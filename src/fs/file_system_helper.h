@@ -1,4 +1,8 @@
 /*
 File System helper header
-1.
 */
+
+class FileSystemHelper {
+ public:
+  void Connect();
+};
