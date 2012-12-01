@@ -3,33 +3,50 @@
 
 class QFSFileHelper : public FileHelper {
  public:
-	QFSFileHelper(QFSHelper fshelper, string fname, int mode) {
-		this->fshelper = fshelper;
+	QFSFileHelper(QFSHelper qfshelper, string fname, int mode) {
+		this->qfshelper = qfshelper;
 		this->filename = fname;
 		this->mode = mode;
 		this->fd = -1;
 	}
 
+	void Create()
+	{
+		fd = qfshelper.kfsClient->Create(fname.c_str());
+		if (fd < 0) { }
+	}
+
 	void Open() {
-		fd = fshelper->Open(fname, mode);
-		if(fd < 0) {
-			// logging
-			// throw exception
-		}
+		fd = qfshelper.kfsClient->Open(fname, mode);
+		if(fd < 0) { }
 	}
 
 	void Close() {
-		fshelper->Close(fd);
+		qfshelper.kfsClient->Close(fd);
 	}
 
 	void Read(char *buffer, int length) {
-		// check for buffer -> null
-		fshelper->Read(fd, buffer, length);
+		qfshelper.kfsClient->Read(fd, buffer, length);
 	}
 
 	void Write(char *buffer, int length) {
-		fshelper->Write(fd, buffer, length);
+		qfshelper.kfsClient->Write(fd, buffer, length);
 	}
+
+	static bool IsFileExist(char *fname)
+	{
+	 KFS::KfsClient *kfsClient = NULL;
+	 kfsClient = KFS::Connect(serverHost, port);
+	 return qfshelper.kfsClient->Exists(fname);
+	}
+
+	static bool IsDirectoryExist(char *dirname)
+	{
+	 KFS::KfsClient *kfsClient = NULL;
+	 kfsClient = KFS::Connect(serverHost, port);
+	 return qfshelper.kfsClient->Exists(fname.c_str());
+	}
+
  private:
-	FileSystemHelper fshelper;
+	QFSHelper qfshelper;
 };

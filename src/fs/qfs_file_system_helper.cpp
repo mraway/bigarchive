@@ -1,4 +1,5 @@
 #include "file_system_helper.h"
+// include issues
 #include "libclient/KfsClient.h"
 
 using std::string;
@@ -6,8 +7,7 @@ using std::string;
 class QFSHelper : public FileSystemHelper {
 	public:
 		void Connect() {
-			// connect to default host , port
-			kfsClient = KFS::Connect(this, 40000);
+			Conect(string("localhost"), 40000);
 		}
 
 		void Connect(string metaserverhost, int metaserverport) {
@@ -17,6 +17,5 @@ class QFSHelper : public FileSystemHelper {
 				// throw exception
 			}
 		}
-	private:
 	    KFS::KfsClient *kfsClient;
 };

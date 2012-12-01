@@ -4,17 +4,12 @@
 #include <string>
 #include <map>
 
+#include "../fs/file_system_helper.h"
+#include "../fs/file_helper.h"
+
 #include "append_store_types.h"
-#include "pangu_helper.h"
 #include "append_store_index.h"
-#include "CompressionCodec.h"
-//#include "AppendStoreException.h"
 
-
-namespace apsara
-{
-namespace AppendStore
-{
 
 struct Defaults
 {
@@ -27,47 +22,19 @@ struct Defaults
 class Chunk
 {
 public:
-    /**
-     * \brief constructor of a chunk for append or read
-     * @param root the root path of this chunk
-     * @param chunk_id the id of this chunk
-     * @param max_chunk_sz the maximum chunk size in bytes
-     */
     Chunk(const std::string& root, ChunkIDType chunk_id, 
           uint64_t max_chunk_sz, bool append, CompressionCodecWeakPtr weakptr,  
           CacheWeakPtr cacheptr, uint32_t index_interval=DF_MAX_PENDING);
 
-    /**
-    * constructor of a chunk for remove record only
-    */
     Chunk(const std::string& root, ChunkIDType chunk_id);
 
     ~Chunk();
     
 public:
-    /**
-     * \brief Append a data item to the data store.
-     * @param 	data the data item to be added.
-     * @param	flag the flag (i.e. property) associated with the data.
-     * @return the index of the newly appended data item (always non-zero); 
-     * if it fails, it returns 0 
-     */
     IndexType Append(const std::string& data);
 
-    /**
-     * \brief read a data item from the data store
-     * @param idx      the index of the data item
-     * @param data     the buf to hold the read data
-     * @return true if succeeds, false otherwise
-     */
     bool Read(IndexType idx, std::string* data);
     
-    /**
-     * \brief remove a data item from the data store
-     * @param idx the index of the data item
-     * @return true if the data exist and successfully removed
-     * 		   false otherwise
-     */
     bool Remove(const IndexType& idx);
     
     ChunkIDType GetID() { return mChunkId; }
@@ -101,12 +68,12 @@ private:
     CacheWeakPtr            mCachePtr;
     uint32_t   mBlockIndexInterval;
 
-    apsara::pangu::FileSystem* mFileSystemPtr;
-    apsara::pangu::LogFileInputStreamPtr mDataInputStream;
-    apsara::pangu::LogFileOutputStreamPtr mDataOutputStream;
-    apsara::pangu::LogFileOutputStreamPtr mIndexOutputStream;
-    apsara::pangu::LogFileOutputStreamPtr mDeleteLogStream;
-    std::stringstream mBlockStream;
+    FileSystemHelper mFileSystemPtr;
+    FileHelper mDataInputStream;
+    FileHelper mDataOutputStream;
+    FileHelper mIndexOutputStream;
+    FileHelper mDeleteLogStream;
+    FileHelper mBlockStream;
     
     static apsara::logging::Logger* sLogger;
 
@@ -115,7 +82,6 @@ private:
     static const uint32_t FLAG_MASK = (1<<31);
 
 private:	
-    ///generate an index key based on current max_index_
 
     void CheckIfNew();
 
@@ -134,16 +100,8 @@ private:
     ///close chunk, and dump all in-memory structure to disk
     bool Close();
 
-    /* read a blob from a file
-    *
-    *
-    */
     bool ReadRaw(const OffsetType&  offset_mix, std::string& data) ;
     
-    /* write a blob
-    *  index:   the index number
-    *  numentry: the number of records
-    */ 
     OffsetType AppendRaw(const IndexType& index, const uint32_t numentry, const std::string& data);
 
     bool ExtractDataFromBlock(const std::string& buf, AppendStore::IndexType index, std::string* data);
@@ -159,7 +117,5 @@ private:
     static std::string GetLogFname(const std::string& root, uint32_t chunk_id);
 };
 
-}
-}
 
 #endif//_ASCHUNK_H

@@ -29,7 +29,7 @@ AppendStore::Chunk::Chunk(const std::string& root, ChunkIDType chunk_id,
     mCachePtr(cacheptr),
     mBlockIndexInterval(index_interval)
 {
-    mFileSystemPtr = FileSystem::GetInstance();
+    mFileSystemPtr = FileSystemHelper::GetInstance();
     CheckIfNew();
     LoadIndex();
     LoadData(append_flag);
