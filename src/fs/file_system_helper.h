@@ -8,7 +8,7 @@ File System helper header
 class FileSystemHelper {
  public:
   /* Connect method establishes a connection with FileSystem MetaServer (usually host name and port are passed)*/
-  void Connect();
+  void Connect() {}
 };
 
 #endif /* FILE_SYSTEM_HELPER_H */

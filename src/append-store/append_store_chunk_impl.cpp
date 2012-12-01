@@ -29,6 +29,7 @@ AppendStore::Chunk::Chunk(const std::string& root, ChunkIDType chunk_id,
     mCachePtr(cacheptr),
     mBlockIndexInterval(index_interval)
 {
+	// change required
     mFileSystemPtr = FileSystemHelper::GetInstance();
     CheckIfNew();
     LoadIndex();
@@ -41,17 +42,20 @@ AppendStore::Chunk::Chunk(const std::string& root, ChunkIDType chunk_id)
     mLogFileName(GetIdxLogFname(root, chunk_id)), 
     mDirty(false)
 {
+	// change required
     mFileSystemPtr = FileSystem::GetInstance();
     LoadDeleteLog();
 }
 
 void AppendStore::Chunk::LoadDeleteLog()
 {
-    if ( PanguHelper::IsFileExist(mLogFileName) == false)
-    {
-        PanguHelper::CreateLogFile(mLogFileName, DF_MINCOPY, DF_MAXCOPY, AppName, PartName);
-    }
-    mDeleteLogStream = PanguHelper::OpenLog4Append(mLogFileName);
+	// QFSHelper qfsHelper = new QFSHelper();
+	// qfsHelper.connect();
+	mDeleteLogStream = new QFSFileHelper(qfsHelper, mLogFileName, WRITE);
+	if(QFSFileHelper::IsFileExist(mLogFileName) == false) {
+		mDeleteLogStream.Create();
+	}
+	mDeleteLogStream.Open();
 }
 
 void AppendStore::Chunk::CheckIfNew()
@@ -62,8 +66,8 @@ void AppendStore::Chunk::CheckIfNew()
     bool iexist;
     try
     {
-        dexist = PanguHelper::IsFileExist(mDataFileName);
-        iexist = PanguHelper::IsFileExist(mIndexFileName);
+        dexist = QFSFileHelper::IsFileExist(mDataFileName); // PanguHelper::IsFileExist(mDataFileName);
+        iexist = QFSFileHelper::IsFileExist(mIndexFileName); // PanguHelper::IsFileExist(mIndexFileName);
     }
     catch(ExceptionBase& e)
     {
@@ -80,8 +84,12 @@ void AppendStore::Chunk::CheckIfNew()
     {
         try
         {
-            PanguHelper::CreateLogFile(mDataFileName, DF_MINCOPY, DF_MAXCOPY, AppName, PartName);
-            PanguHelper::CreateLogFile(mIndexFileName, DF_MINCOPY, DF_MAXCOPY, AppName, PartName);
+        	mDataLogStream = new QFSFileHelper(qfsHelper, mDataFileName, WRITE);
+        	mIndexLogStream = new QFSFileHelper(qfsHelper, mIndexFileName, WRITE);
+        	mDataLogStream.Create();
+        	mIndexLogStream.Create();
+            // PanguHelper::CreateLogFile(mDataFileName, DF_MINCOPY, DF_MAXCOPY, AppName, PartName);
+            // PanguHelper::CreateLogFile(mIndexFileName, DF_MINCOPY, DF_MAXCOPY, AppName, PartName);
         }
         catch(ExceptionBase& e)
         {

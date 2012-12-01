@@ -15,19 +15,19 @@ class FileHelper {
  public:
   FileHelper();
   /* Creates a file */
-  void Create();
+  void Create() {}
   /* Opens a file on specified mode */
-  void Open();
+  void Open() {}
   /* Reads from file into buffer */
-  void Read(char *buffer, int length);
+  void Read(char *buffer, int length) {}
   /* Writes buffer into file */
-  void Write(char *buffer, int length);
+  void Write(char *buffer, int length) {}
   /* Closes the file */
-  void Close();
+  void Close() {}
   /* checks whether file "fname" exists or not */
-  static bool IsFileExists(char *fname);
+  static bool IsFileExists(char *fname) {}
   /* checks whether directory "dirname" exits or not */
-  static bool IsDirectoryExists(char *dirname);
+  static bool IsDirectoryExists(char *dirname) {}
  protected:
   /*file descriptor*/
   int fd;
