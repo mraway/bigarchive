@@ -1,0 +1,13 @@
+# -*- mode: python -*-
+Import('env')
+env = env.Clone()
+
+libsmock=['append_store', 'lzo2', 'pangumock'] + env['LIBS']
+
+libs=['append_store', 'lzo2', 'pangu', 'pangu_common'] + env['LIBS']
+
+mockscan = env.Program(target='scanner_check', source='scanner_check.cpp', LIBS=libsmock, LIBPATH=env['LIBPATH']+['..'])
+#Default(mockscan)
+
+cdspartition = env.Program(target='cds_partitioner', source='cds_partitioner.cpp', LIBS=libs, LIBPATH=env['LIBPATH']+['..'])
+Default(cdspartition)
