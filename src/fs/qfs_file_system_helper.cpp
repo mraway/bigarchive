@@ -20,15 +20,11 @@ class QFSHelper : public FileSystemHelper {
 
 		bool IsFileExist(char *fname)
 		{
-		 //KFS::KfsClient *kfsClient = NULL;
-		 //kfsClient = KFS::Connect(serverHost, port);
 		 return kfsClient->Exists(fname);
 		}
 
 		bool IsDirectoryExist(char *dirname)
 		{
-		 //KFS::KfsClient *kfsClient = NULL;
-		 //kfsClient = KFS::Connect(serverHost, port);
 		 return kfsClient->Exists(dirname);
 		}
 
@@ -37,6 +33,11 @@ class QFSHelper : public FileSystemHelper {
 			KFS::KfsFileAttr kfsattr = new KfsFileAttr(); // Stat method takes reference of this object
 			kfsClient->Stat(fname, kfsattr, true); // true is for computing the size
 			return kfsattr.fileSize;
+		}
+
+		int ListDir(char *pathname, vector<string> &result)
+		{
+			return kfsClient->ReadDir(pathname, result);
 		}
 
 	    KFS::KfsClient *kfsClient;

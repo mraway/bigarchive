@@ -3,7 +3,7 @@
 
 class QFSFileHelper : public FileHelper {
  public:
-	QFSFileHelper(QFSHelper qfshelper, string fname, int mode) {
+	QFSFileHelper(QFSHelper *qfshelper, string fname, int mode) {
 		this->qfshelper = qfshelper;
 		this->filename = fname;
 		this->mode = mode;
@@ -12,31 +12,31 @@ class QFSFileHelper : public FileHelper {
 
 	void Create()
 	{
-		fd = qfshelper.kfsClient->Create(fname.c_str());
+		fd = qfshelper->kfsClient->Create(fname.c_str());
 		if (fd < 0) { }
 	}
 
 	void Open() {
-		fd = qfshelper.kfsClient->Open(fname, mode);
+		fd = qfshelper->kfsClient->Open(fname, mode);
 		if(fd < 0) { }
 	}
 
 	void Close() {
-		qfshelper.kfsClient->Close(fd);
+		qfshelper->kfsClient->Close(fd);
 	}
 
 	void Read(char *buffer, int length) {
-		qfshelper.kfsClient->Read(fd, buffer, length);
+		qfshelper->kfsClient->Read(fd, buffer, length);
 	}
 
 	void Write(char *buffer, int length) {
-		qfshelper.kfsClient->Write(fd, buffer, length);
+		qfshelper->kfsClient->Write(fd, buffer, length);
 	}
 
 	void Seek(int offset) {
-		qfshelper.kfsClient->Seek(fd, offset);
+		qfshelper->kfsClient->Seek(fd, offset);
 	}
 
  private:
-	QFSHelper qfshelper;
+	QFSHelper *qfshelper;
 };
