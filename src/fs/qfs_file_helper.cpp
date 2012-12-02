@@ -33,18 +33,8 @@ class QFSFileHelper : public FileHelper {
 		qfshelper.kfsClient->Write(fd, buffer, length);
 	}
 
-	static bool IsFileExist(char *fname)
-	{
-	 KFS::KfsClient *kfsClient = NULL;
-	 kfsClient = KFS::Connect(serverHost, port);
-	 return qfshelper.kfsClient->Exists(fname);
-	}
-
-	static bool IsDirectoryExist(char *dirname)
-	{
-	 KFS::KfsClient *kfsClient = NULL;
-	 kfsClient = KFS::Connect(serverHost, port);
-	 return qfshelper.kfsClient->Exists(fname.c_str());
+	void Seek(int offset) {
+		qfshelper.kfsClient->Seek(fd, offset);
 	}
 
  private:

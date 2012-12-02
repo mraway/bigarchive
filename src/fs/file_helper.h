@@ -22,12 +22,10 @@ class FileHelper {
   void Read(char *buffer, int length) {}
   /* Writes buffer into file */
   void Write(char *buffer, int length) {}
+  /* Seeks to position */
+  void Seek(int offset) {}
   /* Closes the file */
   void Close() {}
-  /* checks whether file "fname" exists or not */
-  static bool IsFileExists(char *fname) {}
-  /* checks whether directory "dirname" exits or not */
-  static bool IsDirectoryExists(char *dirname) {}
  protected:
   /*file descriptor*/
   int fd;

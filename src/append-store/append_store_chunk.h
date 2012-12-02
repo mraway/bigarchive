@@ -68,14 +68,12 @@ private:
     CacheWeakPtr            mCachePtr;
     uint32_t   mBlockIndexInterval;
 
-    FileSystemHelper mFileSystemPtr;
-    FileHelper mDataInputStream;
-    FileHelper mDataOutputStream;
-    FileHelper mIndexOutputStream;
-    FileHelper mDeleteLogStream;
-    FileHelper mBlockStream;
-    
-    static apsara::logging::Logger* sLogger;
+    FileSystemHelper* mFileSystemHelper;
+    FileHelper* mDataInputFH;
+    FileHelper* mDataOutputFH;
+    FileHelper* mIndexOutputFH;
+    FileHelper* mDeleteLogFH;
+    std::stringstream mBlockFH;
 
     static const uint32_t OFF_MASK = 0x7fffffff;
 
@@ -91,13 +89,10 @@ private:
 
     void LoadDeleteLog();
 
-    ///load the index file to an in-memory map
     bool LoadIndex();
     
-    ///load data file
     bool LoadData(bool flag);
     
-    ///close chunk, and dump all in-memory structure to disk
     bool Close();
 
     bool ReadRaw(const OffsetType&  offset_mix, std::string& data) ;

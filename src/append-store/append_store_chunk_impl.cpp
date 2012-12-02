@@ -10,7 +10,7 @@ const char* AppendStore::Defaults::IDX_DIR = "index/";
 const char* AppendStore::Defaults::DAT_DIR = "data/";
 const char* AppendStore::Defaults::LOG_DIR = "log/";
 
-apsara::logging::Logger* AppendStore::Chunk::sLogger = apsara::logging::GetLogger("/apsara/append_store");
+// apsara::logging::Logger* AppendStore::Chunk::sLogger = apsara::logging::GetLogger("/apsara/append_store");
 
 AppendStore::Chunk::Chunk(const std::string& root, ChunkIDType chunk_id, 
     uint64_t max_chunk_sz, bool append_flag, CompressionCodecWeakPtr weakptr, 
@@ -30,7 +30,7 @@ AppendStore::Chunk::Chunk(const std::string& root, ChunkIDType chunk_id,
     mBlockIndexInterval(index_interval)
 {
 	// change required
-    mFileSystemPtr = FileSystemHelper::GetInstance();
+    mFileSystemHelper = FileSystemHelper::GetInstance();
     CheckIfNew();
     LoadIndex();
     LoadData(append_flag);
@@ -43,7 +43,7 @@ AppendStore::Chunk::Chunk(const std::string& root, ChunkIDType chunk_id)
     mDirty(false)
 {
 	// change required
-    mFileSystemPtr = FileSystem::GetInstance();
+    mFileSystemHelper = FileSystemHelper::GetInstance();
     LoadDeleteLog();
 }
 
@@ -51,17 +51,15 @@ void AppendStore::Chunk::LoadDeleteLog()
 {
 	// QFSHelper qfsHelper = new QFSHelper();
 	// qfsHelper.connect();
-	mDeleteLogStream = new QFSFileHelper(qfsHelper, mLogFileName, WRITE);
+	mDeleteLogFH = new QFSFileHelper(qfsHelper, mLogFileName, WRITE);
 	if(QFSFileHelper::IsFileExist(mLogFileName) == false) {
-		mDeleteLogStream.Create();
+		mDeleteLogFH.Create();
 	}
-	mDeleteLogStream.Open();
+	mDeleteLogFH.Open();
 }
 
 void AppendStore::Chunk::CheckIfNew()
 {
-    // need check for consistence here 
-
     bool dexist;
     bool iexist;
     try
@@ -84,10 +82,10 @@ void AppendStore::Chunk::CheckIfNew()
     {
         try
         {
-        	mDataLogStream = new QFSFileHelper(qfsHelper, mDataFileName, WRITE);
-        	mIndexLogStream = new QFSFileHelper(qfsHelper, mIndexFileName, WRITE);
-        	mDataLogStream.Create();
-        	mIndexLogStream.Create();
+        	mDataLogFH = new QFSFileHelper(qfsHelper, mDataFileName, WRITE);
+        	mIndexLogFH = new QFSFileHelper(qfsHelper, mIndexFileName, WRITE);
+        	mDataLogFH->Create();
+        	mIndexLogFH->Create();
             // PanguHelper::CreateLogFile(mDataFileName, DF_MINCOPY, DF_MAXCOPY, AppName, PartName);
             // PanguHelper::CreateLogFile(mIndexFileName, DF_MINCOPY, DF_MAXCOPY, AppName, PartName);
         }
@@ -109,7 +107,6 @@ void AppendStore::Chunk::Flush()
 {
     if (mDirty)
     {
-        LOG_DEBUG(sLogger, ("Chunk Flush", mMaxIndex));
         if (mFlushCount > 0)
         {
             AppendIndex();
@@ -119,7 +116,6 @@ void AppendStore::Chunk::Flush()
 
 AppendStore::IndexType AppendStore::Chunk::Append(const std::string& data)
 {
-    //check whether the chunk if full, should be always false since already checked during loadChunk
     if (IsChunkFull() == true)
     {
         std::stringstream ss;
@@ -149,7 +145,6 @@ void AppendStore::Chunk::AppendIndex()
         return;
     }
 
-    // AppendRaw throw on error
     OffsetType written = AppendRaw(mMaxIndex, mFlushCount, mBlockStream.str());
     mLastData = written;
     mFlushCount = 0;
@@ -170,28 +165,32 @@ void AppendStore::Chunk::AppendIndex()
     {
         try
         {
-             mIndexOutputStream->FlushLog((char*)&streamBuf.str()[0], streamBuf.str().size());
-             break;
+        	mIndexOutputFH->Write((char*)&streamBuf.str()[0], streamBuf.str().size());
+        	// mIndexOutputStream->FlushLog((char*)&streamBuf.str()[0], streamBuf.str().size());
+            break;
         }
         catch(StreamCorruptedException& e)
         {
             LOG_ERROR(sLogger, ("IndexOutputStream corrupt", e.ToString()));
             try
             {
-                mIndexOutputStream->Close();
+                mIndexOutputFH->Close();
             }
             catch(ExceptionBase& e)
             {
                 LOG_ERROR(sLogger, ("Failed close file after write fail", e.ToString()));
             }
-            mIndexOutputStream.reset();
+            // mIndexOutputStream.reset();
+            mIndexOutputFH->Seek(0);
 
             if (++retryCount <= 1)
             {
                 usleep(3000000);
             }
 
-            mIndexOutputStream = PanguHelper::OpenLog4Append(mIndexFileName);
+            // mIndexOutputStream = PanguHelper::OpenLog4Append(mIndexFileName);
+            mIndexOutputFH = new QFSFileHelper(qfsHelper, mIndexFileName, WRITE);
+            mIndexOutputFH->Open();
 
             if (retryCount > 1)
             {
@@ -280,27 +279,31 @@ bool AppendStore::Chunk::Remove(const AppendStore::IndexType& index)
     {
         try
         {
-             mDeleteLogStream->FlushLog(&tmp[0], tmp.size());
-             break;
+        	mDeleteLogFH->Write(&tmp[0], tmp.size());
+            // mDeleteLogStream->FlushLog(&tmp[0], tmp.size());
+            break;
         }
         catch(StreamCorruptedException& e)
         {
             LOG_ERROR(sLogger, ("DeleteLogStream corrupt", e.ToString()));
             try
             {
-                mDeleteLogStream->Close();
+                // mDeleteLogStream->Close();
+            	mDeleteLogFH->Close();
             }
             catch(ExceptionBase& e)
             {
                 LOG_ERROR(sLogger, ("Failed close file after write fail", e.ToString()));
             }
-            mDeleteLogStream.reset();
+            // mDeleteLogStream.reset(); CHECK
+            mDeleteLogFH->Seek(0);
 
             if (++retryCount <= 1)
             {
                 usleep(3000000);
             }
-            mDeleteLogStream = PanguHelper::OpenLog4Append(mLogFileName);
+            // mDeleteLogStream = PanguHelper::OpenLog4Append(mLogFileName);
+            mDeleteLogFH = new QFSFileHelper(qfsHelper, mLogFileName, WRITE);
 
             if (retryCount > 1)
             {
@@ -335,19 +338,25 @@ bool AppendStore::Chunk::LoadData(bool flag)
     {
         try
         {
-            mLastData = PanguHelper::GetFileSize(mDataFileName);
+            mLastData = QFSFileHelper::GetFileSize(mDataFileName);
         }
         catch(ExceptionBase& e)
         {
             LOG_ERROR(sLogger, ("error on get data file size", e.ToString()));
             throw;
         }
-        mDataOutputStream  = PanguHelper::OpenLog4Append(mDataFileName);
-        mIndexOutputStream = PanguHelper::OpenLog4Append(mIndexFileName);
+        // mDataOutputStream  = PanguHelper::OpenLog4Append(mDataFileName);
+        // mIndexOutputStream = PanguHelper::OpenLog4Append(mIndexFileName);
+        mDataOutputFH = new QFSFileHelper(qfsHelper, mDataFileName, WRITE);
+        mDataOutputFH->Open();
+        mIndexOutputFH = new QFSFileHelper(qfsHelper, mIndexFileName, WRITE);
+        mIndexOutputFH->Open();
     }
     else 
     {
-        mDataInputStream = PanguHelper::OpenLog4Read(mDataFileName);
+    	mDataInputFH = new QFSFileHelper(qfsHelper, mDataFileName, READ);
+    	mDataInputFH->Open();
+        // mDataInputStream = PanguHelper::OpenLog4Read(mDataFileName);
     }
     return true;
 }
@@ -355,7 +364,7 @@ bool AppendStore::Chunk::LoadData(bool flag)
 uint32_t AppendStore::Chunk::GetChunkSize(const std::string& root, ChunkIDType chunk_id)
 {
     std::string dat_file = GetDatFname(root, chunk_id);
-    return PanguHelper::GetFileSize(dat_file);
+    return QFSFileHelper::GetFileSize(dat_file);
 }
 
 uint16_t AppendStore::Chunk::GetMaxChunkID(const std::string& root)
@@ -366,6 +375,7 @@ uint16_t AppendStore::Chunk::GetMaxChunkID(const std::string& root)
     std::vector<std::string> data_files; 
     try
     {
+
         apsara::pangu::FileSystem::GetInstance()->ListDirectory(data_root, "", DF_MAXFILENO, data_files);
     }
     catch(ExceptionBase& e)
