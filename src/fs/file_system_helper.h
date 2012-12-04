@@ -2,8 +2,14 @@
 File System helper header
 */
 
+#include<vector>
+#include<string>
+
 #ifndef FILE_SYSTEM_HELPER_H
 #define FILE_SYSTEM_HELPER_H
+
+using std::vector;
+using std::string;
 
 class FileSystemHelper {
  public:
