@@ -1,5 +1,5 @@
 Import('env')
-fs_env = env.clone();
+fs_env = env.Clone();
 fs_env.StaticLibrary(target='bar', source=['qfs_file_helper.cpp', 'qfs_file_system_helper.cpp'])
 	# header= ['file_system_helper.h', 'file_helper.h', 'qfs_file_system_helper.h', 'qfs_file_helper.h'])
 # file_helper.h  file_system_helper.h  qfs_file_helper.cpp  qfs_file_system_helper.cpp  SConstruct
