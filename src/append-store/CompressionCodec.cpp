@@ -2,9 +2,6 @@
 #include "Compressor.h"
 #include "CompressionCodec.h"
 
-using namespace apsara;
-using namespace apsara::AppendStore;
-
 const char* LzoCodec::mName = "lzo";
 const char* NoneCodec::mName = "none";
 

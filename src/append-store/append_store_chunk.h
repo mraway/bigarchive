@@ -4,12 +4,14 @@
 #include <string>
 #include <map>
 
-#include "../fs/file_system_helper.h"
-#include "../fs/file_helper.h"
-
+#include "file_system_helper.h"
+#include "file_helper.h"
+#include "qfs_file_helper.h"
+// #include "qfs_file_system_helper.h"
 #include "append_store_types.h"
 #include "append_store_index.h"
-
+#include "CompressionCodec.h"
+#include <stdio.h>
 
 struct Defaults
 {
@@ -39,7 +41,9 @@ public:
     
     ChunkIDType GetID() { return mChunkId; }
     
+	// CHKIT
     static uint32_t GetChunkSize(const std::string& root, ChunkIDType chunk_id);
+
 
     static ChunkIDType GetMaxChunkID(const std::string& root);
     
@@ -73,7 +77,8 @@ private:
     FileHelper* mDataOutputFH;
     FileHelper* mIndexOutputFH;
     FileHelper* mDeleteLogFH;
-    std::stringstream mBlockFH;
+    // CHKIT
+    std::stringstream mBlockStream;
 
     static const uint32_t OFF_MASK = 0x7fffffff;
 
@@ -99,7 +104,7 @@ private:
     
     OffsetType AppendRaw(const IndexType& index, const uint32_t numentry, const std::string& data);
 
-    bool ExtractDataFromBlock(const std::string& buf, AppendStore::IndexType index, std::string* data);
+    bool ExtractDataFromBlock(const std::string& buf, IndexType index, std::string* data);
 
     static bool IsValid(const IndexType& value);
     
@@ -113,4 +118,4 @@ private:
 };
 
 
-#endif//_ASCHUNK_H
+#endif //_ASCHUNK_H

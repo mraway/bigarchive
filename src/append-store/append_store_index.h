@@ -8,16 +8,15 @@
 #include <algorithm>
 #include <memory>
 #include <map>
-#include "apsara/pangu.h"
-#include "pangu_helper.h"
+// #include <qfs_file_helper.h>
+// #include <qfs_file_system_helper.h>
+// #include "apsara/pangu.h"
+// #include "pangu_helper.h"
+// #include "serialize.h"
 #include "append_store_types.h"
 
-namespace apsara
-{
-namespace AppendStore
-{
 
-class IndexRecord : public apsara::Serializable
+class IndexRecord : public marshall::Serializable
 {
 public:
     IndexRecord() { };
@@ -28,8 +27,8 @@ public:
 
     void Serialize(std::ostream& os) const
     {
-        apsara::Serialize(mOffset, os);
-        apsara::Serialize(mIndex, os);
+        marshall::Serialize(mOffset, os);
+        marshall::Serialize(mIndex, os);
     }
 
     IndexRecord* New()
@@ -39,8 +38,8 @@ public:
 
     void Deserialize(std::istream& is)
     {
-        apsara::Deserialize(mOffset, is);
-        apsara::Deserialize(mIndex, is);
+        marshall::Deserialize(mOffset, is);
+        marshall::Deserialize(mIndex, is);
     }
 
     void Copy(const Serializable& rec)
@@ -90,7 +89,5 @@ private:
     static bool bisearch(const IndexRecord* val_v, uint32_t start, uint32_t nele,  IndexType key, uint32_t& pos);
 };
 
-}
-}
 #endif
 

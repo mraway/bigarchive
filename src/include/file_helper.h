@@ -19,11 +19,13 @@ class FileHelper {
   /* Opens a file on specified mode */
   void Open() {}
   /* Reads from file into buffer */
-  void Read(char *buffer, int length) {}
+  int Read(char *buffer, int length) {}
   /* Writes buffer into file */
-  void Write(char *buffer, int length) {}
+  int Write(char *buffer, int length) {}
   /* Seeks to position */
   void Seek(int offset) {}
+  /* */
+  int GetNextLogSize() {return 0;}
   /* Closes the file */
   void Close() {}
  protected:

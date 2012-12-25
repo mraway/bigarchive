@@ -4,19 +4,23 @@
 #include <deque>
 #include <set>
 #include "store.h"
-#include "apsara/pangu.h"
-#include "apsara/pgfstream.h"
-#include "apsara/common/safeguard.h"
 #include "append_store_types.h"
-#include "append_store_exception.h"
+#include "exception.h"
 #include "append_store_chunk.h"
 #include "CompressionCodec.h"
 
+/*
+#include <log4cxx/logger.h>
+#include <log4cxx/xml/domconfigurator.h>
 
-namespace apsara
-{
-namespace AppendStore
-{
+using namespace log4cxx;
+using namespace log4cxx::xml;
+using namespace log4cxx::helpers;
+
+// static logger variable
+// LoggerPtr logger(Logger::getLogger( "appendstore"));
+// typedef unsigned long long int uint64_t
+*/
 
 class PanguScanner : public Scanner 
 {
@@ -37,8 +41,11 @@ private:
     mutable std::deque<ChunkIDType> mChunkList;
     mutable std::stringstream       mDataStream;
     std::auto_ptr<CompressionCodec> mScannerCodec;
+    // CHKIT
     // mutable apsara::pangu::LogFileInputStreamPtr mScannerFileStream;
-    mutable FileHelper mScannerFileFH;
+    mutable FileHelper* mScannerFH;
+    // added file system helper !! CHKIT
+    FileSystemHelper*   mFileSystemHelper;
     bool                mFileHasMore;
     mutable ChunkIDType mChunkId;
     std::set<IndexType> mDeleteSet;
@@ -69,8 +76,9 @@ private:
     bool ValidChunkID(ChunkIDType id) const; 
     void CreateDirs(const std::string& root);
     bool CheckDirs(const std::string& root);
-    AppendStore::Chunk* LoadRandomChunk(ChunkIDType id);
-    AppendStore::Chunk* LoadDeleteChunk(ChunkIDType id);
+	// CHKIT CHKIT
+    /* AppendStore:: */ Chunk* LoadRandomChunk(ChunkIDType id);
+    /* AppendStore:: */ Chunk* LoadDeleteChunk(ChunkIDType id);
     bool CreateDirectory(const std::string&);
 
 private:
@@ -84,16 +92,15 @@ private:
     StoreMetaData mMeta;
     CachePtr            mCache;
     CompressionCodecPtr mCodec;
-    FileSystemHelper*   mFileSystemPtr;
+    FileSystemHelper*   mFileSystemHelper;
     mutable std::auto_ptr<Chunk> mCurrentAppendChunk;  
     mutable ChunkPtr             mCurrentRandomChunk;  
     mutable ChunkPtr             mCurrentDeleteChunk;  
     ChunkMapType mChunkMap;          // for read map of chunk index 
     ChunkMapType mDeleteChunkMap;    // for read map of delete chunk index 
-    static apsara::logging::Logger* sLogger;
+    // CHKIT
+    // static apsara::logging::Logger* sLogger;
 };
 
-}
-}
 
 #endif

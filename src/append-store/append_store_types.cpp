@@ -1,7 +1,7 @@
 #include "append_store_types.h"
 
 
-using namespace apsara::AppendStore;
+// using namespace AppendStore;
 
 
 DataRecord::DataRecord() 
@@ -13,26 +13,26 @@ DataRecord::DataRecord(const std::string& s, const IndexType& i)
 { 
 }
 
-void apsara::AppendStore::DataRecord::Serialize(std::ostream& os) const
+void DataRecord::Serialize(std::ostream& os) const
 {
-    apsara::Serialize(mVal, os);
-    apsara::Serialize(mIndex, os);
+    marshall::Serialize(mVal, os);
+    marshall::Serialize(mIndex, os);
 }
 
-apsara::AppendStore::DataRecord::DataRecord* apsara::AppendStore::DataRecord::New()
+DataRecord* DataRecord::New()
 {
-    return new apsara::AppendStore::DataRecord();
+    return new DataRecord();
 }
 
-void apsara::AppendStore::DataRecord::Deserialize(std::istream& is)
+void DataRecord::Deserialize(std::istream& is)
 {
-    apsara::Deserialize(mVal, is);
-    apsara::Deserialize(mIndex, is);
+    marshall::Deserialize(mVal, is);
+    marshall::Deserialize(mIndex, is);
 }
 
-void apsara::AppendStore::DataRecord::Copy(const Serializable& rec)
+void DataRecord::Copy(const Serializable& rec)
 {
-    const apsara::AppendStore::DataRecord& tmpRec = dynamic_cast<const apsara::AppendStore::DataRecord&>(rec);
+    const DataRecord& tmpRec = dynamic_cast<const DataRecord&>(rec);
     mVal = tmpRec.mVal;
     mIndex = tmpRec.mIndex;
 }
@@ -54,12 +54,12 @@ CompressedDataRecord::CompressedDataRecord(const IndexType& index, const uint32_
 
 void CompressedDataRecord::Serialize(std::ostream& os) const
 {
-    apsara::Serialize(mIndex, os);
-    apsara::Serialize(mRecords, os);
-    apsara::Serialize(mOrigLength, os);
-    apsara::Serialize(mCompressLength, os);
-    // cannot use apsara::Serialize(mData, os);
-    apsara::Serialize(mCompressLength, os);
+    marshall::Serialize(mIndex, os);
+    marshall::Serialize(mRecords, os);
+    marshall::Serialize(mOrigLength, os);
+    marshall::Serialize(mCompressLength, os);
+    // cannot use Serialize(mData, os);
+    marshall::Serialize(mCompressLength, os);
     os.write(&mData[0], mCompressLength);
 }
 
@@ -70,11 +70,11 @@ CompressedDataRecord* CompressedDataRecord::New()
 
 void CompressedDataRecord::Deserialize(std::istream& is)
 {
-    apsara::Deserialize(mIndex, is);
-    apsara::Deserialize(mRecords, is);
-    apsara::Deserialize(mOrigLength, is);
-    apsara::Deserialize(mCompressLength, is);
-    apsara::Deserialize(mData, is);
+    marshall::Deserialize(mIndex, is);
+    marshall::Deserialize(mRecords, is);
+    marshall::Deserialize(mOrigLength, is);
+    marshall::Deserialize(mCompressLength, is);
+    marshall::Deserialize(mData, is);
 }
 
 void CompressedDataRecord::Copy(const Serializable& rec)
@@ -88,7 +88,7 @@ void CompressedDataRecord::Copy(const Serializable& rec)
 }
 
 
-apsara::AppendStore::DeleteRecord::DeleteRecord(const std::string& src)
+DeleteRecord::DeleteRecord(const std::string& src)
 {
     if ( src.size()!=sizeof(IndexType))
     {
@@ -103,20 +103,20 @@ DeleteRecord::DeleteRecord(IndexType index)
 {
 }
 
-std::string apsara::AppendStore::DeleteRecord::ToString()
+std::string DeleteRecord::ToString()
 {
     std::string ret;
     ret.append(reinterpret_cast<char*>(&mIndex), sizeof(mIndex));
     return ret;
 }
 
-bool apsara::AppendStore::DeleteRecord::isValid() const
+bool DeleteRecord::isValid() const
 {
     return (mIndex <=0x0000ffffffffffffllu);
     //return (mIndex != (IndexType)-1);
 }
 
-apsara::AppendStore::Handle::Handle(const std::string& src)
+Handle::Handle(const std::string& src)
 {
     if (src.size() != 8)
     {
@@ -141,7 +141,7 @@ Handle::Handle(const Handle& other)
     mIndex   = other.mIndex;
 }
 
-std::string apsara::AppendStore::Handle::ToString()
+std::string Handle::ToString()
 {
     std::string ret;
     uint64_t tmp = ((0xffffffffff & mChunkId) << 48) | mIndex;
@@ -149,22 +149,22 @@ std::string apsara::AppendStore::Handle::ToString()
     return ret;
 }
 
-bool apsara::AppendStore::Handle::isValid() const
+bool Handle::isValid() const
 {
     return (mChunkId != (uint16_t)-1) && (mIndex != (uint64_t)-1);
 }
 
-bool apsara::AppendStore::Handle::operator==(const Handle& other) const
+bool Handle::operator==(const Handle& other) const
 {
     return (mChunkId == other.mChunkId && mIndex == other.mIndex);
 }
 
-bool apsara::AppendStore::Handle::operator!=(const Handle& other) const
+bool Handle::operator!=(const Handle& other) const
 {
     return !(*this == other);
 }
 
-bool apsara::AppendStore::Handle::operator<(const Handle& other) const
+bool Handle::operator<(const Handle& other) const
 {
     if (mChunkId < other.mChunkId)
     {

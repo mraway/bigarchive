@@ -3,13 +3,12 @@
 
 #include <string>
 #include <vector>
-
-namespace apsara
-{
-namespace AppendStore
-{ 
+#include <stdint.h>
 
 const char panguStore[] = "PanguAppendStore";
+
+// typedef unsigned long long int uint64_t;
+// typedef unsigned long int uint32_t;
 
 
 class Scanner 
@@ -119,10 +118,12 @@ public:
     static Store* Load(const StoreParameter&, const std::string&); 
 };
 
+
+/*
 class StoreUtility
 {
 public:
-    /*
+    
      * Make sure: InitPangu() is called somewhere before using this function!
      *
      * get the size of apend store.
@@ -130,14 +131,12 @@ public:
      *   0 if the path does not exist. 
      *   size of store (before pangu meta update).
      * throw exception on error.
-    */
+    
     static uint64_t GetSize(const std::string& rootPath);
 
 private:    
     static uint64_t GetDirectorySize(const std::string& dirName);
 };
+*/
 
-
-}
-}
 #endif

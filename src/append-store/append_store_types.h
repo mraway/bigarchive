@@ -3,15 +3,10 @@
 
 #include <inttypes.h>
 #include <string>
-#include "apsara/common/serialize.h"
+#include "serialize.h"
 #include "store.h" 
-//#include "apsara/common/logging.h" 
-#include "apsara/pangu.h"
-
-namespace apsara
-{
-namespace AppendStore
-{
+// #include "apsara/common/logging.h" 
+// #include "apsara/pangu.h"
 
 typedef uint16_t ChunkIDType; // chunk id
 typedef uint64_t IndexType;   // logical index of the data item (the index is location-independent)
@@ -27,8 +22,9 @@ const int DF_MINCOPY = 3;
 const int DF_MAXCOPY = 3;
 const int DF_MAXFILENO = 255*255;
 
-const char AppName[] = LOCALFILE_APPNAME; 
-const char PartName[] = LOCALFILE_PARTNAME; 
+//CHKIT
+const char AppName[] = "app_name"; // LOCALFILE_APPNAME; 
+const char PartName[] = "part_name"; // LOCALFILE_PARTNAME; 
 
 const char* const MetaFileName = ".meta_";
 
@@ -39,7 +35,7 @@ const uint16_t MINOR_VER = 0;
 /*
 * data record in data/dat.0
 */
-class DataRecord : public apsara::Serializable
+class DataRecord : public marshall::Serializable
 {
 public:
     DataRecord();
@@ -62,7 +58,7 @@ public:
 /*
 * compressed record which consists of many data record in data/dat.0
 */
-class CompressedDataRecord : public apsara::Serializable
+class CompressedDataRecord : public marshall::Serializable
 {
 public:
     CompressedDataRecord();
@@ -167,8 +163,5 @@ private:
 
 typedef std::tr1::weak_ptr<Cache>   CacheWeakPtr;
 typedef std::tr1::shared_ptr<Cache> CachePtr;
-
-}
-}
 
 #endif//_APPENDSTORE_TYPES_H

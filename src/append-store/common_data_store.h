@@ -5,18 +5,21 @@
 #include <string>
 #include <deque>
 #include <string>
-#include "apsara/common/serialize.h"
+#include <sstream>
+
+#include "serialize.h"
+#include "file_helper.h"
+#include "qfs_file_helper.h"
+
+/*
 #include "apsara/common/logging.h"
 #include "apsara/pangu.h"
 #include "append/pangu_helper.h"
+*/
 
-namespace apsara
-{
-namespace AppendStore
-{
+// using namespace marshall;
 
-
-class CdsIndexRecord : public apsara::Serializable
+class CdsIndexRecord : public marshall::Serializable
 {
 public:
     CdsIndexRecord();
@@ -38,12 +41,15 @@ public:
     std::string mSha1Index;		// 20-byte string
     //uint64_t    mOffset;
     std::string mOffset;                // 8-byte string
+
+private:
+    FileSystemHelper* mFileSystemHelper;
 };
 
 /*
 * record consisting of multiple CdsIndexRecord
 */
-class MultiIndexRecord : public apsara::Serializable
+class MultiIndexRecord : public marshall::Serializable
 {
 public:
     MultiIndexRecord();
@@ -94,7 +100,8 @@ public:
     */
     bool Next(std::vector<CdsIndexRecord>&);
 
-    static apsara::logging::Logger* sLoggerReader;
+	// CHKIT
+    // static apsara::logging::Logger* sLoggerReader;
 
 private:
     void InitReader();
@@ -102,7 +109,8 @@ private:
 private:
     std::string mPath;
     int         mPartition_id;
-    mutable apsara::pangu::LogFileInputStreamPtr mIndexInputStream;
+    FileSystemHelper* mFileSystemHelper;
+    mutable FileHelper* mIndexInputFH;
 };
 
 
@@ -164,25 +172,19 @@ private:
     std::string  mPath;
     bool         mAppend;
     uint32_t     mFlushCount;
-    uint32_t     mIndexInterval;
-    
+    uint32_t     mIndexInterval;    
     std::string  mIndexFileName; 
     std::string  mDataFileName;  
-
-    apsara::pangu::FileSystem*            mFileSystemPtr;
-    apsara::pangu::LogFileInputStreamPtr  mDataInputStream;
-    apsara::pangu::LogFileOutputStreamPtr mDataOutputStream;
-    apsara::pangu::LogFileOutputStreamPtr mIndexOutputStream;
-
     std::stringstream mIndexStream;
 
-    static apsara::logging::Logger* sLogger;
-
+    FileSystemHelper* mFileSystemHelper;
+    FileHelper* mDataInputFH; //     apsara::pangu::LogFileInputStreamPtr  mDataInputStream;
+    FileHelper* mDataOutputFH; // apsara::pangu::LogFileOutputStreamPtr mDataOutputStream;
+    FileHelper* mIndexOutputFH;
 
     friend class IndexReader;
 };
 
-}
-}
+
 
 #endif // COMMON_DATA_H

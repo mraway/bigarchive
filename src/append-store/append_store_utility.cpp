@@ -1,10 +1,6 @@
-#include "pangu_helper.h"
-#include "append_store_exception.h"
+// #include "pangu_helper.h"
+#include "exception.h"
 #include "append_store.h"
-
-
-using namespace apsara::pangu;
-using namespace apsara::AppendStore;
 
 
 Store* StoreFactory::Create(const StoreParameter& para, const std::string& type)
@@ -13,7 +9,7 @@ Store* StoreFactory::Create(const StoreParameter& para, const std::string& type)
     {
         if (para.mAppend != true)
         {
-            APSARA_THROW(AppendStoreFactoryException, "Has to be appendable for StoreFactory::Create");
+            THROW_EXCEPTION(AppendStoreFactoryException, "Has to be appendable for StoreFactory::Create");
         }
         return new PanguAppendStore(para, true);
     }
@@ -26,14 +22,14 @@ Store* StoreFactory::Load(const StoreParameter& para, const std::string& type)
     {
         if (para.mAppend != false)
         {
-            APSARA_THROW(AppendStoreFactoryException, "Has to be non-appendable for StoreFactory::Load");
+            THROW_EXCEPTION(AppendStoreFactoryException, "Has to be non-appendable for StoreFactory::Load");
         }
         return new PanguAppendStore(para, false);
     }
     return NULL;
 }
 
-
+/*
 uint64_t StoreUtility::GetSize(const std::string& rootPath) 
 {
     std::string path = rootPath;
@@ -43,7 +39,9 @@ uint64_t StoreUtility::GetSize(const std::string& rootPath)
     }
     
     // if does not exist at the top level, not throw, just return 0
-    if (PanguHelper::IsDirectoryExist(path))
+    // CHKIT FileSystemHelper->IsDirectoryExist(path) 
+    // do we need to declare a new FileSystemHelper ??
+    if (IsDirectoryExist(path))
     {
         return GetDirectorySize(path);
     }
@@ -56,17 +54,21 @@ uint64_t StoreUtility::GetDirectorySize(const std::string& dirName)
 
     uint64_t total_size = 0;
     std::vector<std::string> data_files;
+
+    QFSHelper *qfsHelper = new QFSHelper();
+    qfsHelper->Connect("host", 30000);
     try
     {
-        pangu::FileSystem::GetInstance()->ListDirectory(dirName, "", AppendStore::DF_MAXFILENO, data_files);
+        // pangu::FileSystem::GetInstance()->ListDirectory(dirName, "", DF_MAXFILENO, data_files);
+	qfsHelper->ListDir(dirName.c_str(), data_files);
     }
-    catch (apsara::DirectoryNotExistException& e)
+    catch (DirectoryNotExistException& e)
     {
         return 0;
     }
-    catch (apsara::ExceptionBase& e)
+    catch (ExceptionBase& e)
     {
-        APSARA_THROW(AppendStoreReadException, "GetDirectorySize " + e.ToString());
+        THROW_EXCEPTION(AppendStoreReadException, "GetDirectorySize " + e.ToString());
     }
 
     try
@@ -79,14 +81,14 @@ uint64_t StoreUtility::GetDirectorySize(const std::string& dirName)
             }
             else
             {
-                total_size += PanguHelper::GetFileSize(dirName+data_files.at(i));
+                total_size += GetFileSize(dirName+data_files.at(i));
             }
         }
         return total_size;
     }
-    catch (apsara::ExceptionBase& e)
+    catch (ExceptionBase& e)
     {
-        APSARA_THROW(AppendStoreReadException, "GetDirectorySize " + e.ToString());
+        THROW_EXCEPTION(AppendStoreReadException, "GetDirectorySize " + e.ToString());
     }
 }
-
+*/

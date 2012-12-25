@@ -1,12 +1,8 @@
 #ifndef COMPRESSIONCODEC_H_
 #define COMPRESSIONCODEC_H_
-
+// #include <stdint.h>
 #include <tr1/memory>
-
-namespace apsara
-{
-namespace AppendStore
-{
+#include <string.h>
 
 class LzoCompressor;
 class LzoDecompressor;
@@ -79,7 +75,5 @@ public:
     static const char* mName;
 };
 
-}
-}
 
 #endif /* COMPRESSIONCODEC_H_ */

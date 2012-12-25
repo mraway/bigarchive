@@ -3,11 +3,6 @@
 #include "lzo/lzo1x.h"
 #include "Compressor.h"
 
-using namespace std;
-using namespace apsara;
-using namespace apsara::AppendStore;
-
-
 LzoCompressor::LzoCompressor(int bufsize) 
 {
     mBufsize = 0;

@@ -1,9 +1,6 @@
 #include "append_store_index.h"
-#include "append_store_exception.h"
-
-using namespace apsara;
-using namespace apsara::pangu;
-using namespace apsara::AppendStore;
+#include "exception.h"
+#include "qfs_file_helper.h"
 
 IndexVector::IndexVector(const std::string& fname)
  {
@@ -52,20 +49,25 @@ void IndexVector::LoadFromFile(const std::string& fname)
     // int32_t size = PanguHelper::GetFileSize(fname);
     // if (size) 
     //     condition size!=0 is not correct due to latency
-   
-    LogFileInputStreamPtr ifsPtr = PanguHelper::OpenLog4Read(fname);
+  
+    // CHKIT
+ 
+    QFSHelper *qfsHelper = new QFSHelper();
+    qfsHelper->Connect("host", 30000);
+    
+    QFSFileHelper *qfsFH = new QFSFileHelper(qfsHelper, fname, O_RDONLY); 
 
     try
     {
         do
         {
-            uint32_t indexSize = ifsPtr->GetNextLogSize();
+            uint32_t indexSize = qfsFH->GetNextLogSize();
             if (indexSize != 0)
             {
 
                 std::string buffer;
                 buffer.resize(indexSize, 0);
-                ifsPtr->ReadLog(&buffer[0], indexSize);
+                qfsFH->Read(&buffer[0], indexSize);
                 std::stringstream ss(buffer);
                 IndexRecord r;
                 r.Deserialize(ss);
@@ -77,15 +79,15 @@ void IndexVector::LoadFromFile(const std::string& fname)
             }
 
         } while(true);
-        ifsPtr->Close();
+        qfsFH->Close();
     }
-    catch (apsara::ExceptionBase& e)
+    catch (ExceptionBase& e)
     {
-        if (ifsPtr)
+        if (qfsFH)
         {
-            ifsPtr->Close();
+            qfsFH->Close();
         }
-        APSARA_THROW(AppendStoreReadException, "Load index file exception " + e.ToString());
+        THROW_EXCEPTION(AppendStoreReadException, "Load index file exception " + e.ToString());
     }
 }
 

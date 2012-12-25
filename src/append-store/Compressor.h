@@ -2,12 +2,7 @@
 #define COMPRESSOR_H_
 
 #include <vector>
-
-
-namespace apsara
-{
-namespace AppendStore
-{
+#include <stdint.h>
 
 class Compressor 
 {
@@ -68,6 +63,4 @@ private:
     uint32_t mBufsize;
 };
 
-}
-}
 #endif /* COMPRESSOR_H_ */
