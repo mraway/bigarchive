@@ -5,6 +5,7 @@
 #include <string>
 #include "serialize.h"
 #include "store.h" 
+#include "stdio.h"
 // #include "apsara/common/logging.h" 
 // #include "apsara/pangu.h"
 
@@ -130,6 +131,10 @@ struct StoreMetaData
     StoreMetaData() : compressionFlag(COMPRESSOR_LZO) {};
 
     StoreMetaData(uint32_t, uint32_t, uint64_t, uint32_t, DataFileCompressionFlag);
+
+    void fromBuffer(char *buffer);
+
+    void toBuffer(char *buffer);
 
     bool check(uint32_t, uint32_t) const;
 

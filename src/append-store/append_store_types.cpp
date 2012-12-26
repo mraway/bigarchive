@@ -207,6 +207,22 @@ bool StoreMetaData::check(uint32_t omajor, uint32_t ominor) const
     return false;
 }
 
+void StoreMetaData::fromBuffer(char *buffer) 
+{
+ if(buffer == NULL) { 
+  // THROW_EXCEPTION()
+ }
+ if(buffer[0] != 'M' || buffer[1] != 'E' || buffer[2] != 'T' || buffer[3] != 'A') {
+  // THROW_EXCEPTION() 
+ }
+ sscanf(buffer, "META%lu,%lu,%llu,%lu,%d", &storemajor, &storeminor, &maxChunkSize, &blockIndexInterval, &compressionFlag);
+}
+
+void StoreMetaData::toBuffer(char *buffer) 
+{
+ sprintf(buffer, "META%lu,%lu,%llu,%lu,%d", storemajor, storeminor, maxChunkSize, blockIndexInterval, compressionFlag);
+}
+
 bool Cache::Find(const Handle& idx, std::string* data) const
 {
     Cache::CacheMapType::const_iterator it = mCacheMap.find(idx);

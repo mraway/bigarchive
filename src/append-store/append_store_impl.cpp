@@ -155,10 +155,7 @@ void PanguAppendStore::Reload()
 
 void PanguAppendStore::Init(bool iscreate)
 {
-    // CHKIT
-    // InitPangu();
     mFileSystemHelper = new QFSHelper();
-    // CHKIT
     mFileSystemHelper->Connect("host", 30000);
 
     // create the outer directory and index, data and log file directories.
@@ -242,20 +239,13 @@ bool PanguAppendStore::ReadMetaInfo()
     {
         try
         {
-		// CHKIT
-		/*
-            pgifstream iff;
-            iff.open(metaFileName);
-            AppendStoreMeta meta;
-            meta.FromStream(iff);
-            iff.close();
-
-            mMeta.storemajor   = meta.GetMajor();
-            mMeta.storeminor   = meta.GetMinor();
-            mMeta.maxChunkSize = meta.GetMaxChunkSize();
-            mMeta.blockIndexInterval = meta.GetBlockIndexInterval();
-            mMeta.compressionFlag    = (DataFileCompressionFlag)meta.GetCompressType();
-		*/
+	    // CHKIT
+	    FileHelper* metaInputFH =
+ 		new QFSFileHelper((QFSHelper *)mFileSystemHelper, metaFileName, O_RDONLY);
+            char *read_buffer = new char[4 + sizeof(StoreMetaData) + 4]; // 4 MAGIC STRING + data separated by commas
+            metaInputFH->Read(read_buffer, 4 + sizeof(StoreMetaData) + 4);
+	    metaInputFH->Close();
+            mMeta.fromBuffer(read_buffer);
             return true;
         }
         catch (ExceptionBase& e)
@@ -270,26 +260,14 @@ void PanguAppendStore::WriteMetaInfo(const std::string& root, const StoreMetaDat
 {
     std::string metaFileName = root + MetaFileName;
     try
-    {
-	
-	// CHKIT
-	/*
-        pgofstream off;
-        off.setOption(DF_MINCOPY, DF_MAXCOPY, "", "");
-        off.open(metaFileName, true);
-	
-        AppendStoreMeta savemeta;
-        savemeta.SetMajor(meta.storemajor);
-        savemeta.SetMinor(meta.storeminor);
-        savemeta.SetMaxChunkSize(meta.maxChunkSize);
-        savemeta.SetBlockIndexInterval(meta.blockIndexInterval);
-        savemeta.SetCompressType(meta.compressionFlag);
-	
-        savemeta.ToStream(off);
-        off.flush();
-        off.close();
-	*/
-
+    {	
+	 // CHKIT
+	 FileHelper* metaOutputFH =
+                new QFSFileHelper((QFSHelper *)mFileSystemHelper, metaFileName, O_WRONLY);
+         char *write_buffer = new char[4 + sizeof(StoreMetaData) + 4]; // 4 MAGIC STRING + data separated by commas
+	 mMeta.toBuffer(write_buffer);
+	 metaOutputFH->Flush(write_buffer, 4 + sizeof(StoreMetaData) + 4);
+         metaOutputFH->Close();	
     }
     catch (ExceptionBase& e) 
     {
