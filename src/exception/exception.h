@@ -96,99 +96,75 @@ private:
 class AppendStoreExceptionBase : public  ExceptionBase
 {
 public:
-    AppendStoreExceptionBase(const std::string& message = "") throw ()
-        : ExceptionBase(message)
-    {}
+  DEFINE_EXCEPTION(AppendStoreExceptionBase, ExceptionBase);
 };
 
 class AppendStoreWriteException : public AppendStoreExceptionBase
 {
 public:
-    AppendStoreWriteException(const std::string& message = "") throw ()
-        : AppendStoreExceptionBase(message)
-    {}
+  DEFINE_EXCEPTION(AppendStoreWriteException, AppendStoreExceptionBase);
 };
 
 class AppendStoreReadException : public AppendStoreExceptionBase
 {
 public:
-    AppendStoreReadException(const std::string& message = "") throw ()
-        : AppendStoreExceptionBase(message)
-    {}
+  DEFINE_EXCEPTION(AppendStoreReadException, AppendStoreExceptionBase);
 };
 
 
 class FileCreationException : public AppendStoreExceptionBase
 {
 public:
-    FileCreationException(const std::string& message = "") throw ()
-        : AppendStoreExceptionBase(message)
-    {}
+  DEFINE_EXCEPTION(FileCreationException, AppendStoreExceptionBase);
 };
 
 class FileOpenException : public AppendStoreExceptionBase
 {
 public:
-    FileOpenException(const std::string& message = "") throw ()
-        : AppendStoreExceptionBase(message)
-    {}
+  DEFINE_EXCEPTION(FileOpenException, AppendStoreExceptionBase);
 };
 
 
 class AppendStoreInvalidIndexException : public AppendStoreExceptionBase
 {
 public:
-    AppendStoreInvalidIndexException(const std::string& message = "") throw ()
-        : AppendStoreExceptionBase(message)
-    {}
+  DEFINE_EXCEPTION(AppendStoreInvalidIndexException, AppendStoreExceptionBase);
 };
 
 class AppendStoreInvalidChunkException : public AppendStoreExceptionBase
 {
 public:
-    AppendStoreInvalidChunkException(const std::string& message = "") throw ()
-        : AppendStoreExceptionBase(message)
-    {}
+  DEFINE_EXCEPTION(AppendStoreInvalidChunkException, AppendStoreExceptionBase);
 };
 
 class AppendStoreCompressionException : public AppendStoreExceptionBase
 {
 public:
-    AppendStoreCompressionException(const std::string& message = "") throw ()
-        : AppendStoreExceptionBase(message)
-    {}
+  DEFINE_EXCEPTION(AppendStoreCompressionException, AppendStoreExceptionBase);
 };
 
 class AppendStoreCodecException : public AppendStoreExceptionBase
 {
 public:
-    AppendStoreCodecException(const std::string& message = "") throw ()
-        : AppendStoreExceptionBase(message)
-    {}
+  DEFINE_EXCEPTION(AppendStoreCodecException, AppendStoreExceptionBase);
 };
 
 class AppendStoreMisMatchedVerException: public AppendStoreExceptionBase
 {
 public:
-    AppendStoreMisMatchedVerException(const std::string& message = "") throw ()
-        : AppendStoreExceptionBase(message)
-    {}
+  DEFINE_EXCEPTION(AppendStoreMisMatchedVerException, AppendStoreExceptionBase);
 };
 
 class AppendStoreNotExistException: public AppendStoreExceptionBase
 {
 public:
-    AppendStoreNotExistException(const std::string& message = "") throw ()
-        : AppendStoreExceptionBase(message)
-    {}
+  DEFINE_EXCEPTION(AppendStoreNotExistException, AppendStoreExceptionBase);
 };
 
 class AppendStoreFactoryException: public AppendStoreExceptionBase
 {
 public:
-    AppendStoreFactoryException(const std::string& message = "") throw ()
-        : AppendStoreExceptionBase(message)
-    {}
+    DEFINE_EXCEPTION(AppendStoreFactoryException, AppendStoreExceptionBase);
 };
 
 
