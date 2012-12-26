@@ -1,0 +1,11 @@
+1) implement GetNextLogSize() method
+2) Disconnet method for KFSClient -> to reduce number of connections 
+3) Write and Flush methods
+4) Write fails, do flush !!! --> Open in Append only mode
+5) pgifstream and pgofstream definitions
+6) Exceptions : Not thrown Exceptions . how to handle them ? 
+7) Logging
+8) static and shared linking !! 
+9) testcases and examples 
+10) ..
+

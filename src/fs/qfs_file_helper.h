@@ -13,6 +13,7 @@ class QFSFileHelper : public FileHelper {
 	void Close();
 	int Read(char *buffer, int length);
 	int Write(char *buffer, int length);
+	int Flush(char *buffer, int length);
 	void Seek(int offset);
 	int GetNextLogSize();
  private:
