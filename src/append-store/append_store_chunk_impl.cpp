@@ -150,7 +150,7 @@ void Chunk::AppendIndex()
     {
         try
         {
-            mIndexOutputFH->Write((char*)&streamBuf.str()[0], streamBuf.str().size());
+            mIndexOutputFH->Flush((char*)&streamBuf.str()[0], streamBuf.str().size());
             break;
         }
         catch(StreamCorruptedException& e)
@@ -172,8 +172,8 @@ void Chunk::AppendIndex()
                 usleep(3000000);
             }
 
-            // CHKIT
-            mIndexOutputFH = new QFSFileHelper((QFSHelper *)mFileSystemHelper, mIndexFileName, O_WRONLY); // WRITE
+            // CHKIT -> from WRITE mode to APPEND mode
+            mIndexOutputFH = new QFSFileHelper((QFSHelper *)mFileSystemHelper, mIndexFileName, O_APPEND); // O_WRONLY); // WRITE
             mIndexOutputFH->Open();
 
             if (retryCount > 1)
@@ -263,8 +263,7 @@ bool Chunk::Remove(const IndexType& index)
     {
         try
         {
-        	mDeleteLogFH->Write(&tmp[0], tmp.size());
-           	// mDeleteLogStream->FlushLog(&tmp[0], tmp.size());
+        	mDeleteLogFH->Flush(&tmp[0], tmp.size());
             break;
         }
 	// CHKIT - this exceptions is not throwed from our write method !!! 
@@ -287,7 +286,7 @@ bool Chunk::Remove(const IndexType& index)
                 usleep(3000000);
             }
         
-            mDeleteLogFH = new QFSFileHelper((QFSHelper*)mFileSystemHelper, mLogFileName, O_WRONLY); // WRITE);
+            mDeleteLogFH = new QFSFileHelper((QFSHelper*)mFileSystemHelper, mLogFileName, O_APPEND); // WRITE);
 
             if (retryCount > 1)
             {
@@ -585,10 +584,9 @@ OffsetType Chunk::AppendRaw(const IndexType& index, const uint32_t numentry, con
     {
         try
         {
-        	// Write return VOID .. how to match it with OffsetType
-		// CHKIT
+	    // CHKIT
             OffsetType fos = 0;
-	    mDataOutputFH->Write((char*)&ssref[0], ssref.size());
+	    fos = mDataOutputFH->Flush((char*)&ssref[0], ssref.size());
             return fos;
         }
         catch(StreamCorruptedException& e)

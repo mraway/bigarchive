@@ -28,7 +28,7 @@
 
 	void QFSFileHelper::Close() {
 		// flushes out all changes
-		qfshelper->kfsClient->Sync(fd);
+		// qfshelper->kfsClient->Sync(fd);
 		// closes the file handle
 		qfshelper->kfsClient->Close(fd);
 	}
@@ -57,6 +57,18 @@
 		}
 	}
 
+
+	int QFSFileHelper::Flush(char *buffer, int length) {
+                int bytes_wrote = qfshelper->kfsClient->Write(fd, buffer, length);
+                if( bytes_wrote != length) {
+                        string bytes_wrote_str = "" + bytes_wrote;
+                        string length_str = "" + length;
+                        LOG4CXX_ERROR(logger, "Was able to write(flush) only " << bytes_wrote << ", instead of " << length);
+                        THROW_EXCEPTION(AppendStoreWriteException,  "Was able to write(flush) only " + bytes_wrote_str + ", instead of " + length_str);
+                }
+		qfshelper->kfsClient->Sync(fd);
+        }
+
 	void QFSFileHelper::Seek(int offset) {
 		qfshelper->kfsClient->Seek(fd, offset);
 	}
@@ -64,5 +76,8 @@
 	int QFSFileHelper::GetNextLogSize() {
 		return -1;
         }
+
+
+
 
 

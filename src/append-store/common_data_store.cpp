@@ -238,9 +238,7 @@ std::string CDSUtility::Append(const std::string index, const std::string& data)
     uint64_t offset;
     try
     {
-	// CHKIT
-        offset = 0;
-	mDataOutputFH->Write((char*)&data[0], data.size());
+	offset = mDataOutputFH->Flush((char*)&data[0], data.size());
     }
     catch(ExceptionBase& e)
     {
@@ -278,9 +276,7 @@ void CDSUtility::AppendIndex()
 
     try
     {
-	// CHKIT
-        fileSize = 0;
-	mIndexOutputFH->Write((char*)&ssref[0], ssref.size());
+	fileSize = mIndexOutputFH->Flush((char*)&ssref[0], ssref.size());
     }
     catch (ExceptionBase& e)
     {
@@ -655,7 +651,7 @@ bool GeneratePartitionIndex(std::string& path, uint32_t no_partitions, std::stri
         try
         {
 		// CHKIT
-	    temp = new QFSFileHelper((QFSHelper *)mFileSystemHelper, ifilevec[j], O_WRONLY); // WRITE
+	    temp = new QFSFileHelper((QFSHelper *)mFileSystemHelper, ifilevec[j], O_APPEND); // WRITE
             // AppendStore::PanguHelper::CreateLogFile(ifilevec[j], DF_MINCOPY, DF_MAXCOPY, AppName, PartName);
         } 
         catch(ExceptionBase& e)
@@ -665,8 +661,6 @@ bool GeneratePartitionIndex(std::string& path, uint32_t no_partitions, std::stri
         }
         try
         { 
-            // CHKIT
-            // istreamvec.push_back(PanguHelper::OpenLog4Append(ifilevec[j]));
 	    temp->Open();
 	    istreamvec.push_back(temp);
         } 
@@ -719,7 +713,7 @@ bool GeneratePartitionIndex(std::string& path, uint32_t no_partitions, std::stri
 
                 try
                 {
-                    istreamvec[ith]->Write((char*)&ssref[0], ssref.size());
+                    istreamvec[ith]->Flush((char*)&ssref[0], ssref.size());
                 }
                 catch (ExceptionBase& e)
                 {
@@ -745,7 +739,7 @@ bool GeneratePartitionIndex(std::string& path, uint32_t no_partitions, std::stri
 
             try
             {
-                istreamvec[j]->Write((char*)&ssref[0], ssref.size());
+                istreamvec[j]->Flush((char*)&ssref[0], ssref.size());
             }
             catch (ExceptionBase& e)
             {

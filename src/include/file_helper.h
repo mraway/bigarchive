@@ -22,6 +22,8 @@ class FileHelper {
   int Read(char *buffer, int length) {}
   /* Writes buffer into file */
   int Write(char *buffer, int length) {}
+  /* Write and Sync */
+  int Flush(char *buffer, int length) {}
   /* Seeks to position */
   void Seek(int offset) {}
   /* */
