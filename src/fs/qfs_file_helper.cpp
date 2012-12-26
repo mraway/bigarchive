@@ -48,6 +48,17 @@
 	}
 
 	int QFSFileHelper::Write(char *buffer, int length) {
+		
+
+/*
+ int dataLength = size + sizeof(LogItemTag);
+ LogItemTag logTag(size);
+ logTag.reserved = logTag.length;
+
+ string data(dataLength, 0);
+ memcpy(&data[0], &logTag, sizeof(LogItemTag));
+ memcpy(&data[sizeof(LogItemTag)], logBuf, size);
+ */
 		int bytes_wrote = qfshelper->kfsClient->Write(fd, buffer, length);
 		if( bytes_wrote != length) {
 			string bytes_wrote_str = "" + bytes_wrote;

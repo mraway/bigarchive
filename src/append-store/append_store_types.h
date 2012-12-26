@@ -1,7 +1,6 @@
 #ifndef  _APPENDSTORE_TYPES_H
 #define  _APPENDSTORE_TYPES_H
 
-#include <inttypes.h>
 #include <string>
 #include "serialize.h"
 #include "store.h" 

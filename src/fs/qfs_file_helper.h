@@ -19,3 +19,11 @@ class QFSFileHelper : public FileHelper {
  private:
 	QFSHelper *qfshelper;
 };
+
+/*
+class Header {
+ Header(int len) : data_length(len) {
+ }
+ int data_length;
+}
+*/
