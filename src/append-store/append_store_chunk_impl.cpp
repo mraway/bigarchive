@@ -153,7 +153,7 @@ void Chunk::AppendIndex()
             mIndexOutputFH->Flush((char*)&streamBuf.str()[0], streamBuf.str().size());
             break;
         }
-        catch(StreamCorruptedException& e)
+        catch(ExceptionBase& e)
         {
             LOG4CXX_ERROR(logger, "IndexOutputStream corrupt << e.ToString()");
             try
@@ -181,11 +181,6 @@ void Chunk::AppendIndex()
                 LOG4CXX_ERROR(logger, "DataOutputStream FlushLog fail after retry " << e.ToString());
                 throw;
             }
-        }
-        catch (ExceptionBase& e)
-        {
-            LOG4CXX_ERROR(logger, "IndexOutputStream FlushLog fail" << e.ToString());
-            throw;
         }
     } while (retryCount <= 1);
 };
@@ -268,7 +263,7 @@ bool Chunk::Remove(const IndexType& index)
         }
 	// CHKIT - this exceptions is not throwed from our write method !!! 
 	// this will be never called	
-        catch(StreamCorruptedException& e)
+        catch(ExceptionBase& e)
         {
             LOG4CXX_ERROR(logger, "DeleteLogStream corrupt " << e.ToString());
             try
@@ -293,11 +288,6 @@ bool Chunk::Remove(const IndexType& index)
                 LOG4CXX_ERROR(logger, "DataOutputStream FlushLog fail after retry " << e.ToString());
                 throw;
             }
-        }
-        catch (ExceptionBase& e)
-        {
-            LOG4CXX_ERROR(logger, "DeleteLogStream FlushLog fail " << e.ToString());
-            throw;
         }
     } while (retryCount <= 1);
 
@@ -589,9 +579,11 @@ OffsetType Chunk::AppendRaw(const IndexType& index, const uint32_t numentry, con
 	    fos = mDataOutputFH->Flush((char*)&ssref[0], ssref.size());
             return fos;
         }
-        catch(StreamCorruptedException& e)
+        //catch(StreamCorruptedException& e)
+        catch(ExceptionBase& e)
         {
-            LOG4CXX_ERROR(logger, "DataOutputStream corrupt : " << e.ToString());
+               
+            LOG4CXX_ERROR(logger, "DataOutputStream FlushLog fail : " << e.ToString());
             try
             {
                 mDataOutputFH->Close();
@@ -615,11 +607,6 @@ OffsetType Chunk::AppendRaw(const IndexType& index, const uint32_t numentry, con
                 LOG4CXX_ERROR(logger, "DataOutputStream FlushLog fail after retry : " << e.ToString());
                 throw;
             }
-        }
-        catch(ExceptionBase& e)
-        {
-            LOG4CXX_ERROR(logger, "DataOutputStream FlushLog fail : " << e.ToString());
-            throw;
         }
     } while (retryCount <= 1);
 

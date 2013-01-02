@@ -207,8 +207,10 @@ bool StoreMetaData::check(uint32_t omajor, uint32_t ominor) const
     return false;
 }
 
+/*
 void StoreMetaData::fromBuffer(char *buffer) 
 {
+ 
  if(buffer == NULL) { 
   // THROW_EXCEPTION()
  }
@@ -216,12 +218,17 @@ void StoreMetaData::fromBuffer(char *buffer)
   // THROW_EXCEPTION() 
  }
  sscanf(buffer, "META%lu,%lu,%llu,%lu,%d", &storemajor, &storeminor, &maxChunkSize, &blockIndexInterval, &compressionFlag);
+ 
+ buffer = (char *)this;
 }
+
 
 void StoreMetaData::toBuffer(char *buffer) 
 {
- sprintf(buffer, "META%lu,%lu,%llu,%lu,%d", storemajor, storeminor, maxChunkSize, blockIndexInterval, compressionFlag);
+ sprintf(buffer, "META%lu,%lu,%llu,%lu,%d", storemajor, storeminor, maxChunkSize, blockIndexInterval, compressionFlag); 
+ this = (StoreMetaData *)buffer;
 }
+*/
 
 bool Cache::Find(const Handle& idx, std::string* data) const
 {

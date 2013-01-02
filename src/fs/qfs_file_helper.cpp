@@ -27,9 +27,7 @@
 	}
 
 	void QFSFileHelper::Close() {
-		// flushes out all changes
 		// qfshelper->kfsClient->Sync(fd);
-		// closes the file handle
 		qfshelper->kfsClient->Close(fd);
 	}
 
@@ -48,35 +46,25 @@
 	}
 
 	int QFSFileHelper::Write(char *buffer, int length) {
-		
+		int dataLength = length + sizeof(Header);
+		Header header(length);
 
-/*
- int dataLength = size + sizeof(LogItemTag);
- LogItemTag logTag(size);
- logTag.reserved = logTag.length;
+ 		string data(dataLength, 0);
+		memcpy(&data[0], &header, sizeof(Header));
+		memcpy(&data[sizeof(Header)], buffer, length);
 
- string data(dataLength, 0);
- memcpy(&data[0], &logTag, sizeof(LogItemTag));
- memcpy(&data[sizeof(LogItemTag)], logBuf, size);
- */
-		int bytes_wrote = qfshelper->kfsClient->Write(fd, buffer, length);
-		if( bytes_wrote != length) {
+		int bytes_wrote = qfshelper->kfsClient->Write(fd, data.c_str(), length);
+		if( bytes_wrote != dataLength) {
 			string bytes_wrote_str = "" + bytes_wrote;
-			string length_str = "" + length;
-			LOG4CXX_ERROR(logger, "Was able to write only " << bytes_wrote << ", instead of " << length);
+			string length_str = "" + dataLength;
+			LOG4CXX_ERROR(logger, "Was able to write only " << bytes_wrote_str << ", instead of " << length_str);
 			THROW_EXCEPTION(AppendStoreWriteException,  "Was able to write only " + bytes_wrote_str + ", instead of " + length_str);
 		}
 	}
 
 
 	int QFSFileHelper::Flush(char *buffer, int length) {
-                int bytes_wrote = qfshelper->kfsClient->Write(fd, buffer, length);
-                if( bytes_wrote != length) {
-                        string bytes_wrote_str = "" + bytes_wrote;
-                        string length_str = "" + length;
-                        LOG4CXX_ERROR(logger, "Was able to write(flush) only " << bytes_wrote << ", instead of " << length);
-                        THROW_EXCEPTION(AppendStoreWriteException,  "Was able to write(flush) only " + bytes_wrote_str + ", instead of " + length_str);
-                }
+		Write(buffer, length);
 		qfshelper->kfsClient->Sync(fd);
         }
 
@@ -84,8 +72,12 @@
 		qfshelper->kfsClient->Seek(fd, offset);
 	}
 
-	int QFSFileHelper::GetNextLogSize() {
-		return -1;
+	uint32_t QFSFileHelper::GetNextLogSize() {
+		char *buffer = new char[sizeof(Header)];
+		Header *header = new Header(-1);
+		Read(buffer, 4);
+		header = (Header *)buffer;
+		return header->data_length;
         }
 
 

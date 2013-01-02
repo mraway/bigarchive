@@ -4,6 +4,7 @@
 #include "exception.h"
 #include <fcntl.h>
 #include <stdlib.h>
+#include <cstring>
 
 class QFSFileHelper : public FileHelper {
  public:
@@ -15,15 +16,13 @@ class QFSFileHelper : public FileHelper {
 	int Write(char *buffer, int length);
 	int Flush(char *buffer, int length);
 	void Seek(int offset);
-	int GetNextLogSize();
+	uint32_t GetNextLogSize();
  private:
 	QFSHelper *qfshelper;
 };
 
-/*
-class Header {
- Header(int len) : data_length(len) {
- }
+
+struct Header {
+ Header(int len) : data_length(len) {}
  int data_length;
-}
-*/
+};

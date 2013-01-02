@@ -2,11 +2,12 @@
  file_helper
 */
 
-#include "file_system_helper.h"
 
 #ifndef FILE_HELPER_H
 #define FILE_HELPER_H
 
+#include "file_system_helper.h"
+#include <stdint.h>
 /*
  * this class performs all file related actions,
  * this class internally uses filesystem's client to get its word done
@@ -27,7 +28,7 @@ class FileHelper {
   /* Seeks to position */
   void Seek(int offset) {}
   /* */
-  int GetNextLogSize() {return 0;}
+  uint32_t GetNextLogSize() {return 0;}
   /* Closes the file */
   void Close() {}
  protected:
