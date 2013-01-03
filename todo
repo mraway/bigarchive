@@ -1,4 +1,5 @@
 1) Using recordappend interface
 2) static and shared linking !! 
-3) testcases and examples 
+3) testcases and examples : a) qfs test: file create, r/w/append. delete. b) append store tests
 4) Reading host and port details from file !!! ????
+5) Use stastic casting for all record serialization
