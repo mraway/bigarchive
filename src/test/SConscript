@@ -16,13 +16,6 @@ print "Building project ........ " + project
 
 localenv.Append(CPPPATH = [INCLUDE_HOME, EXCEPTION_HOME])
 
-
-## if mymode == 'debug':
-##   localenv.Append(CCFLAGS=debugcflags)
-## else:
-##   localenv.Append(CCFLAGS=releasecflags)
-
-
 localenv.VariantDir(builddir, ".", duplicate=0)
 
 srclst = [] # map(lambda x: x, glob.glob('*.h'))
@@ -32,7 +25,7 @@ srclst += map(lambda x: x, glob.glob('*.cpp'))
 print "Compiling Sources " ,
 print srclst
 
-pgm = localenv.Program(srclst)
+pgm = localenv.Program(source=[test_example.cpp])
 
 #env.Alias('all', pgm)
 

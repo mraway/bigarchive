@@ -265,7 +265,7 @@ void PanguAppendStore::WriteMetaInfo(const std::string& root, const StoreMetaDat
 	 FileHelper* metaOutputFH = new QFSFileHelper((QFSHelper *)mFileSystemHelper, metaFileName, O_WRONLY);
          char *write_buffer = new char[sizeof(StoreMetaData)]; 
 	 /* Copying into buffer from StoreMetaData */
-	 memcpy(write_buffer, &meta, sizeof(StoreMetaData));
+	 meta.toBuffer(write_buffer);
 	 metaOutputFH->Flush(write_buffer, sizeof(StoreMetaData));
          metaOutputFH->Close();	
     }

@@ -219,12 +219,18 @@ void StoreMetaData::fromBuffer(char *buffer)
  memcpy(&compressionFlag, (buffer + (s32 + s32 + s64 + s32)), s32);
 }
 
-/*
-void StoreMetaData::toBuffer(char *buffer) 
-{
 
+void StoreMetaData::toBuffer(char *buffer) const 
+{
+ uint32_t s32 = sizeof(uint32_t);
+ uint32_t s64 = sizeof(uint32_t);
+ memcpy(buffer, &storemajor, s32);
+ memcpy((buffer + (s32)), &storeminor, s32);
+ memcpy((buffer + (s32 + s32)), &maxChunkSize, s64);
+ memcpy((buffer + (s32 + s32 + s64)), &blockIndexInterval, s32);
+ memcpy((buffer + (s32 + s32 + s64 + s32)), &compressionFlag, s32);
 }
-*/
+
 
 bool Cache::Find(const Handle& idx, std::string* data) const
 {

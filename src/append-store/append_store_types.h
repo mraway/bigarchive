@@ -134,7 +134,7 @@ struct StoreMetaData
     StoreMetaData(uint32_t, uint32_t, uint64_t, uint32_t, DataFileCompressionFlag);
 
     void fromBuffer(char *buffer);
-    // void toBuffer(char *buffer);
+    void toBuffer(char *buffer) const;
 
     bool check(uint32_t, uint32_t) const;
 
