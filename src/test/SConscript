@@ -25,7 +25,7 @@ srclst += map(lambda x: x, glob.glob('*.cpp'))
 print "Compiling Sources " ,
 print srclst
 
-pgm = localenv.Program(source=[test_example.cpp])
+pgm = localenv.Program(source=['test_example.cpp', EXCEPTION_HOME + "//exception.o"], target= BINARY_HOME + '//test_example')
 
 #env.Alias('all', pgm)
 
