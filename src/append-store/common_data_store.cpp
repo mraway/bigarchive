@@ -112,7 +112,7 @@ void CDSUtility::Init()
     // InitPangu();
     mFileSystemHelper = new QFSHelper();//FileSystem::GetInstance();
 	// CHKIT
-    mFileSystemHelper->Connect("host", 30000);
+    mFileSystemHelper->Connect();//"host", 30000);
 
     bool direxist;
     try
@@ -573,7 +573,7 @@ bool GeneratePartitionIndex(std::string& path, uint32_t no_partitions, std::stri
 
 	//CHKIT
     FileSystemHelper* mFileSystemHelper = new QFSHelper();
-    mFileSystemHelper->Connect("host", 30000);	
+    mFileSystemHelper->Connect();//"host", 30000);	
 
 
     std::string ipath = dest_path;

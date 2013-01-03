@@ -5,7 +5,12 @@
 #include <cxxabi.h>
 
 
-std::string operator+(const std::string& lhs, int);
+std::string operator+(const std::string& lhs, int n) {
+ //std::ostringstream os;
+ //os << lhs << ":" << n;
+ //return os.str();
+ return lhs;
+}
 
 ExceptionBase::ExceptionBase(const std::string& message) throw()
     : mMessage(message),
@@ -107,6 +112,7 @@ const std::string& ExceptionBase::GetExceptionChain() const
 
 std::string ExceptionBase::GetStackTrace() const
 {
+/*
     if (mStackTraceSize == 0)
         return "<No stack trace>\n";
     char** strings = backtrace_symbols(mStackTrace, mStackTraceSize);
@@ -153,6 +159,7 @@ std::string ExceptionBase::GetStackTrace() const
     }
     free(strings);
     return result;
+*/
 }
 
 

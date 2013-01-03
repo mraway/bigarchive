@@ -156,7 +156,7 @@ void PanguAppendStore::Reload()
 void PanguAppendStore::Init(bool iscreate)
 {
     mFileSystemHelper = new QFSHelper();
-    mFileSystemHelper->Connect("host", 30000);
+    mFileSystemHelper->Connect();//"host", 30000);
 
     // create the outer directory and index, data and log file directories.
     if (iscreate) 
@@ -448,7 +448,7 @@ void PanguScanner::InitScanner()
     GetAllChunkID(mRoot);
 
     mFileSystemHelper = new QFSHelper();
-    mFileSystemHelper->Connect("host", 30000);
+    mFileSystemHelper->Connect();//"host", 30000);
 
     std::string compressAlgo(LzoCodec::mName);
     if (NO_COMPRESSION == mCompressionFlag) 

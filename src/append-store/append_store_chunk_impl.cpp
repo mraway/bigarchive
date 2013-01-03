@@ -24,7 +24,7 @@ Chunk::Chunk(const std::string& root, ChunkIDType chunk_id,
 {
     // CHKIT : get the host and port from config file
     mFileSystemHelper = new QFSHelper();    
-    mFileSystemHelper->Connect("localhost", 30000);
+    mFileSystemHelper->Connect();//"localhost", 30000);
     CheckIfNew();
     LoadIndex();
     LoadData(append_flag);
@@ -38,7 +38,7 @@ Chunk::Chunk(const std::string& root, ChunkIDType chunk_id)
 {
 	// CHKIT : get the host and port from config file
 	mFileSystemHelper = new QFSHelper;
-	mFileSystemHelper->Connect("hostname", 30000);
+	mFileSystemHelper->Connect();//"hostname", 30000);
 	LoadDeleteLog();
 }
 
@@ -336,7 +336,7 @@ uint32_t Chunk::GetChunkSize(const std::string& root, ChunkIDType chunk_id)
 {
     std::string dat_file = GetDatFname(root, chunk_id);
     FileSystemHelper *fsh = new QFSHelper();
-    fsh->Connect("host", 30000);
+    fsh->Connect();//"host", 30000);
     return fsh->getSize(dat_file);
 }
 
@@ -349,7 +349,7 @@ uint16_t Chunk::GetMaxChunkID(const std::string& root)
     	// CHECK IT
 	FileSystemHelper *fsh;
 	fsh = new QFSHelper();
-	fsh->Connect("host", 30000);
+	fsh->Connect();//"host", 30000);
         fsh->ListDir(data_root, data_files);
     }
     catch(ExceptionBase& e)
