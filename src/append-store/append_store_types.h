@@ -5,7 +5,9 @@
 #include "serialize.h"
 #include "store.h" 
 #include "stdio.h"
+#include <cstring>
 // #include "apsara/common/logging.h" 
+
 // #include "apsara/pangu.h"
 
 typedef uint16_t ChunkIDType; // chunk id
@@ -131,7 +133,7 @@ struct StoreMetaData
 
     StoreMetaData(uint32_t, uint32_t, uint64_t, uint32_t, DataFileCompressionFlag);
 
-    // void fromBuffer(char *buffer);
+    void fromBuffer(char *buffer);
     // void toBuffer(char *buffer);
 
     bool check(uint32_t, uint32_t) const;

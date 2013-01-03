@@ -245,8 +245,7 @@ bool PanguAppendStore::ReadMetaInfo()
             char *read_buffer = new char[sizeof(StoreMetaData)]; 
             metaInputFH->Read(read_buffer, sizeof(StoreMetaData));
 	    metaInputFH->Close();
-            StoreMetaData *inputMeta = new StoreMetaData;
-            inputMeta = (StoreMetaData *)read_buffer;
+            mMeta.fromBuffer(read_buffer);
             return true;
         }
         catch (ExceptionBase& e)
@@ -263,10 +262,10 @@ void PanguAppendStore::WriteMetaInfo(const std::string& root, const StoreMetaDat
     try
     {	
 	 // CHKIT
-	 FileHelper* metaOutputFH =
-                new QFSFileHelper((QFSHelper *)mFileSystemHelper, metaFileName, O_WRONLY);
-         char *write_buffer = new char[sizeof(StoreMetaData)]; // 4 MAGIC STRING + data separated by commas
-	 write_buffer = (char *) (&meta);
+	 FileHelper* metaOutputFH = new QFSFileHelper((QFSHelper *)mFileSystemHelper, metaFileName, O_WRONLY);
+         char *write_buffer = new char[sizeof(StoreMetaData)]; 
+	 /* Copying into buffer from StoreMetaData */
+	 memcpy(write_buffer, &meta, sizeof(StoreMetaData));
 	 metaOutputFH->Flush(write_buffer, sizeof(StoreMetaData));
          metaOutputFH->Close();	
     }

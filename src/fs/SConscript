@@ -31,7 +31,7 @@ srclst += map(lambda x: x, glob.glob('*.cpp'))
 print "Compiling Sources " ,
 print srclst
 
-pgm = localenv.Object(srclst)
+localenv.Object(srclst)
 
 #env.Alias('all', pgm)
 

@@ -207,26 +207,22 @@ bool StoreMetaData::check(uint32_t omajor, uint32_t ominor) const
     return false;
 }
 
-/*
+
 void StoreMetaData::fromBuffer(char *buffer) 
 {
- 
- if(buffer == NULL) { 
-  // THROW_EXCEPTION()
- }
- if(buffer[0] != 'M' || buffer[1] != 'E' || buffer[2] != 'T' || buffer[3] != 'A') {
-  // THROW_EXCEPTION() 
- }
- sscanf(buffer, "META%lu,%lu,%llu,%lu,%d", &storemajor, &storeminor, &maxChunkSize, &blockIndexInterval, &compressionFlag);
- 
- buffer = (char *)this;
+ uint32_t s32 = sizeof(uint32_t);
+ uint32_t s64 = sizeof(uint32_t);
+ memcpy(&storemajor, buffer, s32);
+ memcpy(&storeminor, (buffer + (s32)), s32);
+ memcpy(&maxChunkSize, (buffer + (s32 + s32)), s64);
+ memcpy(&blockIndexInterval, (buffer + (s32 + s32 + s64)), s32);
+ memcpy(&compressionFlag, (buffer + (s32 + s32 + s64 + s32)), s32);
 }
 
-
+/*
 void StoreMetaData::toBuffer(char *buffer) 
 {
- sprintf(buffer, "META%lu,%lu,%llu,%lu,%d", storemajor, storeminor, maxChunkSize, blockIndexInterval, compressionFlag); 
- this = (StoreMetaData *)buffer;
+
 }
 */
 
