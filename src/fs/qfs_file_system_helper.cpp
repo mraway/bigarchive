@@ -26,6 +26,11 @@ void QFSHelper::Connect(string metaserverhost, int metaserverport)
     }
 }
 
+void QFSHelper::DisConnect()
+{
+ kfsClient = NULL;
+}
+
 bool QFSHelper::IsFileExists(string fname)
 {
     return kfsClient->Exists(fname.c_str());

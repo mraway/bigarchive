@@ -40,6 +40,7 @@ class QFSHelper : public FileSystemHelper {
 public:
     void Connect(); 
     void Connect(string metaserverhost, int metaserverport);
+    void DisConnect();
     bool IsFileExists(string fname);
     bool IsDirectoryExists(string dirname);
     int getSize(string fname);

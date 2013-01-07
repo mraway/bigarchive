@@ -7,10 +7,10 @@
 using namespace std;
 
 int main() {
- // QFSHelper *qfs = new QFSHelper();
- // qfs->Connect();
- // QFSFileHelper *qfsfh = new QFSFileHelper(qfs, "new_file", O_WRONLY);
- // qfsfh->Create();
- // cout << "Testing QFS host connection";
- // return 0;
+ QFSHelper *qfs = new QFSHelper();
+ qfs->Connect();
+ cout << endl << "Connected to localhost:40000";
+ qfs->DisConnect();
+ cout << endl << "DisConnected";
+ cout << endl;
 }

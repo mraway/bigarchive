@@ -16,6 +16,8 @@ class FileSystemHelper {
   /* Connect method establishes a connection with FileSystem MetaServer (usually host name and port are passed)*/
   void Connect() {}
   void Connect(string host, int port) {}
+  /* */
+  void DisConnect() {}
   /* list file contents */
   int ListDir(string pathname, vector<string> &result) {return -1;}
   /* checks whether file "fname" exists or not */
