@@ -26,8 +26,8 @@ class QFSFileHelper : public FileHelper {
 
 
 struct Header {
- Header(int len) : data_length(len) {}
- int data_length;
+ Header(uint32_t len) : data_length(len) {}
+ uint32_t data_length;
 };
 
 #endif

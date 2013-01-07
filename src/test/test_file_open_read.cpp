@@ -4,7 +4,6 @@
 #include "qfs_file_system_helper.h"
 #include "qfs_file_helper.h"
 #include <fcntl.h>
-#include <cstring>
 //
  using namespace std;
 //
@@ -12,24 +11,24 @@ int main() {
   QFSHelper *qfs = new QFSHelper();
   qfs->Connect();
   string new_file_name;
-  cout << endl << "enter a file name to write data : ";
+  cout << endl << "enter a file name to read data : ";
   cin >> new_file_name;
 
-  QFSFileHelper *qfsfh = new QFSFileHelper(qfs, new_file_name, O_WRONLY);
+  QFSFileHelper *qfsfh = new QFSFileHelper(qfs, new_file_name, O_RDONLY);
+
   if(qfs->IsFileExists(new_file_name)) {
    cout << endl << "File exists";
    qfsfh->Open();
-   string data;
-   cout << endl << "enter some data to write ";
-   cin >> data;
+   uint32_t size = qfsfh->GetNextLogSize(); // char *data = new char[11]; 
+   cout << endl << "GetNextLogSize : " << size;
 
-   char *cstr = new char [data.size()+1];
-   strcpy (cstr, data.c_str());
-   int wrote = qfsfh->Write(cstr, strlen(cstr));
-
-   cout << endl << "wrote " << wrote << " bytes";
+   char *data = new char[size + 1];
+   qfsfh->Read(data, size);
+   data[size] = '\0';
+   cout << endl << "data read : " << data;
+   cout << endl << "get next log size " << size;
    qfsfh->Close();
-   cout << endl << "data writtern and file closed";
+   cout << endl << "data read and file closed";
   } 
   else {
    cout << endl << "File doesnt exists";

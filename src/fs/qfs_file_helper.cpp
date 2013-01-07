@@ -1,5 +1,6 @@
 #include "qfs_file_helper.h"
 
+#include <iostream>
 #include <log4cxx/logger.h>
 #include <log4cxx/xml/domconfigurator.h>
 
@@ -64,13 +65,17 @@ int QFSFileHelper::Write(char *buffer, int length) {
     memcpy(&data[0], &header, sizeof(Header));
     memcpy(&data[sizeof(Header)], buffer, length);
 
-    int bytes_wrote = qfshelper->kfsClient->Write(fd, data.c_str(), length);
+    int bytes_wrote = qfshelper->kfsClient->Write(fd, data.c_str(), dataLength);
+    
+    // std::cout << bytes_wrote << " " << dataLength; 
+
     if( bytes_wrote != dataLength) {
 	string bytes_wrote_str = "" + bytes_wrote;
 	string length_str = "" + dataLength;
 	LOG4CXX_ERROR(qfsfh_logger, "Was able to write only " << bytes_wrote_str << ", instead of " << length_str);
 	THROW_EXCEPTION(AppendStoreWriteException,  "Was able to write only " + bytes_wrote_str + ", instead of " + length_str);
     }
+    
     return bytes_wrote;
 }
 
@@ -88,7 +93,7 @@ void QFSFileHelper::Seek(int offset) {
 uint32_t QFSFileHelper::GetNextLogSize() {
     char *buffer = new char[sizeof(Header)];
     Header *header = new Header(-1);
-    Read(buffer, 4);
+    Read(buffer, sizeof(Header));
     header = (Header *)buffer;
     return header->data_length;
 }
