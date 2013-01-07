@@ -1,6 +1,17 @@
 #include "append_store_chunk.h"
 #include "exception.h"
 
+#include <log4cxx/logger.h>
+#include <log4cxx/xml/domconfigurator.h>
+
+using namespace log4cxx;
+using namespace log4cxx::xml;
+using namespace log4cxx::helpers;
+
+// static logger variable
+LoggerPtr logger(Logger::getLogger( "appendstore.qfs_helper"));
+
+
 const char* Defaults::IDX_DIR = "index/";
 const char* Defaults::DAT_DIR = "data/";
 const char* Defaults::LOG_DIR = "log/";

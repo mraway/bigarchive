@@ -1,6 +1,25 @@
+#ifndef QFS_FILESYSTEM_HELPER_H
+#define QFS_FILESYSTEM_HELPER_H
+
+
 #include "file_system_helper.h"
 #include "KfsClient.h"
 #include "exception.h"
+#include "KfsAttr.h"
+#include <iostream>
+#include <fstream>
+#include <cerrno>
+
+
+
+extern "C" {
+#include <sys/types.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
+#include <dirent.h>
+}
 
 /*
   #include <log4cxx/logger.h>
@@ -30,3 +49,5 @@ public:
 public:	
     KFS::KfsClient *kfsClient;
 };
+
+#endif

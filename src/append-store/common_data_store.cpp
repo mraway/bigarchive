@@ -2,10 +2,17 @@
 #include <fstream>
 #include "common_data_store.h"
 #include <string.h>
-// #include "protocol/cds_cj.h"
-// #include "apsara/pangu.h"
-// #include "apsara/common/serialize.h"
-// #include "apsara/pgfstream.h"
+
+#include <log4cxx/logger.h>
+#include <log4cxx/xml/domconfigurator.h>
+
+using namespace log4cxx;
+using namespace log4cxx::xml;
+using namespace log4cxx::helpers;
+
+// static logger variable
+LoggerPtr logger(Logger::getLogger( "appendstore.qfs_helper"));
+
 
 using namespace std;
 

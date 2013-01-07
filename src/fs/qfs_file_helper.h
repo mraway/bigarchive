@@ -1,5 +1,8 @@
+
+#ifndef QFS_FILE_HELPER_H
+#define QFS_FILE_HELPER_H
+
 #include "file_helper.h"
-#include "file_system_helper.h"
 #include "qfs_file_system_helper.h"
 #include "exception.h"
 #include <fcntl.h>
@@ -26,3 +29,5 @@ struct Header {
  Header(int len) : data_length(len) {}
  int data_length;
 };
+
+#endif

@@ -4,6 +4,17 @@
 #include "exception.h"
 
 
+#include <log4cxx/logger.h>
+#include <log4cxx/xml/domconfigurator.h>
+
+using namespace log4cxx;
+using namespace log4cxx::xml;
+using namespace log4cxx::helpers;
+
+// static logger variable
+LoggerPtr logger(Logger::getLogger( "appendstore.qfs_helper"));
+
+
 // using namespace apsara::AppendStore;
 // apsara::logging::Logger* PanguAppendStore::sLogger = apsara::logging::GetLogger("/apsara/append_store");
 

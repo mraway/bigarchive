@@ -1,4 +1,4 @@
-import glob
+import glob, shutil, os
 
 Import('env', 'project', 'mymode', 'debugcflags', 'releasecflags', 'PROJECT_HOME', 'SOURCE_HOME', 'BINARY_HOME', 'LIB_HOME', 'INCLUDE_HOME', 'EXCEPTION_HOME')
 
@@ -14,7 +14,9 @@ print "-------------------------------------------------------------------------
 
 print "Building project ........ " + project
 
-localenv.Append(CPPPATH = [INCLUDE_HOME, EXCEPTION_HOME])
+
+localenv.Append(CPPFLAGS=['-pthread', '-Wall', '-g'])
+localenv.Append(CPPPATH = [INCLUDE_HOME, EXCEPTION_HOME, SOURCE_HOME + "/fs", "/usr/include/apr-1", "aprutil-1", "pthread"])
 
 localenv.VariantDir(builddir, ".", duplicate=0)
 
@@ -25,8 +27,28 @@ srclst += map(lambda x: x, glob.glob('*.cpp'))
 print "Compiling Sources " ,
 print srclst
 
-pgm = localenv.Program(source=['test_example.cpp', EXCEPTION_HOME + "//exception.o"], target= BINARY_HOME + '//test_example')
+localenv.Program(source=['test_example.cpp', 
+			BINARY_HOME + "//exception.o"], 
+		target= BINARY_HOME + '//test//test_example')
 
-#env.Alias('all', pgm)
+
+dict = localenv.ParseFlags(['-Wall', '-DBOOST_SP_USE_QUICK_ALLOCATOR', '-O2', '-g', '-fPIC', 'rdynamic'])
+print dict
+
+srclst = [ 'test_qfsconnect.cpp' , BINARY_HOME + '/qfs_file_helper.o',  BINARY_HOME + '/qfs_file_system_helper.o',  BINARY_HOME + '/exception.o', LIB_HOME + '/libqfs_client.a',  LIB_HOME + '/libqfs_qcdio.a',  LIB_HOME + '/libqfs_io.a',  LIB_HOME + '/libqfs_common.a',  LIB_HOME + '/libqfs_qcdio.a',  LIB_HOME + '/libqfs_qcrs.a', '/usr/local/lib/liblog4cxx.a']
+
+libs = ['pthread', 'rt', 'z', 'boost_regex-mt', 'crypt', 'apr-1', 'aprutil-1']
+
+libpaths = [SOURCE_HOME + '/include', SOURCE_HOME + '/fs', SOURCE_HOME + '/exception']
+
+localenv.Append(CPPDEFINES = ['BOOST_SP_USE_QUICK_ALLOCATOR'], CCFLAGS = ['-Wall', '-O2', '-g', '-fPIC'])
+
+# localenv
+
+localenv.Program(source= srclst, LIBS = libs, CPPPATH = libpaths, CPPDEFINES = ['BOOST_SP_USE_QUICK_ALLOCATOR'], CCFLAGS = ['-Wall', '-O2', '-g', '-fPIC'], target = BINARY_HOME + "//test//qfs_connect")
 
 print "-----------------------------------------------------------------------------"
+
+
+#[prakash@dhcp-46-222 bigarchive]$ g++ -Wall -DBOOST_SP_USE_QUICK_ALLOCATOR -O2 -g  -fPIC src/test/test_qfsconnect.cpp -o qfsconnect -rdynamic ./bin/qfs_file_helper.o ./bin/qfs_file_system_helper.o ./bin/exception.o ./lib/libqfs_client.a ./lib/libqfs_qcdio.a -lpthread -lrt ./lib/libqfs_io.a ./lib/libqfs_common.a ./lib/libqfs_qcdio.a -lpthread -lz -lrt -lboost_regex-mt -lcrypto ./lib/libqfs_qcrs.a -Isrc/include -Isrc/fs -Isrc/exception /usr/local/lib/liblog4cxx.a -lapr-1 -laprutil-1 
+
