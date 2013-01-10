@@ -53,7 +53,7 @@ void IndexVector::LoadFromFile(const std::string& fname)
     // CHKIT
  
     QFSHelper *qfsHelper = new QFSHelper();
-    qfsHelper->Connect("host", 30000);
+    qfsHelper->Connect();//"host", 30000);
     
     QFSFileHelper *qfsFH = new QFSFileHelper(qfsHelper, fname, O_RDONLY); 
 

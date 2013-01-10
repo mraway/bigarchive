@@ -14,17 +14,17 @@
  */
 class FileHelper {
  public:
-  FileHelper();
+  FileHelper() {}
   /* Creates a file */
   void Create() {}
   /* Opens a file on specified mode */
   void Open() {}
   /* Reads from file into buffer */
-  int Read(char *buffer, int length) {}
+  int Read(char *buffer, int length) {return -1;}
   /* Writes buffer into file */
-  int Write(char *buffer, int length) {}
+  int Write(char *buffer, int length) {return -1;}
   /* Write and Sync */
-  int Flush(char *buffer, int length) {}
+  int Flush(char *buffer, int length) {return -1;}
   /* Seeks to position */
   void Seek(int offset) {}
   /* */

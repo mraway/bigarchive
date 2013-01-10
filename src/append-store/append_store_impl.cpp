@@ -4,6 +4,17 @@
 #include "exception.h"
 
 
+#include <log4cxx/logger.h>
+#include <log4cxx/xml/domconfigurator.h>
+
+using namespace log4cxx;
+using namespace log4cxx::xml;
+using namespace log4cxx::helpers;
+
+// static logger variable
+LoggerPtr logger(Logger::getLogger( "appendstore.qfs_helper"));
+
+
 // using namespace apsara::AppendStore;
 // apsara::logging::Logger* PanguAppendStore::sLogger = apsara::logging::GetLogger("/apsara/append_store");
 
@@ -156,7 +167,7 @@ void PanguAppendStore::Reload()
 void PanguAppendStore::Init(bool iscreate)
 {
     mFileSystemHelper = new QFSHelper();
-    mFileSystemHelper->Connect("host", 30000);
+    mFileSystemHelper->Connect();//"host", 30000);
 
     // create the outer directory and index, data and log file directories.
     if (iscreate) 
@@ -245,8 +256,7 @@ bool PanguAppendStore::ReadMetaInfo()
             char *read_buffer = new char[sizeof(StoreMetaData)]; 
             metaInputFH->Read(read_buffer, sizeof(StoreMetaData));
 	    metaInputFH->Close();
-            StoreMetaData *inputMeta = new StoreMetaData;
-            inputMeta = (StoreMetaData *)read_buffer;
+            mMeta.fromBuffer(read_buffer);
             return true;
         }
         catch (ExceptionBase& e)
@@ -263,10 +273,10 @@ void PanguAppendStore::WriteMetaInfo(const std::string& root, const StoreMetaDat
     try
     {	
 	 // CHKIT
-	 FileHelper* metaOutputFH =
-                new QFSFileHelper((QFSHelper *)mFileSystemHelper, metaFileName, O_WRONLY);
-         char *write_buffer = new char[sizeof(StoreMetaData)]; // 4 MAGIC STRING + data separated by commas
-	 write_buffer = (char *) (&meta);
+	 FileHelper* metaOutputFH = new QFSFileHelper((QFSHelper *)mFileSystemHelper, metaFileName, O_WRONLY);
+         char *write_buffer = new char[sizeof(StoreMetaData)]; 
+	 /* Copying into buffer from StoreMetaData */
+	 meta.toBuffer(write_buffer);
 	 metaOutputFH->Flush(write_buffer, sizeof(StoreMetaData));
          metaOutputFH->Close();	
     }
@@ -449,7 +459,7 @@ void PanguScanner::InitScanner()
     GetAllChunkID(mRoot);
 
     mFileSystemHelper = new QFSHelper();
-    mFileSystemHelper->Connect("host", 30000);
+    mFileSystemHelper->Connect();//"host", 30000);
 
     std::string compressAlgo(LzoCodec::mName);
     if (NO_COMPRESSION == mCompressionFlag) 

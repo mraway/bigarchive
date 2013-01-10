@@ -1,13 +1,5 @@
-1) implement GetNextLogSize() method
-## 2) Disconnet method for KFSClient -> to reduce number of connections 
-## 3) Write and Flush methods
-4) Write fails, do flush !!! --> Open in Append only mode
-## 5) pgifstream and pgofstream definitions
-## 6) serialize for pg streams 
-6) Exceptions : Not thrown Exceptions . how to handle them ? 
-## 7) Logging
-8) static and shared linking !! 
-9) testcases and examples 
-## 10) Exception definitions => #DEFINE
-11) Reading host and port details from file !!! ????
-
+1) Using recordappend interface
+2) static and shared linking !! 
+3) testcases and examples : a) qfs test: file create, r/w/append. delete. b) append store tests
+4) Reading host and port details from file !!! ????
+5) Use stastic casting for all record serialization

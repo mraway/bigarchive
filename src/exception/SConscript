@@ -1,4 +1,4 @@
-import glob
+import glob, shutil
 
 Import('env', 'project', 'mymode', 'debugcflags', 'releasecflags', 'PROJECT_HOME', 'SOURCE_HOME', 'BINARY_HOME', 'LIB_HOME', 'INCLUDE_HOME')
 
@@ -14,12 +14,14 @@ print "-------------------------------------------------------------------------
 
 print "Building project ........ " + project
 
-# localenv.Append(CPPPATH = [INCLUDE_HOME])
+localenv.Append(CPPPATH = [INCLUDE_HOME])
 
-if mymode == 'debug':
-   localenv.Append(CCFLAGS=debugcflags)
-else:
-   localenv.Append(CCFLAGS=releasecflags)
+
+## if mymode == 'debug':
+##   localenv.Append(CCFLAGS=debugcflags)
+## else:
+##   localenv.Append(CCFLAGS=releasecflags)
+
 
 localenv.VariantDir(builddir, ".", duplicate=0)
 
@@ -32,6 +34,11 @@ print srclst
 
 pgm = localenv.Object(srclst)
 
-#env.Alias('all', pgm)
+objlst = []
+objlst += map(lambda x: x, glob.glob('*.o'))
+
+for obj in objlst:
+        shutil.copyfile(obj,  BINARY_HOME + "/" + obj)
+
 
 print "-----------------------------------------------------------------------------"

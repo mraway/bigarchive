@@ -7,16 +7,6 @@ File System helper header
 
 #include<vector>
 #include<string>
-#include <log4cxx/logger.h>
-#include <log4cxx/xml/domconfigurator.h>
-
-using namespace log4cxx;
-using namespace log4cxx::xml;
-using namespace log4cxx::helpers;
-
-// static logger variable
-LoggerPtr logger(Logger::getLogger( "appendstore.qfs_helper"));
- //
 
 using std::vector;
 using std::string;
@@ -26,16 +16,18 @@ class FileSystemHelper {
   /* Connect method establishes a connection with FileSystem MetaServer (usually host name and port are passed)*/
   void Connect() {}
   void Connect(string host, int port) {}
+  /* */
+  void DisConnect() {}
   /* list file contents */
-  int ListDir(string pathname, vector<string> &result) {}
+  int ListDir(string pathname, vector<string> &result) {return -1;}
   /* checks whether file "fname" exists or not */
-  bool IsFileExists(string fname) {}
+  bool IsFileExists(string fname) {return false;}
   /* checks whether directory "dirname" exits or not */
-  bool IsDirectoryExists(string dirname) {}
+  bool IsDirectoryExists(string dirname) {return false;}
   /* gets file Size */
-  int getSize(string fname) {}
+  int getSize(string fname) {return -1;}
   /* create Directory */
-  int CreateDirectory(string dirname) {}
+  int CreateDirectory(string dirname) {return -1;}
 };
 
 #endif /* FILE_SYSTEM_HELPER_H */

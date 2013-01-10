@@ -1,2 +1,5 @@
 *.o
 *.dblite
+*.a
+*.so
+*.swp
