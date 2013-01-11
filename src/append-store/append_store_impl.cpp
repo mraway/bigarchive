@@ -12,7 +12,7 @@ using namespace log4cxx::xml;
 using namespace log4cxx::helpers;
 
 // static logger variable
-LoggerPtr asimpl_logger(Logger::getLogger( "appendstore.qfs_helper"));
+LoggerPtr asimpl_logger(Logger::getLogger( "appendstore.impl"));
 
 PanguAppendStore::PanguAppendStore(const StoreParameter& para, bool iscreate)
     : mRoot(para.mPath), 
@@ -21,6 +21,7 @@ PanguAppendStore::PanguAppendStore(const StoreParameter& para, bool iscreate)
      mAppendChunkId(0),
      mCompressionType(para.mCompressionFlag)
 {
+        DOMConfigurator::configure("/home/prakash/log_config.xml");
     if (mRoot.compare(mRoot.size()-1, 1, "/"))
     {
         mRoot.append("/");
@@ -164,17 +165,16 @@ void PanguAppendStore::Init(bool iscreate)
     mFileSystemHelper = new QFSHelper();
     mFileSystemHelper->Connect();//"host", 30000);
     
-    std::cout << "file system helpers created and connected";
     // create the outer directory and index, data and log file directories.
     if (iscreate) 
     {
         CreateDirs(mRoot);
     }
 
-    std::cout << "directories created";
-
     uint32_t binmajor = mMeta.storemajor; 
     uint32_t binminor = mMeta.storeminor;
+
+    LOG4CXX_DEBUG(asimpl_logger, "directories are created !!! ");
 
     if (ReadMetaInfo())
     {
@@ -188,16 +188,13 @@ void PanguAppendStore::Init(bool iscreate)
     {
         if (iscreate)
         {
-	    // std::cout << "came here !!!!!!!!"; 
             WriteMetaInfo(mRoot, mMeta);
         } 
         else 
 	{
             THROW_EXCEPTION(AppendStoreNotExistException, "store not exist (.meta_)" + mRoot);
         }
-    }
- 
-    std::cout<< " came here !!";
+    } 
 
     std::string compressAlgo(LzoCodec::mName);
     if (mCompressionType == (uint32_t)NO_COMPRESSION) 
@@ -240,6 +237,7 @@ bool PanguAppendStore::ReadMetaInfo()
     try  
     {
         fexist = mFileSystemHelper->IsFileExists(metaFileName);
+	LOG4CXX_DEBUG(asimpl_logger, "meta file name " << metaFileName << " : " << fexist)
     }
     catch (ExceptionBase & e)
     {

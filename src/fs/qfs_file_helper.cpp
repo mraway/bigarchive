@@ -44,6 +44,10 @@ void QFSFileHelper::Close() {
 }
 
 int QFSFileHelper::Read(char *buffer, int length) {
+    /* check whether its opened of not */
+    if(fd == -1)
+	Open();
+
     int bytes_read = qfshelper->kfsClient->Read(fd, buffer, length);
     if(bytes_read != length) {
 	if(bytes_read < 0) {
@@ -58,6 +62,10 @@ int QFSFileHelper::Read(char *buffer, int length) {
 }
 
 int QFSFileHelper::Write(char *buffer, int length) {
+    /* check whether its opened or not */
+    if(fd == -1)
+      Open();
+
     int dataLength = length + sizeof(Header);
     Header header(length);
 

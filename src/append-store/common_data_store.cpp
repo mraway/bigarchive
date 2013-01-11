@@ -11,7 +11,7 @@ using namespace log4cxx::xml;
 using namespace log4cxx::helpers;
 
 // static logger variable
-LoggerPtr cdslogger(Logger::getLogger( "appendstore.qfs_helper"));
+LoggerPtr cdslogger(Logger::getLogger( "appendstore.cds"));
 
 
 using namespace std;

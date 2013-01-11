@@ -9,7 +9,7 @@ using namespace log4cxx::xml;
 using namespace log4cxx::helpers;
 
 // static logger variable
-LoggerPtr logger(Logger::getLogger( "appendstore.qfs_helper"));
+LoggerPtr logger(Logger::getLogger( "appendstore.chunk_impl"));
 
 
 const char* Defaults::IDX_DIR = "index/";
@@ -33,6 +33,7 @@ Chunk::Chunk(const std::string& root, ChunkIDType chunk_id,
     mCachePtr(cacheptr),
     mBlockIndexInterval(index_interval)
 {
+    DOMConfigurator::configure("/home/prakash/log_config.xml");
     // CHKIT : get the host and port from config file
     mFileSystemHelper = new QFSHelper();    
     mFileSystemHelper->Connect();//"localhost", 30000);
