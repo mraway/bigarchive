@@ -14,7 +14,7 @@ LoggerPtr qfsfsh_logger(Logger::getLogger( "appendstore.qfs_helper"));
 
 void QFSHelper::Connect() 
 {	
-    Connect(string("localhost"), 20000);
+    Connect(string("128.111.46.96"), 20000);
     LOG4CXX_INFO(qfsfsh_logger, "Connected to QFS Master Node");
 }
 

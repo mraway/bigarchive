@@ -12,12 +12,7 @@ using namespace log4cxx::xml;
 using namespace log4cxx::helpers;
 
 // static logger variable
-LoggerPtr logger(Logger::getLogger( "appendstore.qfs_helper"));
-
-
-// using namespace apsara::AppendStore;
-// apsara::logging::Logger* PanguAppendStore::sLogger = apsara::logging::GetLogger("/apsara/append_store");
-
+LoggerPtr asimpl_logger(Logger::getLogger( "appendstore.qfs_helper"));
 
 PanguAppendStore::PanguAppendStore(const StoreParameter& para, bool iscreate)
     : mRoot(para.mPath), 
@@ -64,7 +59,7 @@ std::string PanguAppendStore::Append(const std::string& data)
     Chunk* p_chunk = LoadAppendChunk();
     Handle h;
     h.mIndex = p_chunk->Append(data);
-    LOG4CXX_DEBUG(logger, "Write " << mRoot << "mChunkId" << p_chunk->GetID() << "mIndex" << h.mIndex << "size" << data.size());
+    LOG4CXX_DEBUG(asimpl_logger, "Write " << mRoot << "mChunkId" << p_chunk->GetID() << "mIndex" << h.mIndex << "size" << data.size());
 
     if (h.mIndex==0)
     {
@@ -127,7 +122,7 @@ bool PanguAppendStore::Read(const std::string& h, std::string* data)
         return true;
     }
 
-    LOG4CXX_DEBUG(logger, "READ : " << mRoot << " & mChunkId : " << handle.mChunkId << " & mIndex : " <<  handle.mIndex);
+    LOG4CXX_DEBUG(asimpl_logger, "READ : " << mRoot << " & mChunkId : " << handle.mChunkId << " & mIndex : " <<  handle.mIndex);
     Chunk* p_chunk = LoadRandomChunk(handle.mChunkId);
 
     if (p_chunk == 0)
@@ -136,7 +131,7 @@ bool PanguAppendStore::Read(const std::string& h, std::string* data)
     }
 
     bOK = p_chunk->Read(handle.mIndex, data);
-    LOG4CXX_DEBUG(logger, "READ : " << mRoot << " & mChunkId : " << handle.mChunkId << " & mIndex : " <<  handle.mIndex);
+    LOG4CXX_DEBUG(asimpl_logger, "READ : " << mRoot << " & mChunkId : " << handle.mChunkId << " & mIndex : " <<  handle.mIndex);
 
     return bOK;
 }
@@ -168,12 +163,15 @@ void PanguAppendStore::Init(bool iscreate)
 {
     mFileSystemHelper = new QFSHelper();
     mFileSystemHelper->Connect();//"host", 30000);
-
+    
+    std::cout << "file system helpers created and connected";
     // create the outer directory and index, data and log file directories.
     if (iscreate) 
     {
         CreateDirs(mRoot);
     }
+
+    std::cout << "directories created";
 
     uint32_t binmajor = mMeta.storemajor; 
     uint32_t binminor = mMeta.storeminor;
@@ -189,7 +187,8 @@ void PanguAppendStore::Init(bool iscreate)
     else
     {
         if (iscreate)
-        { 
+        {
+	    // std::cout << "came here !!!!!!!!"; 
             WriteMetaInfo(mRoot, mMeta);
         } 
         else 
@@ -197,6 +196,8 @@ void PanguAppendStore::Init(bool iscreate)
             THROW_EXCEPTION(AppendStoreNotExistException, "store not exist (.meta_)" + mRoot);
         }
     }
+ 
+    std::cout<< " came here !!";
 
     std::string compressAlgo(LzoCodec::mName);
     if (mCompressionType == (uint32_t)NO_COMPRESSION) 
@@ -217,7 +218,7 @@ void PanguAppendStore::Init(bool iscreate)
 
     if (mAppend)
     {
-        LOG4CXX_INFO(logger, "mMaxChunkSize : " << mMeta.maxChunkSize << " & mBlockIndexInterval : " << mMeta.blockIndexInterval);
+        LOG4CXX_INFO(asimpl_logger, "mMaxChunkSize : " << mMeta.maxChunkSize << " & mBlockIndexInterval : " << mMeta.blockIndexInterval);
         // Currently, append at the last chunk // set mMaxChunkId: chunks are in [0, mMaxChunkId] inclusive
         mAppendChunkId = mMaxChunkId;
         mCodec.reset(CompressionCodec::getCodec(compressAlgo.c_str(), 1024, true));
@@ -242,7 +243,7 @@ bool PanguAppendStore::ReadMetaInfo()
     }
     catch (ExceptionBase & e)
     {
-        LOG4CXX_ERROR(logger, "IsFileExist : " <<  metaFileName);
+        LOG4CXX_ERROR(asimpl_logger, "IsFileExist : " <<  metaFileName);
         throw;
     }
 
@@ -312,7 +313,7 @@ Chunk* PanguAppendStore::LoadAppendChunk()
     }
     catch (...)
     {
-        LOG4CXX_ERROR(logger, "[AppendStore] chunk is disabled for append, chunk id : " << mAppendChunkId);
+        LOG4CXX_ERROR(asimpl_logger, "[AppendStore] chunk is disabled for append, chunk id : " << mAppendChunkId);
         throw;
     }
 
@@ -388,7 +389,7 @@ bool PanguAppendStore::CreateDirectory(const std::string& name)
     }
     catch(ExceptionBase& e)
     {
-        LOG4CXX_ERROR(logger, "error on CreateDirectory : " << e.ToString());
+        LOG4CXX_ERROR(asimpl_logger, "error on CreateDirectory : " << e.ToString());
         throw;
     }
     return true;
@@ -414,28 +415,28 @@ void PanguAppendStore::CreateDirs(const std::string& root)
     //create root path
     if (CreateDirectory(root))
     {
-        LOG4CXX_DEBUG(logger, "CreateDirectory : " << root);
+        LOG4CXX_DEBUG(asimpl_logger, "CreateDirectory : " << root);
     }
 
     //create index path
     std::string index_path = root+ std::string(Defaults::IDX_DIR);
     if (CreateDirectory(index_path.c_str()))
     {
-        LOG4CXX_DEBUG(logger, "CreateDirectory : " << index_path);
+        LOG4CXX_DEBUG(asimpl_logger, "CreateDirectory : " << index_path);
     }
 
     //create data path
     std::string data_path = root+ std::string(Defaults::DAT_DIR);
     if (CreateDirectory(data_path.c_str()))
     {
-        LOG4CXX_DEBUG(logger, "CreateDirectory : " << data_path);
+        LOG4CXX_DEBUG(asimpl_logger, "CreateDirectory : " << data_path);
     }
 
     //create delete log path
     std::string log_path = root + std::string(Defaults::LOG_DIR);
     if (CreateDirectory(log_path.c_str()))
     {
-        LOG4CXX_DEBUG(logger, "CreateDirectory : " << log_path);
+        LOG4CXX_DEBUG(asimpl_logger, "CreateDirectory : " << log_path);
     }
 }
 
@@ -492,7 +493,7 @@ void PanguScanner::ReadDeleteLog(const std::string& fname)
     }
     catch (ExceptionBase & e)
     {
-        LOG4CXX_ERROR(logger, "IsFileExist : " << fname);
+        LOG4CXX_ERROR(asimpl_logger, "IsFileExist : " << fname);
         throw;
     }
     
@@ -524,7 +525,7 @@ void PanguScanner::ReadDeleteLog(const std::string& fname)
         }
         catch (ExceptionBase & e)
         {
-            LOG4CXX_ERROR(logger, "Error while reading deletelog : " << fname);
+            LOG4CXX_ERROR(asimpl_logger, "Error while reading deletelog : " << fname);
             throw;
         }
     }
@@ -540,7 +541,7 @@ PanguScanner::~PanguScanner()
         }
         catch(ExceptionBase& ex)
         {
-            LOG4CXX_ERROR(logger, "Failed to close file for scanner : " << ex.ToString());
+            LOG4CXX_ERROR(asimpl_logger, "Failed to close file for scanner : " << ex.ToString());
         }
         mScannerFH->Seek(0); 
     }
@@ -590,7 +591,7 @@ bool PanguScanner::Next(std::string* handle, std::string* item)
             {
                 if (mDataStream.bad())
                 {
-                    LOG4CXX_ERROR(logger, "Error geting next : Bad data stream");
+                    LOG4CXX_ERROR(asimpl_logger, "Error geting next : Bad data stream");
                 }
                     
 		// CHKIT
@@ -607,7 +608,7 @@ bool PanguScanner::Next(std::string* handle, std::string* item)
 		    /*
                     if (rsize != bufSize)
                     {
-                        LOG4CXX_ERROR(logger, "Error file read error in Scanner");
+                        LOG4CXX_ERROR(asimpl_logger, "Error file read error in Scanner");
                         THROW_EXCEPTION(AppendStoreReadException, "file read error in Scanner");
                     }
 		    */
@@ -621,12 +622,12 @@ bool PanguScanner::Next(std::string* handle, std::string* item)
                     int retc = mScannerCodec->decompress(&(crd.mData[0]), crd.mCompressLength, &buf[0], uncompressedSize);
                     if (uncompressedSize != crd.mOrigLength)
                     {
-                        LOG4CXX_ERROR(logger, "Error error when decompressing due to invalid length");
+                        LOG4CXX_ERROR(asimpl_logger, "Error error when decompressing due to invalid length");
                         THROW_EXCEPTION(AppendStoreCompressionException, "decompression invalid length");
                     }
                     if (retc < 0)
                     {
-                        LOG4CXX_ERROR(logger, "Error decompression codec error when decompressing inside Next()");
+                        LOG4CXX_ERROR(asimpl_logger, "Error decompression codec error when decompressing inside Next()");
                         THROW_EXCEPTION(AppendStoreCompressionException, "decompression codec error");
                     }
 
@@ -665,7 +666,7 @@ bool PanguScanner::Next(std::string* handle, std::string* item)
     }
     catch (ExceptionBase& e)
     {
-        LOG4CXX_ERROR(logger, "Error while geting next : " <<  mRoot);
+        LOG4CXX_ERROR(asimpl_logger, "Error while geting next : " <<  mRoot);
         throw;
     }
 

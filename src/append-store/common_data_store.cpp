@@ -11,7 +11,7 @@ using namespace log4cxx::xml;
 using namespace log4cxx::helpers;
 
 // static logger variable
-LoggerPtr logger(Logger::getLogger( "appendstore.qfs_helper"));
+LoggerPtr cdslogger(Logger::getLogger( "appendstore.qfs_helper"));
 
 
 using namespace std;
@@ -71,7 +71,7 @@ void CDSUtility::Close()
     }
     catch(ExceptionBase& e)
     {
-        LOG4CXX_ERROR(logger, "Error in ~CDSUtility() Flush: " <<  e.ToString());
+        LOG4CXX_ERROR(cdslogger, "Error in ~CDSUtility() Flush: " <<  e.ToString());
     }
     try
     {
@@ -82,7 +82,7 @@ void CDSUtility::Close()
     }
     catch(ExceptionBase& e)
     {
-        LOG4CXX_ERROR(logger, "Error in Stream Close(): " << e.ToString());
+        LOG4CXX_ERROR(cdslogger, "Error in Stream Close(): " << e.ToString());
     }
     try
     {
@@ -93,7 +93,7 @@ void CDSUtility::Close()
     }
     catch(ExceptionBase& e)
     {
-        LOG4CXX_ERROR(logger, "Error in Stream Close(): " << e.ToString());
+        LOG4CXX_ERROR(cdslogger, "Error in Stream Close(): " << e.ToString());
     }
     try
     {
@@ -104,7 +104,7 @@ void CDSUtility::Close()
     }
     catch(ExceptionBase& e)
     {
-        LOG4CXX_ERROR(logger, "Error in Stream Close(): " << e.ToString());
+        LOG4CXX_ERROR(cdslogger, "Error in Stream Close(): " << e.ToString());
     }
 }
 
@@ -128,7 +128,7 @@ void CDSUtility::Init()
     }
     catch(ExceptionBase& e)
     {
-        LOG4CXX_ERROR(logger, "Error in Init() Directory: " << e.ToString());
+        LOG4CXX_ERROR(cdslogger, "Error in Init() Directory: " << e.ToString());
         throw;
     }
 
@@ -142,14 +142,14 @@ void CDSUtility::Init()
             }
             catch(ExceptionBase& e)
             {
-                LOG4CXX_ERROR(logger, "Error in Init() CreateDirectory: " << e.ToString());
+                LOG4CXX_ERROR(cdslogger, "Error in Init() CreateDirectory: " << e.ToString());
                 throw;
             }
         }
     }
     else if (!direxist)
     {
-        LOG4CXX_ERROR(logger, "Error: Directory not exist and readonly");
+        LOG4CXX_ERROR(cdslogger, "Error: Directory not exist and readonly");
         THROW_EXCEPTION(ExceptionBase, "CDS store Directory not exist and readonly");
     }
 
@@ -162,12 +162,12 @@ void CDSUtility::Init()
     }
     catch(ExceptionBase& e)
     {
-        LOG4CXX_ERROR(logger, "Error in Init() File: " << e.ToString());
+        LOG4CXX_ERROR(cdslogger, "Error in Init() File: " << e.ToString());
         throw;
     }
     if (! ((dexist && iexist) || (!dexist && !iexist)) )
     {
-        LOG4CXX_ERROR(logger, "Error: " << "mDataFileName and mIndexFileName not co-exist");
+        LOG4CXX_ERROR(cdslogger, "Error: " << "mDataFileName and mIndexFileName not co-exist");
         THROW_EXCEPTION(ExceptionBase, "mDataFileName and mIndexFileName not co-exist");
     }
 
@@ -185,7 +185,7 @@ void CDSUtility::Init()
             }
             catch(ExceptionBase& e)
             {
-                LOG4CXX_ERROR(logger, "Error in Init() CreateLogFile: " << e.ToString());
+                LOG4CXX_ERROR(cdslogger, "Error in Init() CreateLogFile: " << e.ToString());
                 throw;
             }
         }
@@ -225,7 +225,7 @@ bool CDSUtility::Read(const std::string& handle, std::string* data)
     }
     catch (ExceptionBase& e)
     {
-        LOG4CXX_ERROR(logger, "Error in Read(): " << e.ToString());
+        LOG4CXX_ERROR(cdslogger, "Error in Read(): " << e.ToString());
         throw;
     }
 
@@ -249,7 +249,7 @@ std::string CDSUtility::Append(const std::string index, const std::string& data)
     }
     catch(ExceptionBase& e)
     {
-        LOG4CXX_ERROR(logger, "Error in FlushLog : " << e.ToString());
+        LOG4CXX_ERROR(cdslogger, "Error in FlushLog : " << e.ToString());
         throw;
     }
 
@@ -287,10 +287,10 @@ void CDSUtility::AppendIndex()
     }
     catch (ExceptionBase& e)
     {
-        LOG4CXX_ERROR(logger, ("Error", e.ToString()));
+        LOG4CXX_ERROR(cdslogger, ("Error", e.ToString()));
         throw;
     }
-    LOG4CXX_DEBUG(logger, "FlushCount : " << mFlushCount << " & fileSize : " << fileSize);
+    LOG4CXX_DEBUG(cdslogger, "FlushCount : " << mFlushCount << " & fileSize : " << fileSize);
 
     mFlushCount = 0;
     mIndexStream.str("");
@@ -299,7 +299,7 @@ void CDSUtility::AppendIndex()
 
 void CDSUtility::Flush()
 {
-    LOG4CXX_INFO(logger, ("Flush", mFlushCount));
+    LOG4CXX_INFO(cdslogger, ("Flush", mFlushCount));
     if (mFlushCount > 0)
     {
         AppendIndex();
@@ -448,12 +448,12 @@ void CdsIndexReader::InitReader()
     }
     catch(ExceptionBase& e)
     {
-        LOG4CXX_ERROR(/*loggerReader*/ logger, ("Error in IndexReader ctr: " + IndexFileName, e.ToString()));
+        LOG4CXX_ERROR(/*cdsloggerReader*/ cdslogger, ("Error in IndexReader ctr: " + IndexFileName, e.ToString()));
         throw;
     }
     if (!iexist)
     {
-        LOG4CXX_ERROR(/*loggerReader*/ logger, ("Error: ", "IndexFileName not co-exist"));
+        LOG4CXX_ERROR(/*cdsloggerReader*/ cdslogger, ("Error: ", "IndexFileName not co-exist"));
         THROW_EXCEPTION(ExceptionBase, "IndexFileName not co-exist");
     }
 
@@ -487,14 +487,14 @@ bool CdsIndexReader::Next(MultiIndexRecord& out_record)
 		/*
             if (rsize != indexSize)
             {
-                LOG4CXX_ERROR( *loggerReader logger, ("Error", "file read error in IndexReader"));
+                LOG4CXX_ERROR( *cdsloggerReader cdslogger, ("Error", "file read error in IndexReader"));
                 THROW_EXCEPTION(ExceptionBase, "file read error in IndexReader");
             }
 		*/
 
             std::stringstream ss(buffer);
             out_record.Deserialize(ss);
-            LOG4CXX_DEBUG(/*loggerReader*/ logger, ("CDS indexSize = ", indexSize));
+            LOG4CXX_DEBUG(/*cdsloggerReader*/ cdslogger, ("CDS indexSize = ", indexSize));
 
             return true;
         }
@@ -531,7 +531,7 @@ bool CdsIndexReader::Next(std::vector<CdsIndexRecord>& outvec)
             }
             if (streamBuf.bad())
             {
-                LOG4CXX_ERROR(logger, "Error in Next() due to stream bad << .");
+                LOG4CXX_ERROR(cdslogger, "Error in Next() due to stream bad << .");
                 THROW_EXCEPTION(ExceptionBase, "error in Next()");
             }
 
@@ -541,8 +541,8 @@ bool CdsIndexReader::Next(std::vector<CdsIndexRecord>& outvec)
             dirty = 1;
         } while (1);
     }
-	// logger reader
-	LOG4CXX_INFO(logger, "in Next() : " << outvec.size());
+	// cdslogger reader
+	LOG4CXX_INFO(cdslogger, "in Next() : " << outvec.size());
     if (dirty) 
     {
         return true;

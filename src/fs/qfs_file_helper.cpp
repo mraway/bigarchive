@@ -13,7 +13,7 @@ LoggerPtr qfsfh_logger(Logger::getLogger( "appendstore.qfs_helper"));
 
 
 QFSFileHelper::QFSFileHelper(QFSHelper *qfshelper, string fname, int mode) {
-    // super();
+    DOMConfigurator::configure("/home/prakash/log_config.xml");
     LOG4CXX_INFO(qfsfh_logger, "File helper for file created : " << fname );
     this->qfshelper = qfshelper;
     this->filename = fname;
