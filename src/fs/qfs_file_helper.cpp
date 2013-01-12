@@ -31,6 +31,10 @@ void QFSFileHelper::Create()
 }
 
 void QFSFileHelper::Open() {
+
+    if( ! qfshelper->IsFileExists(filename) )
+	Create();
+
     fd = qfshelper->kfsClient->Open(filename.c_str(), mode);
     if(fd < 0) { 
 	LOG4CXX_ERROR(qfsfh_logger, "Failed while opening file : " << filename << ", ERROR :" << KFS::ErrorCodeToStr(fd));

@@ -16,21 +16,21 @@ class FileHelper {
  public:
   FileHelper() {}
   /* Creates a file */
-  void Create() {}
+  virtual void Create() {}
   /* Opens a file on specified mode */
-  void Open() {}
+  virtual void Open() {}
   /* Reads from file into buffer */
-  int Read(char *buffer, int length) {return -1;}
+  virtual int Read(char *buffer, int length) {return -1;}
   /* Writes buffer into file */
-  int Write(char *buffer, int length) {return -1;}
+  virtual int Write(char *buffer, int length) {return -1;}
   /* Write and Sync */
-  int Flush(char *buffer, int length) {return -1;}
+  virtual int Flush(char *buffer, int length) {return -1;}
   /* Seeks to position */
-  void Seek(int offset) {}
+  virtual void Seek(int offset) {}
   /* */
-  uint32_t GetNextLogSize() {return 0;}
+  virtual uint32_t GetNextLogSize() {return 0;}
   /* Closes the file */
-  void Close() {}
+  virtual void Close() {}
  protected:
   /*file descriptor*/
   int fd;

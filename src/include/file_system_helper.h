@@ -14,20 +14,20 @@ using std::string;
 class FileSystemHelper {
  public:
   /* Connect method establishes a connection with FileSystem MetaServer (usually host name and port are passed)*/
-  void Connect() {}
-  void Connect(string host, int port) {}
+  virtual void Connect() {}
+  virtual void Connect(string host, int port) {}
   /* */
-  void DisConnect() {}
+  virtual void DisConnect() {}
   /* list file contents */
-  int ListDir(string pathname, vector<string> &result) {return -1;}
+  virtual int ListDir(string pathname, vector<string> &result) {return -1;}
   /* checks whether file "fname" exists or not */
-  bool IsFileExists(string fname) {return false;}
+  virtual bool IsFileExists(string fname) {return false;}
   /* checks whether directory "dirname" exits or not */
-  bool IsDirectoryExists(string dirname) {return false;}
+  virtual bool IsDirectoryExists(string dirname) {return false;}
   /* gets file Size */
-  int getSize(string fname) {return -1;}
+  virtual int getSize(string fname) {return 0;}
   /* create Directory */
-  int CreateDirectory(string dirname) {return -1;}
+  virtual int CreateDirectory(string dirname) {return 0;}
 };
 
 #endif /* FILE_SYSTEM_HELPER_H */
