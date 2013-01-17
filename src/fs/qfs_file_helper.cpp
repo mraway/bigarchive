@@ -209,7 +209,7 @@ uint32_t QFSFileHelper::GetNextLogSize() {
 }
 
 
-string get_mode() {
+string QFSFileHelper::sget_mode() {
 	switch(mode) {
 		case O_RDONLY : return "READ_ONLY";
 		case O_WRONLY : return "WRITE_ONLY";
