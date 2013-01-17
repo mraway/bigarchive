@@ -52,7 +52,8 @@ public:
     bool IsChunkFull() const;
 
     friend class PanguScanner;
-
+    
+    bool Close();
 
 private:
     std::string mRoot;		///< root path of the chunk
@@ -98,7 +99,7 @@ private:
     
     bool LoadData(bool flag);
     
-    bool Close();
+   // bool Close();
 
     bool ReadRaw(const OffsetType&  offset_mix, std::string& data) ;
     

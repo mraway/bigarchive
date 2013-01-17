@@ -42,7 +42,7 @@ PanguAppendStore::PanguAppendStore(const StoreParameter& para, bool iscreate)
 
 PanguAppendStore::~PanguAppendStore()
 {
-    //UninitPangu();
+    // std::cout << " i am called ";
 }
 
 Scanner* PanguAppendStore::GetScanner()
@@ -60,7 +60,7 @@ std::string PanguAppendStore::Append(const std::string& data)
     Chunk* p_chunk = LoadAppendChunk();
     Handle h;
     h.mIndex = p_chunk->Append(data);
-    LOG4CXX_DEBUG(asimpl_logger, "Write " << mRoot << "mChunkId" << p_chunk->GetID() << "mIndex" << h.mIndex << "size" << data.size());
+    LOG4CXX_DEBUG(asimpl_logger, "Write " << mRoot << "mChunkId : " << p_chunk->GetID() << ", mIndex : " << h.mIndex << ", size : " << data.size());
 
     if (h.mIndex==0)
     {
@@ -124,6 +124,7 @@ bool PanguAppendStore::Read(const std::string& h, std::string* data)
     }
 
     LOG4CXX_DEBUG(asimpl_logger, "READ : " << mRoot << " & mChunkId : " << handle.mChunkId << " & mIndex : " <<  handle.mIndex);
+    
     Chunk* p_chunk = LoadRandomChunk(handle.mChunkId);
 
     if (p_chunk == 0)
@@ -152,6 +153,11 @@ void PanguAppendStore::Remove(const std::string& h)
     p_chunk->Remove(handle.mIndex);
 }
 
+void PanguAppendStore::Close() {
+ Chunk* p_chunk = LoadAppendChunk(); 
+ p_chunk->Close();
+}
+
 void PanguAppendStore::Reload()
 {
     mChunkMap.clear();
@@ -174,11 +180,14 @@ void PanguAppendStore::Init(bool iscreate)
     uint32_t binmajor = mMeta.storemajor; 
     uint32_t binminor = mMeta.storeminor;
 
-    LOG4CXX_DEBUG(asimpl_logger, "directories are created !!! ");
+    
+
+    LOG4CXX_DEBUG(asimpl_logger, "directories are created !!! " );
+    // LOG4CXX_DEBUG(asimpl_logger, "bin major and minor: major  " << binmajor << " minor" << binminor);
 
     if (ReadMetaInfo())
     {
-        if (!mMeta.check(binmajor, binminor))
+        if (! mMeta.check(binmajor, binminor))
         {
             THROW_EXCEPTION(AppendStoreMisMatchedVerException, "meta version is not matched");
         }
@@ -237,7 +246,7 @@ bool PanguAppendStore::ReadMetaInfo()
     try  
     {
         fexist = mFileSystemHelper->IsFileExists(metaFileName);
-	LOG4CXX_DEBUG(asimpl_logger, "meta file name " << metaFileName << " : " << fexist)
+	LOG4CXX_DEBUG(asimpl_logger, "meta file name " << metaFileName << " : " << fexist);
     }
     catch (ExceptionBase & e)
     {
@@ -250,12 +259,21 @@ bool PanguAppendStore::ReadMetaInfo()
         try
         {
 	    // CHKIT
-	    FileHelper* metaInputFH =
- 		new QFSFileHelper((QFSHelper *)mFileSystemHelper, metaFileName, O_RDONLY);
+	    FileHelper* metaInputFH = new QFSFileHelper((QFSHelper *)mFileSystemHelper, metaFileName, O_RDONLY);
             char *read_buffer = new char[sizeof(StoreMetaData)]; 
-            metaInputFH->Read(read_buffer, sizeof(StoreMetaData));
+            // metaInputFH->GetNextLogSize();
+ 	    metaInputFH->Read(read_buffer, sizeof(StoreMetaData));
 	    metaInputFH->Close();
+	    
+	    // LOG4CXX_DEBUG(asimpl_logger, "before reading from buffer : read_buffer to mMeta");
             mMeta.fromBuffer(read_buffer);
+
+	    LOG4CXX_DEBUG(asimpl_logger, "after reading from buffer : mMeta values " << mMeta.storeminor);
+	    LOG4CXX_DEBUG(asimpl_logger, "after reading from buffer : mMeta values " << mMeta.storemajor);
+	    LOG4CXX_DEBUG(asimpl_logger, "after reading from buffer : mMeta values " << mMeta.maxChunkSize);
+	    LOG4CXX_DEBUG(asimpl_logger, "after reading from buffer : mMeta values " << mMeta.blockIndexInterval);
+	    LOG4CXX_DEBUG(asimpl_logger, "after reading from buffer : mMeta values " << mMeta.compressionFlag);
+
             return true;
         }
         catch (ExceptionBase& e)
@@ -275,8 +293,15 @@ void PanguAppendStore::WriteMetaInfo(const std::string& root, const StoreMetaDat
 	 FileHelper* metaOutputFH = new QFSFileHelper((QFSHelper *)mFileSystemHelper, metaFileName, O_WRONLY);
          char *write_buffer = new char[sizeof(StoreMetaData)]; 
 	 /* Copying into buffer from StoreMetaData */
+
+	    LOG4CXX_DEBUG(asimpl_logger, "before reading from buffer : mMeta values " << mMeta.storeminor);
+	    LOG4CXX_DEBUG(asimpl_logger, "b4 reading from buffer : mMeta values " << mMeta.storemajor);
+	    LOG4CXX_DEBUG(asimpl_logger, "b4 reading from buffer : mMeta values " << mMeta.maxChunkSize);
+	    LOG4CXX_DEBUG(asimpl_logger, "b4 reading from buffer : mMeta values " << mMeta.blockIndexInterval);
+	    LOG4CXX_DEBUG(asimpl_logger, "b4 reading from buffer : mMeta values " << mMeta.compressionFlag);
+	 
 	 meta.toBuffer(write_buffer);
-	 metaOutputFH->Flush(write_buffer, sizeof(StoreMetaData));
+	 metaOutputFH->WriteData(write_buffer, sizeof(StoreMetaData));
          metaOutputFH->Close();	
     }
     catch (ExceptionBase& e) 
@@ -297,12 +322,17 @@ Chunk* PanguAppendStore::LoadAppendChunk()
     {
         if (mCurrentAppendChunk->IsChunkFull() == false)
         {
+	    LOG4CXX_DEBUG(asimpl_logger, "Loaded Current chunk");
             return mCurrentAppendChunk.get();
         }
         else
         {
-            AllocNextChunk();
-
+	 /* Close previous chunk and allocate new chunk */
+	 Chunk* p_chunk = mCurrentAppendChunk.get();
+	 p_chunk->Close();
+	 // 
+         LOG4CXX_DEBUG(asimpl_logger, "Allocating next chunk, because current chunk is Full");	
+	 AllocNextChunk();
         }
     }
     try

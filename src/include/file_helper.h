@@ -23,8 +23,12 @@ class FileHelper {
   virtual int Read(char *buffer, int length) {return -1;}
   /* Writes buffer into file */
   virtual int Write(char *buffer, int length) {return -1;}
+  /* Write Data into file */
+  virtual int WriteData(char *buffer, int length) {return -1;}
   /* Write and Sync */
   virtual int Flush(char *buffer, int length) {return -1;}
+  /* Write Data and Sync it */
+  virtual int FlushData(char *buffer, int length) {return -1;}
   /* Seeks to position */
   virtual void Seek(int offset) {}
   /* */

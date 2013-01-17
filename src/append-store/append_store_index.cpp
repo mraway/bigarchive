@@ -2,8 +2,20 @@
 #include "exception.h"
 #include "qfs_file_helper.h"
 
+#include <log4cxx/logger.h>
+#include <log4cxx/xml/domconfigurator.h>
+
+using namespace log4cxx;
+using namespace log4cxx::xml;
+using namespace log4cxx::helpers;
+
+
+LoggerPtr iv_logger(Logger::getLogger( "appendstore.chunk_impl"));
+
+
 IndexVector::IndexVector(const std::string& fname)
  {
+    DOMConfigurator::configure("/home/prakash/log_config.xml");
      LoadFromFile(fname);
  }
  
@@ -11,6 +23,21 @@ IndexRecord IndexVector::at(uint32_t idx) const
 {
      return mValues.at(idx);
 }
+
+void IndexRecord::toBuffer(char *buffer) {
+ uint32_t s_offset = sizeof(OffsetType);
+ uint32_t s_index = sizeof(IndexType);
+ memcpy(buffer, &mOffset, s_offset);
+ memcpy((buffer + (s_offset)), &mIndex, s_index);
+}
+
+void IndexRecord::fromBuffer(char *buffer) {
+ uint32_t s_offset = sizeof(OffsetType);
+ uint32_t s_index = sizeof(IndexType);
+ memcpy(&mOffset, buffer, s_offset);
+ memcpy(&mIndex, (buffer + (s_offset)), s_index);
+}
+
 
 IndexVector::const_index_iterator IndexVector::find(IndexType key) const
 {
@@ -51,10 +78,21 @@ void IndexVector::LoadFromFile(const std::string& fname)
     //     condition size!=0 is not correct due to latency
   
     // CHKIT
+    //
+    LOG4CXX_INFO(iv_logger, "reading index from file : " << fname);
  
     QFSHelper *qfsHelper = new QFSHelper();
     qfsHelper->Connect();//"host", 30000);
     
+    int file_size = qfsHelper->getSize(fname);
+
+    
+    LOG4CXX_INFO(iv_logger, "index file size is : " << file_size);
+    if(file_size <= 0) {
+     LOG4CXX_INFO(iv_logger, "not reading index file, because size is : " << file_size);
+     return;
+    }
+
     QFSFileHelper *qfsFH = new QFSFileHelper(qfsHelper, fname, O_RDONLY); 
 
     try
@@ -62,15 +100,16 @@ void IndexVector::LoadFromFile(const std::string& fname)
         do
         {
             uint32_t indexSize = qfsFH->GetNextLogSize();
+            LOG4CXX_INFO(iv_logger, "Index size from getNextLogSize : " << indexSize);
+	    // LOG4CXX_INFO(iv_logger, "IndexRecord size : " << sizeof(IndexRecord));
             if (indexSize != 0)
             {
 
-                std::string buffer;
-                buffer.resize(indexSize, 0);
-                qfsFH->Read(&buffer[0], indexSize);
-                std::stringstream ss(buffer);
+                char *buffer = new char[indexSize];
+		// indexSize should be equal to IndexRecord Size !!!
+                qfsFH->Read(buffer, indexSize);
                 IndexRecord r;
-                r.Deserialize(ss);
+                r.fromBuffer(buffer);
                 mValues.push_back(r);
             }
             else 

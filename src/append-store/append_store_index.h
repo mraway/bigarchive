@@ -54,6 +54,9 @@ public:
         return sizeof(mOffset)+sizeof(mIndex);
     }
 
+    void fromBuffer(char *buffer);
+    void toBuffer(char  *buffer); 
+
     OffsetType mOffset;
     IndexType  mIndex;
 };

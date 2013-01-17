@@ -66,6 +66,7 @@ public:
     virtual void GarbageCollection(bool force);  
     virtual Scanner* GetScanner();
     friend class PanguScanner;
+    virtual void Close();
 
 private:
     void Init(bool iscreate);
