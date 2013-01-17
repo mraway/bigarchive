@@ -20,6 +20,7 @@ class QFSFileHelper : public FileHelper {
 	int WriteData(char *buffer, int length);
 	int Flush(char *buffer, int length);
 	int FlushData(char *buffer, int length);
+        int Append(char *buffer, int lenght);
 	void Seek(int offset);
 	uint32_t GetNextLogSize();
  private:

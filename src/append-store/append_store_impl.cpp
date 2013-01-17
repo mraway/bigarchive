@@ -2,7 +2,9 @@
 #include <set>
 #include "append_store.h"
 #include "exception.h"
-
+#include <map>
+// #include <iostream>
+#include <string>
 
 #include <log4cxx/logger.h>
 #include <log4cxx/xml/domconfigurator.h>
@@ -21,7 +23,8 @@ PanguAppendStore::PanguAppendStore(const StoreParameter& para, bool iscreate)
      mAppendChunkId(0),
      mCompressionType(para.mCompressionFlag)
 {
-        DOMConfigurator::configure("/home/prakash/log_config.xml");
+    DOMConfigurator::configure("/home/prakash/log_config.xml");
+
     if (mRoot.compare(mRoot.size()-1, 1, "/"))
     {
         mRoot.append("/");
@@ -30,7 +33,6 @@ PanguAppendStore::PanguAppendStore(const StoreParameter& para, bool iscreate)
     mMeta = StoreMetaData(MAJOR_VER, MINOR_VER, para.mMaxChunkSize, para.mBlockIndexInterval, para.mCompressionFlag);
     if (para.mMaxChunkSize == 0)
     {
-	// CHKIT
         mMeta.maxChunkSize = DF_CHUNK_SZ;
     }
     if (para.mBlockIndexInterval == 0)
@@ -42,7 +44,7 @@ PanguAppendStore::PanguAppendStore(const StoreParameter& para, bool iscreate)
 
 PanguAppendStore::~PanguAppendStore()
 {
-    // std::cout << " i am called ";
+    
 }
 
 Scanner* PanguAppendStore::GetScanner()
@@ -123,7 +125,7 @@ bool PanguAppendStore::Read(const std::string& h, std::string* data)
         return true;
     }
 
-    LOG4CXX_DEBUG(asimpl_logger, "READ : " << mRoot << " & mChunkId : " << handle.mChunkId << " & mIndex : " <<  handle.mIndex);
+    LOG4CXX_DEBUG(asimpl_logger, "START READ : " << mRoot << " & mChunkId : " << handle.mChunkId << " & mIndex : " <<  handle.mIndex);
     
     Chunk* p_chunk = LoadRandomChunk(handle.mChunkId);
 
@@ -133,7 +135,7 @@ bool PanguAppendStore::Read(const std::string& h, std::string* data)
     }
 
     bOK = p_chunk->Read(handle.mIndex, data);
-    LOG4CXX_DEBUG(asimpl_logger, "READ : " << mRoot << " & mChunkId : " << handle.mChunkId << " & mIndex : " <<  handle.mIndex);
+    LOG4CXX_DEBUG(asimpl_logger, "DONE READ : " << mRoot << " & mChunkId : " << handle.mChunkId << " & mIndex : " <<  handle.mIndex);
 
     return bOK;
 }
@@ -154,8 +156,28 @@ void PanguAppendStore::Remove(const std::string& h)
 }
 
 void PanguAppendStore::Close() {
- Chunk* p_chunk = LoadAppendChunk(); 
- p_chunk->Close();
+ 
+ if(mAppend) {
+  LOG4CXX_INFO(asimpl_logger, "In APPEND mode : Close last append chunk");
+  Chunk* p_chunk = mCurrentAppendChunk.get();//LoadAppendChunk(); 
+  if(p_chunk != 0)
+   p_chunk->Close();
+ }
+
+ // for each( pair<ChunkIDType, ChunkPtr> c in mChunkMap ) {
+ std::map<ChunkIDType, ChunkPtr>::iterator chunk_iter;
+
+
+ for (chunk_iter = mChunkMap.begin(); chunk_iter != mChunkMap.end(); chunk_iter++) {
+  LOG4CXX_INFO(asimpl_logger, "Closing chunk " << chunk_iter->first);
+  chunk_iter->second->Close();
+ }
+ 
+ for (chunk_iter = mDeleteChunkMap.begin(); chunk_iter != mDeleteChunkMap.end(); chunk_iter++) {
+  LOG4CXX_INFO(asimpl_logger, "Closing chunk " << chunk_iter->first);
+  chunk_iter->second->Close();
+ }
+
 }
 
 void PanguAppendStore::Reload()

@@ -46,6 +46,7 @@ Chunk::Chunk(const std::string& root, ChunkIDType chunk_id,
  
     CheckIfNew();
     LoadIndex();
+
     LoadData(append_flag);
 }
 
@@ -64,7 +65,7 @@ Chunk::Chunk(const std::string& root, ChunkIDType chunk_id)
 void Chunk::LoadDeleteLog()
 {
 	// CHKIT
-	mDeleteLogFH = new QFSFileHelper((QFSHelper*) mFileSystemHelper, mLogFileName, O_WRONLY); //WRONLY);
+	mDeleteLogFH = new QFSFileHelper((QFSHelper*) mFileSystemHelper, mLogFileName, O_APPEND); //WRONLY);
 	if(mFileSystemHelper->IsFileExists(mLogFileName) == false) {
 		mDeleteLogFH->Create();
 	}
@@ -191,7 +192,7 @@ void Chunk::AppendIndex()
                 LOG4CXX_ERROR(logger, "Failed close file after write fail " << e.ToString());
             }
             
-            mIndexOutputFH->Seek(0);
+            // mIndexOutputFH->Seek(0);
 
             if (++retryCount <= 1)
             {
@@ -199,7 +200,7 @@ void Chunk::AppendIndex()
             }
 
             // CHKIT -> from WRITE mode to WRONLY mode
-            mIndexOutputFH = new QFSFileHelper((QFSHelper *)mFileSystemHelper, mIndexFileName, O_WRONLY); // O_WRONLY); // WRITE
+            mIndexOutputFH = new QFSFileHelper((QFSHelper *)mFileSystemHelper, mIndexFileName, O_APPEND); // O_WRONLY); // WRITE
             mIndexOutputFH->Open();
 
             if (retryCount > 1)
@@ -307,7 +308,7 @@ bool Chunk::Remove(const IndexType& index)
                 usleep(3000000);
             }
         
-            mDeleteLogFH = new QFSFileHelper((QFSHelper*)mFileSystemHelper, mLogFileName, O_WRONLY); // WRITE);
+            mDeleteLogFH = new QFSFileHelper((QFSHelper*)mFileSystemHelper, mLogFileName, O_APPEND); // WRITE);
 
             if (retryCount > 1)
             {
@@ -346,9 +347,9 @@ bool Chunk::LoadData(bool flag)
         }
 
 
-        mDataOutputFH = new QFSFileHelper((QFSHelper *)mFileSystemHelper, mDataFileName, O_WRONLY); // O_WRONLY);// WRITE);
+        mDataOutputFH = new QFSFileHelper((QFSHelper *)mFileSystemHelper, mDataFileName, O_APPEND); // O_WRONLY);// WRITE);
         mDataOutputFH->Open();
-        mIndexOutputFH = new QFSFileHelper((QFSHelper *)mFileSystemHelper, mIndexFileName, O_WRONLY); // O_WRONLY); //WRITE);
+        mIndexOutputFH = new QFSFileHelper((QFSHelper *)mFileSystemHelper, mIndexFileName, O_APPEND); // O_WRONLY); //WRITE);
         mIndexOutputFH->Open();
     }
     else 
@@ -630,14 +631,14 @@ OffsetType Chunk::AppendRaw(const IndexType& index, const uint32_t numentry, con
             {
                 LOG4CXX_ERROR(logger, "Failed close file after write fail : " << e.ToString());
             }
-            mDataOutputFH->Seek(0); // .reset();
+            // mDataOutputFH->Seek(0); // .reset();
 
             if (++retryCount <= 1)
             {
                 usleep(3000000);
             }
 
-            mDataOutputFH = new QFSFileHelper((QFSHelper*)mFileSystemHelper, mDataFileName, O_WRONLY); //WRONLY
+            mDataOutputFH = new QFSFileHelper((QFSHelper*)mFileSystemHelper, mDataFileName, O_APPEND); //WRONLY
             mDataOutputFH->Open();
             
             if (retryCount > 1)

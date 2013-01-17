@@ -19,13 +19,13 @@ int main() {
   if(qfs->IsFileExists(new_file_name)) {
    cout << endl << "File exists";
    qfsfh->Open();
-   string data;
-   cout << endl << "enter some data to write ";
-   cin >> data;
 
-   char *cstr = new char [data.size()+1];
-   strcpy (cstr, data.c_str());
-   int wrote = qfsfh->Write(cstr, strlen(cstr));
+   string name = "prakash";
+
+   int fileSize = qfs->getSize(new_file_name);
+   qfsfh->Seek(fileSize);
+
+   int wrote = qfsfh->Write((char *)name.c_str(), name.size());
 
    cout << endl << "wrote " << wrote << " bytes";
    qfsfh->Close();

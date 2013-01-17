@@ -29,6 +29,8 @@ class FileHelper {
   virtual int Flush(char *buffer, int length) {return -1;}
   /* Write Data and Sync it */
   virtual int FlushData(char *buffer, int length) {return -1;}
+  /* Append */
+  virtual int Append(char *buffer, int legnt) {return -1;}
   /* Seeks to position */
   virtual void Seek(int offset) {}
   /* */

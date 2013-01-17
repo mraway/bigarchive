@@ -14,21 +14,21 @@ LoggerPtr qfsfh_logger(Logger::getLogger( "appendstore.qfs_helper"));
 
 QFSFileHelper::QFSFileHelper(QFSHelper *qfshelper, string fname, int mode) {
     DOMConfigurator::configure("/home/prakash/log_config.xml");
-    LOG4CXX_INFO(qfsfh_logger, "File helper for file created : " << fname );
     this->qfshelper = qfshelper;
     this->filename = fname;
     this->mode = mode;
     this->fd = -1;
+    LOG4CXX_INFO(qfsfh_logger, "File helper created : " << fname );
 }
 
 void QFSFileHelper::Create()
 {
-    LOG4CXX_INFO(qfsfh_logger, "Creating file : " << filename);
     fd = qfshelper->kfsClient->Create(filename.c_str());
     if (fd < 0) { 
 	LOG4CXX_ERROR(qfsfh_logger, "File Creation failed : " << filename);
 	THROW_EXCEPTION(FileCreationException, "Failed while creating file : " + filename);
     }
+    LOG4CXX_INFO(qfsfh_logger, "File Created : " << filename);
 }
 
 void QFSFileHelper::Open() {
@@ -36,10 +36,23 @@ void QFSFileHelper::Open() {
     if( ! qfshelper->IsFileExists(filename) )
 	Create();
 
+    bool append = false;
+
+    if(mode == O_APPEND) {
+	append = true;
+	mode = O_WRONLY;
+    }
+
     fd = qfshelper->kfsClient->Open(filename.c_str(), mode);
+
     if(fd < 0) { 
 	LOG4CXX_ERROR(qfsfh_logger, "Failed while opening file : " << filename << ", ERROR :" << KFS::ErrorCodeToStr(fd));
 	THROW_EXCEPTION(FileOpenException, "Failed while opening file : " + filename + " ERROR : " + KFS::ErrorCodeToStr(fd));
+    }
+
+    if(append) {
+	LOG4CXX_INFO(qfsfh_logger, "opening in Write mode and seeking to end of file : " << filename);
+	Seek(qfshelper->getSize(filename));
     }
 }
 
@@ -101,6 +114,33 @@ int QFSFileHelper::Write(char *buffer, int length) {
     return bytes_wrote;
 }
 
+int QFSFileHelper::Append(char *buffer, int length) {
+
+ if(fd == -1)
+      Open();
+
+    int dataLength = length + sizeof(Header);
+    Header header(length);
+
+    string data(dataLength, 0);
+    memcpy(&data[0], &header, sizeof(Header));
+    memcpy(&data[sizeof(Header)], buffer, length);
+
+    int bytes_wrote = qfshelper->kfsClient->AtomicRecordAppend(fd, data.c_str(), dataLength);
+
+
+    if( bytes_wrote != dataLength) {
+        string bytes_wrote_str = "" + bytes_wrote;
+        string length_str = "" + dataLength;
+        LOG4CXX_ERROR(qfsfh_logger, "XXXXXXXXXXXX Was able to append only " << bytes_wrote_str << " bytes , instead of " << length_str);
+        LOG4CXX_ERROR(qfsfh_logger, "Error " << KFS::ErrorCodeToStr(bytes_wrote));  
+        // THROW_EXCEPTION(AppendStoreWriteException,  "Was able to append only " + bytes_wrote_str + ", instead of " + length_str);
+    }
+
+
+    return bytes_wrote;
+}
+
 int QFSFileHelper::WriteData(char *buffer, int length) {
    if(fd == -1)
       Open();
@@ -143,9 +183,10 @@ void QFSFileHelper::Seek(int offset) {
 
 uint32_t QFSFileHelper::GetNextLogSize() {
     char *buffer = new char[sizeof(Header)];
-    for(int i=0; i < sizeof(Header); i++) {
-     *(buffer + i) = 0;
-    }
+    //for(int i=0; i < sizeof(Header); i++) {
+    // *(buffer + i) = 0;
+    //}
+    memset(buffer, 0, sizeof(Header));
     Header *header = new Header(-1);
     Read(buffer, sizeof(Header));
     header = (Header *)buffer;
