@@ -25,6 +25,7 @@ class QFSFileHelper : public FileHelper {
 	uint32_t GetNextLogSize();
  private:
 	QFSHelper *qfshelper;
+	string get_mode();
 };
 
 

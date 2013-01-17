@@ -8,10 +8,12 @@ using namespace log4cxx;
 using namespace log4cxx::xml;
 using namespace log4cxx::helpers;
 
-// static logger variable
 LoggerPtr qfsfh_logger(Logger::getLogger( "appendstore.qfs_helper"));
 
 
+/**
+Consturctor for File Helper, performs file related opereations
+*/
 QFSFileHelper::QFSFileHelper(QFSHelper *qfshelper, string fname, int mode) {
     DOMConfigurator::configure("/home/prakash/log_config.xml");
     this->qfshelper = qfshelper;
@@ -21,39 +23,52 @@ QFSFileHelper::QFSFileHelper(QFSHelper *qfshelper, string fname, int mode) {
     LOG4CXX_INFO(qfsfh_logger, "File helper created : " << fname );
 }
 
+/**
+Create file
+*/
 void QFSFileHelper::Create()
 {
     fd = qfshelper->kfsClient->Create(filename.c_str());
+
     if (fd < 0) { 
-	LOG4CXX_ERROR(qfsfh_logger, "File Creation failed : " << filename);
-	THROW_EXCEPTION(FileCreationException, "Failed while creating file : " + filename);
+		LOG4CXX_ERROR(qfsfh_logger, "File Creation failed : " << filename);
+		THROW_EXCEPTION(FileCreationException, "Failed while creating file : " + filename);
     }
     LOG4CXX_INFO(qfsfh_logger, "File Created : " << filename);
 }
 
+/**
+Opens file on specified mode
+*/
 void QFSFileHelper::Open() {
 
-    if( ! qfshelper->IsFileExists(filename) )
-	Create();
+    if( ! qfshelper->IsFileExists(filename)) {
+		Create();
+	}
 
     bool append = false;
 
     if(mode == O_APPEND) {
-	append = true;
-	mode = O_WRONLY;
+		/* for append mode open the file in Write mode and seek to last */
+		/* found some issue with O_APPEND mode opening ! */
+		append = true;
+		mode = O_WRONLY;
     }
 
     fd = qfshelper->kfsClient->Open(filename.c_str(), mode);
 
     if(fd < 0) { 
-	LOG4CXX_ERROR(qfsfh_logger, "Failed while opening file : " << filename << ", ERROR :" << KFS::ErrorCodeToStr(fd));
-	THROW_EXCEPTION(FileOpenException, "Failed while opening file : " + filename + " ERROR : " + KFS::ErrorCodeToStr(fd));
+		LOG4CXX_ERROR(qfsfh_logger, "Failed while opening file : " << filename << ", ERROR :" << KFS::ErrorCodeToStr(fd));
+		THROW_EXCEPTION(FileOpenException, "Failed while opening file : " + filename + " ERROR : " + KFS::ErrorCodeToStr(fd));
     }
 
+	/* Seeking to the last */
     if(append) {
-	LOG4CXX_INFO(qfsfh_logger, "opening in Write mode and seeking to end of file : " << filename);
-	Seek(qfshelper->getSize(filename));
+		mode = O_APPEND;
+		LOG4CXX_INFO(qfsfh_logger, "opening in Write mode and seeking to end of file : " << filename);
+		Seek(qfshelper->getSize(filename));
     }
+	LOG4CXX_INFO(qfsfh_logger, "File Opened : filename(" << filename << "), mode(" << get_mode() << ")");
 }
 
 void QFSFileHelper::Close() {
@@ -194,6 +209,14 @@ uint32_t QFSFileHelper::GetNextLogSize() {
 }
 
 
+string get_mode() {
+	switch(mode) {
+		case O_RDONLY : return "READ_ONLY";
+		case O_WRONLY : return "WRITE_ONLY";
+		case O_APPEND : return "APPEND";
+		default : return "DEFAULT";
+	}
+}
 
 
 
