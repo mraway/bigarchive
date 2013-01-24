@@ -90,7 +90,7 @@ class StoreParameter
 {
 public:
     StoreParameter() 
-      : mMaxChunkSize(0), mAppend(false), mBlockIndexInterval(100), mCompressionFlag(COMPRESSOR_LZO) {};
+      : mMaxChunkSize(0), mAppend(false), mBlockIndexInterval(1000), mCompressionFlag(COMPRESSOR_LZO) {};
 
     std::string mPath;
     uint64_t    mMaxChunkSize;
