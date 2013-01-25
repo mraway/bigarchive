@@ -23,29 +23,33 @@ void QFSHelper::Connect(string metaserverhost, int metaserverport)
 {
     kfsClient = KFS::Connect(metaserverhost, metaserverport);
     if (! kfsClient ) {
-	LOG4CXX_ERROR(qfsfsh_logger, "Failed to Connect to QFS Master Node ==> " << metaserverhost << ":" << metaserverport);
+		LOG4CXX_ERROR(qfsfsh_logger, "Failed to Connect to QFS Master Node ==> " << metaserverhost << ":" << metaserverport);
     }
 }
 
 void QFSHelper::DisConnect()
 {
- kfsClient = NULL;
+	kfsClient = NULL;
 }
 
 bool QFSHelper::IsFileExists(string fname)
 {
-    return kfsClient->Exists(fname.c_str());
-}
+	bool value = kfsClient->Exists(fname.c_str());
+	LOG4CXX_INFO(qfsfsh_logger, "IsFileExists(" << fname << ") - " << value);
+    return value;}
 
 bool QFSHelper::IsDirectoryExists(string dirname)
 {
-    return kfsClient->Exists(dirname.c_str());
+	bool value = kfsClient->Exists(dirname.c_str());
+	LOG4CXX_INFO(qfsfsh_logger, "IsDirectoryExists(" << dirname << ") - " << value);
+    return value;
 }
 
-int QFSHelper::getSize(string fname)
+long QFSHelper::getSize(string fname)
 {
-    KFS::KfsFileAttr kfsattr; // = new KfsFileAttr(); // Stat method takes reference of this object
-    kfsClient->Stat(fname.c_str(), kfsattr, true); // true is for computing the size
+    KFS::KfsFileAttr kfsattr; 
+    kfsClient->Stat(fname.c_str(), kfsattr); 
+    LOG4CXX_INFO(qfsfsh_logger, "getSize(" << fname << ") - " << kfsattr.fileSize);
     return kfsattr.fileSize;
 }
 
@@ -55,12 +59,13 @@ int QFSHelper::ListDir(string pathname, vector<string> &result)
 }
 
 int QFSHelper::CreateDirectory(string pathname) {
-    int ret = kfsClient->Mkdirs(pathname.c_str()); // mode is 0777 by default
-    if(ret != 0) {
-	LOG4CXX_ERROR(qfsfsh_logger, "Directory Creation failed : " << pathname);
-	THROW_EXCEPTION(FileCreationException, "Failure in directory Creation : " + pathname);
+    int res = kfsClient->Mkdirs(pathname.c_str());
+    if (res < 0 && res != -EEXIST) {
+		LOG4CXX_ERROR(qfsfsh_logger, "Directory Creation failed : " << pathname);
+		THROW_EXCEPTION(FileCreationException, "Failure in directory Creation : " + pathname);
     }	
-    return ret;
+	LOG4CXX_INFO(qfsfsh_logger, "Directory Created(" << pathname << ")" );
+    return res;
 }
 
 

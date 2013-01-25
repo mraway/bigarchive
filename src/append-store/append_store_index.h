@@ -71,7 +71,7 @@ public:
 
     ~IndexVector(){};
 
-    const_index_iterator find(IndexType key) const;
+    const_index_iterator find(IndexType key, bool &is_begin) const;
  
     uint32_t size() const;
 

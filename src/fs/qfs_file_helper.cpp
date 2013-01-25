@@ -65,74 +65,80 @@ void QFSFileHelper::Open() {
 	/* Seeking to the last */
     if(append) {
 		mode = O_APPEND;
-		LOG4CXX_INFO(qfsfh_logger, "opening in Write mode and seeking to end of file : " << filename);
+		LOG4CXX_INFO(qfsfh_logger, "Opening in Write mode and seeking to end of file : " << filename);
 		Seek(qfshelper->getSize(filename));
     }
+
 	LOG4CXX_INFO(qfsfh_logger, "File Opened : filename(" << filename << "), mode(" << get_mode() << ")");
 }
 
 void QFSFileHelper::Close() {
-   
 
     if(fd < 0) {
-     LOG4CXX_INFO(qfsfh_logger, "FileHelper:Close : fd < 0 : " << filename); 
+    	LOG4CXX_INFO(qfsfh_logger, "File Close : file descriptor, fd < 0 for file : " << filename); 
     }
     else {
-     qfshelper->kfsClient->Sync(fd);
-     qfshelper->kfsClient->Close(fd);
-     LOG4CXX_INFO(qfsfh_logger, "file closed : " << filename); 
+    	qfshelper->kfsClient->Sync(fd);
+    	qfshelper->kfsClient->Close(fd);
+    	LOG4CXX_INFO(qfsfh_logger, "File Synced and Closed : " << filename); 
     }
 }
 
 int QFSFileHelper::Read(char *buffer, int length) {
     /* check whether its opened of not */
-    if(fd == -1)
-	Open();
-
-    LOG4CXX_INFO(qfsfh_logger, " Reading from file " << filename << ", length " << length);    
+    if(fd == -1) {
+		Open();
+	}
 
     int bytes_read = qfshelper->kfsClient->Read(fd, buffer, length);
 
     if(bytes_read != length) {
-	if(bytes_read < 0) {
-	    LOG4CXX_ERROR(qfsfh_logger, "Failure while reading file " << filename << " ERROR : " << KFS::ErrorCodeToStr(bytes_read));
-	    THROW_EXCEPTION(AppendStoreReadException, "Failed while reading file " + filename + " ERROR : " + KFS::ErrorCodeToStr(bytes_read));
-	}
-	else {
-	    LOG4CXX_ERROR(qfsfh_logger, "Less number of bytes read from file than specified");
-	}
+		if(bytes_read < 0) {
+		    LOG4CXX_ERROR(qfsfh_logger, "Failed while reading from file(" << filename << ") - ERROR : " << KFS::ErrorCodeToStr(bytes_read));
+		    THROW_EXCEPTION(AppendStoreReadException, "Failed while reading file(" + filename + ") - ERROR : " + KFS::ErrorCodeToStr(bytes_read));
+		}
+		else {
+		    LOG4CXX_ERROR(qfsfh_logger, "Less number of bytes read from file than specified");
+		}
     }
+
+	LOG4CXX_INFO(qfsfh_logger, "Read " << length << " bytes from file(" << filename << ")");    
+
     return bytes_read;	
 }
 
 int QFSFileHelper::Write(char *buffer, int length) {
-    /* check whether its opened or not */
-    if(fd == -1)
-      Open();
 
-    int dataLength = length + sizeof(Header);
-    Header header(length);
+    if(fd == -1) {
+    	Open();
+	}
 
-    string data(dataLength, 0);
+	Header header(length);
+    int dataLength = length + sizeof(Header);    
+	string data(dataLength, 0);
+
     memcpy(&data[0], &header, sizeof(Header));
     memcpy(&data[sizeof(Header)], buffer, length);
 
     int bytes_wrote = qfshelper->kfsClient->Write(fd, data.c_str(), dataLength);
 
     if( bytes_wrote != dataLength) {
-	string bytes_wrote_str = "" + bytes_wrote;
-	string length_str = "" + dataLength;
-	LOG4CXX_ERROR(qfsfh_logger, "Was able to write only " << bytes_wrote_str << " bytes , instead of " << length_str);
-	THROW_EXCEPTION(AppendStoreWriteException,  "Was able to write only " + bytes_wrote_str + ", instead of " + length_str);
+		string bytes_wrote_str = "" + bytes_wrote;
+		string length_str = "" + dataLength;
+		LOG4CXX_ERROR(qfsfh_logger, "Was able to write only " << bytes_wrote << " bytes , instead of " << length);
+		THROW_EXCEPTION(AppendStoreWriteException,  "Was able to write only " + bytes_wrote_str + ", instead of " + length_str);
     }
-    
-    return bytes_wrote;
+
+    LOG4CXX_INFO(qfsfh_logger, "Wrote " << length << " bytes into file(" << filename << ")");    
+    int x = qfshelper->kfsClient->Tell(fd);
+    return x;
 }
 
 int QFSFileHelper::Append(char *buffer, int length) {
 
- if(fd == -1)
-      Open();
+	if(fd == -1) {
+    	Open();
+	}
 
     int dataLength = length + sizeof(Header);
     Header header(length);
@@ -147,25 +153,27 @@ int QFSFileHelper::Append(char *buffer, int length) {
     if( bytes_wrote != dataLength) {
         string bytes_wrote_str = "" + bytes_wrote;
         string length_str = "" + dataLength;
-        LOG4CXX_ERROR(qfsfh_logger, "XXXXXXXXXXXX Was able to append only " << bytes_wrote_str << " bytes , instead of " << length_str);
+        LOG4CXX_ERROR(qfsfh_logger, "Was able to append only " << bytes_wrote_str << " bytes , instead of " << length_str);
         LOG4CXX_ERROR(qfsfh_logger, "Error " << KFS::ErrorCodeToStr(bytes_wrote));  
-        // THROW_EXCEPTION(AppendStoreWriteException,  "Was able to append only " + bytes_wrote_str + ", instead of " + length_str);
+        THROW_EXCEPTION(AppendStoreWriteException,  "Was able to append only " + bytes_wrote_str + ", instead of " + length_str);
     }
 
+	LOG4CXX_INFO(qfsfh_logger, "Append " << length << " bytes into file(" << filename << ")");    
 
     return bytes_wrote;
 }
 
-int QFSFileHelper::WriteData(char *buffer, int length) {
-   if(fd == -1)
-      Open();
+int QFSFileHelper::WriteData(char *buffer, int dataLength) {
+    if(fd == -1) {
+	   	Open();
+    }
 
+/*
     int dataLength = length;
-
     string data(dataLength, 0);
     memcpy(&data[0], buffer, length);
-
-    int bytes_wrote = qfshelper->kfsClient->Write(fd, data.c_str(), dataLength);
+*/
+    int bytes_wrote = qfshelper->kfsClient->Write(fd, buffer, dataLength);
 
     
     if( bytes_wrote != dataLength) {
@@ -174,6 +182,8 @@ int QFSFileHelper::WriteData(char *buffer, int length) {
                 LOG4CXX_ERROR(qfsfh_logger, "Was able to write only " << bytes_wrote_str << ", instead of " << length_str);
                 THROW_EXCEPTION(AppendStoreWriteException,  "Was able to write only " + bytes_wrote_str + ", instead of " + length_str);
     }
+
+	LOG4CXX_INFO(qfsfh_logger, "WriteDATA " << dataLength << " bytes into file(" << filename << ")");    
     
     return bytes_wrote;
 }
@@ -181,7 +191,10 @@ int QFSFileHelper::WriteData(char *buffer, int length) {
 int QFSFileHelper::Flush(char *buffer, int length) {
     int bytes_wrote = Write(buffer, length);
     qfshelper->kfsClient->Sync(fd);
-    return qfshelper->getSize(filename);
+    int x = qfshelper->kfsClient->Tell(fd);
+    LOG4CXX_INFO(qfsfh_logger, " calling tell instead of size in Flush : " << x);
+    return x; //Tell(fd)
+    // return qfshelper->getSize(filename);
 }
 
 
@@ -198,13 +211,12 @@ void QFSFileHelper::Seek(int offset) {
 
 uint32_t QFSFileHelper::GetNextLogSize() {
     char *buffer = new char[sizeof(Header)];
-    //for(int i=0; i < sizeof(Header); i++) {
-    // *(buffer + i) = 0;
-    //}
+	/* setting the buffer to zero, to avoid garbage data */
     memset(buffer, 0, sizeof(Header));
     Header *header = new Header(-1);
     Read(buffer, sizeof(Header));
     header = (Header *)buffer;
+	LOG4CXX_INFO(qfsfh_logger, "GetNextLogSize - " << filename << " - " << header->data_length);    
     return header->data_length;
 }
 
@@ -217,6 +229,3 @@ string QFSFileHelper::get_mode() {
 		default : return "DEFAULT";
 	}
 }
-
-
-

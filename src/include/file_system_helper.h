@@ -25,7 +25,7 @@ class FileSystemHelper {
   /* checks whether directory "dirname" exits or not */
   virtual bool IsDirectoryExists(string dirname) {return false;}
   /* gets file Size */
-  virtual int getSize(string fname) {return 0;}
+  virtual long getSize(string fname) {return -1;}
   /* create Directory */
   virtual int CreateDirectory(string dirname) {return 0;}
 };

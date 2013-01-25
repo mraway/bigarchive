@@ -14,37 +14,42 @@ LoggerPtr iv_logger(Logger::getLogger( "appendstore.chunk_impl"));
 
 
 IndexVector::IndexVector(const std::string& fname)
- {
-    DOMConfigurator::configure("/home/prakash/log_config.xml");
-     LoadFromFile(fname);
- }
+{
+	DOMConfigurator::configure("/home/prakash/log_config.xml");
+	LoadFromFile(fname);
+}
  
 IndexRecord IndexVector::at(uint32_t idx) const
 {
-     return mValues.at(idx);
+	return mValues.at(idx);
 }
 
 void IndexRecord::toBuffer(char *buffer) {
- uint32_t s_offset = sizeof(OffsetType);
- uint32_t s_index = sizeof(IndexType);
- memcpy(buffer, &mOffset, s_offset);
- memcpy((buffer + (s_offset)), &mIndex, s_index);
+	uint32_t s_offset = sizeof(OffsetType);
+	uint32_t s_index = sizeof(IndexType);
+	memcpy(buffer, &mOffset, s_offset);
+	memcpy((buffer + (s_offset)), &mIndex, s_index);
 }
 
 void IndexRecord::fromBuffer(char *buffer) {
- uint32_t s_offset = sizeof(OffsetType);
- uint32_t s_index = sizeof(IndexType);
- memcpy(&mOffset, buffer, s_offset);
- memcpy(&mIndex, (buffer + (s_offset)), s_index);
+	uint32_t s_offset = sizeof(OffsetType);
+	uint32_t s_index = sizeof(IndexType);
+	memcpy(&mOffset, buffer, s_offset);
+	memcpy(&mIndex, (buffer + (s_offset)), s_index);
 }
 
 
-IndexVector::const_index_iterator IndexVector::find(IndexType key) const
+IndexVector::const_index_iterator IndexVector::find(IndexType key, bool &is_begin) const
 {
     uint32_t pos;
     if (bisearch(&mValues[0], 0, mValues.size(), key, pos)) //key exists
     {
-        return begin()+pos;
+	is_begin = false;
+	if(pos == 0) {
+	 is_begin = true;
+	 return begin();
+	}
+        return begin() + pos - 1;
     }
     else
     {
@@ -77,20 +82,18 @@ void IndexVector::LoadFromFile(const std::string& fname)
     // if (size) 
     //     condition size!=0 is not correct due to latency
   
-    // CHKIT
-    //
-    LOG4CXX_INFO(iv_logger, "reading index from file : " << fname);
+    LOG4CXX_DEBUG(iv_logger, "reading index from file : " << fname);
  
     QFSHelper *qfsHelper = new QFSHelper();
     qfsHelper->Connect();//"host", 30000);
     
     int file_size = qfsHelper->getSize(fname);
 
-    
-    LOG4CXX_INFO(iv_logger, "index file size is : " << file_size);
+    LOG4CXX_DEBUG(iv_logger, "index file size is : " << file_size);
+
     if(file_size <= 0) {
-     LOG4CXX_INFO(iv_logger, "not reading index file, because size is : " << file_size);
-     return;
+		LOG4CXX_INFO(iv_logger, "not reading index file, because size is : " << file_size);
+    	return;
     }
 
     QFSFileHelper *qfsFH = new QFSFileHelper(qfsHelper, fname, O_RDONLY); 
@@ -100,13 +103,10 @@ void IndexVector::LoadFromFile(const std::string& fname)
         do
         {
             uint32_t indexSize = qfsFH->GetNextLogSize();
-            LOG4CXX_INFO(iv_logger, "Index size from getNextLogSize : " << indexSize);
-	    // LOG4CXX_INFO(iv_logger, "IndexRecord size : " << sizeof(IndexRecord));
+			LOG4CXX_DEBUG(iv_logger, "Index size from getNextLogSize : " << indexSize);
             if (indexSize != 0)
             {
-
-                char *buffer = new char[indexSize];
-		// indexSize should be equal to IndexRecord Size !!!
+                char *buffer = new char[indexSize]; // indexSize should be equal to IndexRecord Size !!!
                 qfsFH->Read(buffer, indexSize);
                 IndexRecord r;
                 r.fromBuffer(buffer);
@@ -128,6 +128,8 @@ void IndexVector::LoadFromFile(const std::string& fname)
         }
         THROW_EXCEPTION(AppendStoreReadException, "Load index file exception " + e.ToString());
     }
+    qfsHelper->DisConnect();
+    LOG4CXX_INFO(iv_logger,"IndexVector::LoadedfromFile " << fname);
 }
 
 bool IndexVector::bisearch(const IndexRecord* val_v, uint32_t start, uint32_t nele,
@@ -161,6 +163,8 @@ bool IndexVector::bisearch(const IndexRecord* val_v, uint32_t start, uint32_t ne
             last = mid - 1;
         }
     }
+
+    // pos = pos - 1;
 
     if ( !found ) pos = last + 1;
     return found;
