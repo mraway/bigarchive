@@ -5,7 +5,7 @@
 #include <map>
 #include <vector>
 #include <string>
-#include "../exception/exception.h"
+#include "exception.h"
 #include <stdint.h>
 
 namespace marshall
