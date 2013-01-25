@@ -1,7 +1,3 @@
-/**
- * Sub-class of apsara::cangjie::Message should include this file.
- */
-
 #ifndef SERIALIZE_H
 #define SERIALIZE_H
 
@@ -9,7 +5,7 @@
 #include <map>
 #include <vector>
 #include <string>
-#include "exception.h"
+#include "../exception/exception.h"
 #include <stdint.h>
 
 namespace marshall
