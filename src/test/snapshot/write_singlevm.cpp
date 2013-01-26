@@ -13,18 +13,20 @@ void getvmIDAndsnapshotID(string path, string &vmid, string &snapid) {
 
 }
 
-string ROOT_DIRECTORY = "SNAPSHOT";
+string ROOT_DIRECTORY = "root";
 
 int main(int argc, char *argv[]) {
 	PanguAppendStore *pas = NULL;
 	StoreParameter sp = StoreParameter(); ;
 	std::stringstream stream;
-	string snapshotName;
+	string vmName, vmFullName;
 	string storeName;
 	string sampleFile;
 	string snapshotFile;
 	string vmID;
 	string snapshotID;
+	string vmName_p1, vmName_p2, type;
+	string handle;
 
 	if(argc < 3) { 
 		cout << endl << "enter snapshot file path and sample file path";
@@ -34,10 +36,28 @@ int main(int argc, char *argv[]) {
 	snapshotFile = string(argv[1]);
 	sampleFile = string(argv[2]);
 
-	getvmIDAndsnapshotID(snapshotFile, vmID, snapshotID);
+	vmFullName = snapshotFile.substr(snapshotFile.find_last_of('/') + 1);
+	if(vmFullName != "") {
+		// sscanf(vmName, "VM-249804CB.1000-17691-22391-full.vhd.v4", );
+		// sscanf(vmFullName.c_str(), "%s-%s-%d-full.vhd.%s", vmName_p1, vmName_p2, &snapID, type);
+		type = vmFullName.substr(vmFullName.find_last_of('.') + 1);
+		vmName = vmFullName.substr(0, 22);
+		vmID = vmName;
+		snapshotID = vmFullName.substr(23, vmFullName.find_first_of('-', 23) - 23);
+	}
+
+	cout << endl << "Snapshot file -------- " << snapshotFile;
+	cout << endl << "Sample file ---------- " << sampleFile;
+	cout << endl << "Snapshot Name -------- " << vmName;
+	cout << endl << "vm ID ---------------- " << vmID;
+	cout << endl << "snapshot ID ---------- " << snapshotID;
+	cout << endl << "vmtype --------------- " << type;
+	
+	exit(-1);
 
 	/* Init Append Store */
-	stream << ROOT_DIRECTORY << "/" << snapshotName;
+	stream.str("");
+	stream << ROOT_DIRECTORY << "/" << vmName << "/" << "append";
 	storeName = stream.str();
 	sp.mPath = storeName;
 	sp.mAppend = true;
@@ -61,23 +81,33 @@ int main(int argc, char *argv[]) {
 		blockMetaVec = segmentMeta.block_list_;
 		vector<BlockMeta>::iterator blockMetaIter = blockMetaVec.begin();
 		while( blockMetaIter != blockMetaVec.end()) {
-			string handle = pas->Append(blockMetaIter->data_);
-			blockMetaIter->handle_ = 123;
+			handle = pas->Append(blockMetaIter->data_);
+			// do we need to set the data null ???
 			memcpy(& (blockMetaIter->handle_), &handle, sizeof(blockMetaIter->handle_));
 		} 
 		// serialize segmentMeta and write
 		sstream.str("");
 		segmentMeta.Serialize(sstream);
-		string h = pas->Append(sstream.str().c_str());
+		handle = pas->Append(sstream.str().c_str());
 		// update segmentMeta handle
-		memcpy(& (segmentMeta.handle_), &h, sizeof(segmentMeta.handle_));
+		memcpy(& (segmentMeta.handle_), &handle, sizeof(segmentMeta.handle_));
 		// add segmentmeta to snapshotMeta
-		snapshotMeta.segment_list_.push_back(segmentMeta);
+		snapshotMeta.AddSegment(segmentMeta);
 	}
 
 	// write snapshotMeta to file !! 
-
+	QFSHelper *fsh = new QFSHelper();
+	fsh->Connect();
+	stream.str("");
+	stream << "ROOT_DIRECTORY" << "/" << vmName;
+	fsh->CreateDirectory(stream.str());
+	QFSFileHelper *fh = new QFSFileHelper(fsh, stream.str() + "/" + snapshotID, O_WRONLY);
+	sstream.str("");
+	snapshotMeta.Serialize(sstream);
+	// fh->Write(sstream.str().c_str(), sstream.str().size());
+	fh->Close();
 	pas->Flush();
 	pas->Close();
 	return 0;
 }
+
