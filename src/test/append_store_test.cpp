@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
 	for(t = 0; t < TRIES; t++) {
 		StoreParameter sp = StoreParameter(); 
 		std::stringstream sstm;
-		sstm << "//TEST//SIZE_" << MB << "//TRY_" << t;
+		sstm << "//TESTREAD//SIZE_" << MB << "//TRY_" << t;
 		string store_name = sstm.str();
 		sp.mPath = store_name;
 		sp.mAppend = true;
