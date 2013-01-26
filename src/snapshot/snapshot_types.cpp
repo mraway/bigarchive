@@ -135,6 +135,13 @@ uint64_t SnapshotMeta::Size()
     return segment_list_.back().end_offset_;
 }
 
+void SnapshotMeta::AddSegment(const SegmentMeta& sm)
+{
+    segment_list_.push_back(sm);
+    size_ += segment_list_.back().Size();
+    segment_list_.back().end_offset_ = size_;
+}
+
 
 
 
