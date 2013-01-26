@@ -1,0 +1,4 @@
+env = Import('*')
+env = env.Clone()
+#env = Environment()
+env.Program(target = "data_source_test", source = ["dedup_types.cpp", "snapshot_types.cpp", "data_source.cpp", "data_source_test.cpp", "exception.cpp"], LIBS=["stdc++", "ssl"])
