@@ -60,7 +60,12 @@ SConscript(SOURCE_HOME + "/" + project + '/SConscript', exports=['project'])
 project = 'snapshot'
 SConscript(SOURCE_HOME + "/" + project + "/SConscript", exports=['project'])
 
+<<<<<<< HEAD
 project = 'append-store'
 SConscript(SOURCE_HOME + "/" + project + "/SConscript", exports=['project'])
+=======
+project = 'snapshot'
+SConscript(SOURCE_HOME + "/" + project + "/SConscript", export=['project'])
+>>>>>>> 7452ee832ab05579a79840e1598efa0ee9cf80a1
 #project = 'test'
 #SConscript(SOURCE_HOME + "/" + project + '/SConscript', exports=['project'])
