@@ -73,8 +73,6 @@ int main(int argc, char* argv[]) {
 		string store_name = sstm.str();
 		sp.mPath = store_name;
 		sp.mAppend = false;
-		DataFileCompressionFlag dfcf = COMPRESSOR_LZO;
-		sp.mCompressionFlag = dfcf;//COMPRESSOR_LZO;
 		st = time(NULL);		
 		start = clock();
 		PanguAppendStore *pas = new PanguAppendStore(sp, false);

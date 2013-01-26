@@ -32,7 +32,7 @@ int main(int argc, char* argv[]) {
 	long TOTAL_SIZE = 1024  * 1024;// * 1024 * MB;
 	long CHUNK_SIZE = 2 * 1024; // 2048
 	long NUM_CHUNKS = 0;
-	long TRIES = 100;
+	long TRIES = 1;
 	
 
 	// cout << endl << argv[0];
@@ -51,7 +51,7 @@ int main(int argc, char* argv[]) {
 		  QFSHelper *qfs = new QFSHelper();
   		  qfs->Connect();
 			std::stringstream sstm;
-			sstm << "//TEST_FS//SIZE_" << MB << "//TRY_" << t;
+			sstm << "//TESTFS//SIZE_" << MB;// << "//TRY_" << t;
 			string new_file_name = sstm.str();
 
 			QFSFileHelper *qfsfh = new QFSFileHelper(qfs, new_file_name, O_WRONLY);
