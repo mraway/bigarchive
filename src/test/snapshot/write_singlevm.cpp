@@ -6,12 +6,9 @@
 #include "append_store_types.h"
 #include "store.h"
 #include "data_source.h"
+#include "timer.h"
 
 using namespace std;
-
-void getvmIDAndsnapshotID(string path, string &vmid, string &snapid) {
-
-}
 
 string ROOT_DIRECTORY = "root";
 
@@ -27,6 +24,8 @@ int main(int argc, char *argv[]) {
 	string snapshotID;
 	string vmName_p1, vmName_p2, type;
 	string handle;
+	Timer timer = Timer();
+	timer.start();
 
 	if(argc < 3) { 
 		cout << endl << "enter snapshot file path and sample file path";
@@ -38,8 +37,6 @@ int main(int argc, char *argv[]) {
 
 	vmFullName = snapshotFile.substr(snapshotFile.find_last_of('/') + 1);
 	if(vmFullName != "") {
-		// sscanf(vmName, "VM-249804CB.1000-17691-22391-full.vhd.v4", );
-		// sscanf(vmFullName.c_str(), "%s-%s-%d-full.vhd.%s", vmName_p1, vmName_p2, &snapID, type);
 		type = vmFullName.substr(vmFullName.find_last_of('.') + 1);
 		vmName = vmFullName.substr(0, 22);
 		vmID = vmName;
@@ -52,7 +49,8 @@ int main(int argc, char *argv[]) {
 	cout << endl << "vm ID ---------------- " << vmID;
 	cout << endl << "snapshot ID ---------- " << snapshotID;
 	cout << endl << "vmtype --------------- " << type;
-	
+ 	double d = timer.stop();
+	cout << d << " milliseconds";
 	exit(-1);
 
 	/* Init Append Store */
@@ -104,7 +102,7 @@ int main(int argc, char *argv[]) {
 	QFSFileHelper *fh = new QFSFileHelper(fsh, stream.str() + "/" + snapshotID, O_WRONLY);
 	sstream.str("");
 	snapshotMeta.Serialize(sstream);
-	// fh->Write(sstream.str().c_str(), sstream.str().size());
+	fh->Write((char *)sstream.str().c_str(), sstream.str().size());
 	fh->Close();
 	pas->Flush();
 	pas->Close();

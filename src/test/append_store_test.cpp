@@ -5,6 +5,7 @@
 #include <time.h>
 #include "append_store_types.h"
 #include "store.h"
+#include "timer.h"
 /*
 #include <boost/chrono.hpp>
 #include <boost/thread.hpp>
@@ -53,7 +54,7 @@ int main(int argc, char* argv[]) {
 	long CHUNK_SIZE = 4096; // 2048
 	long NUM_CHUNKS = 0;
 	long TRIES = 1;
-
+	Timer timer = Timer();
 	st = time(NULL);
 	// cout << endl << argv[0];
 	// cout << endl << argv[1];
@@ -67,6 +68,7 @@ int main(int argc, char* argv[]) {
 	cout << endl << chunk_data;
 	cout << endl << "---------------------------------------------------------";
 	for(t = 0; t < TRIES; t++) {
+		timer.start();
 		StoreParameter sp = StoreParameter(); 
 		std::stringstream sstm;
 		sstm << "//TESTREAD//SIZE_" << MB << "//TRY_" << t;
@@ -89,23 +91,25 @@ int main(int argc, char* argv[]) {
 		
 		pas->Flush();
 		pas->Close();
-		et = time(NULL);		
-		end = clock();		
-		dif = ((double(end - start) * 1000) / CLOCKS_PER_SEC);
-		total_time += dif;
-		cout << endl << "Time taken for (" << store_name << ") : " << dif << " milli seconds ";
-		cout << endl << "Time taken " << (et - st) << " seconds";
+		//et = time(NULL);		
+		//end = clock();		
+		//dif = ((double(end - start) * 1000) / CLOCKS_PER_SEC);
+		//total_time += dif;
+		//cout << endl << "Time taken for (" << store_name << ") : " << dif << " milli seconds ";
+		//cout << endl << "Time taken " << (et - st) << " seconds";
 		total_time_1 += (et - st);
+		double d = timer.stop();
+		cout << endl << d << " milli seconds";
 	}
-	cout << endl << "total size is " << (TOTAL_SIZE / (1024 * 1024)) << " MB";
-	cout << endl <<	"chunk size is " << CHUNK_SIZE;
-	cout << endl << "num chunks is " << NUM_CHUNKS;
+	//cout << endl << "total size is " << (TOTAL_SIZE / (1024 * 1024)) << " MB";
+	//cout << endl <<	"chunk size is " << CHUNK_SIZE;
+	//cout << endl << "num chunks is " << NUM_CHUNKS;
 
-	cout << endl << "total time taken " << total_time;
-	cout << endl << "average time to insert " << MB << "MB - " << (total_time / TRIES) << " milli seconds";
-	cout << endl << "total time taken " << total_time_1;
-	cout << endl << "average time to insert " << MB << "MB - " << (total_time_1 / TRIES) << " seconds";
-	cout << endl;
+	//cout << endl << "total time taken " << total_time;
+	//cout << endl << "average time to insert " << MB << "MB - " << (total_time / TRIES) << " milli seconds";
+	//cout << endl << "total time taken " << total_time_1;
+	//cout << endl << "average time to insert " << MB << "MB - " << (total_time_1 / TRIES) << " seconds";
+	//cout << endl;
     /*
 	StoreParameter sp = StoreParameter(); 
 	sp.mPath = "/root/store06";

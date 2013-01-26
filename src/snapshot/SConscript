@@ -1,7 +1,6 @@
 import glob, shutil
 
-Import('env', 'project', 'mymode', 'debugcflags', 'releasecflags', 'PROJECT_HOME', 'SOURCE_HOME', 'BINARY_HOME', 'LIB_HOME', 'INCLUDE_HOME'
-	, 'EXCEPTION_HOME')
+Import('env', 'project', 'mymode', 'debugcflags', 'releasecflags', 'PROJECT_HOME', 'SOURCE_HOME', 'BINARY_HOME', 'LIB_HOME', 'INCLUDE_HOME', 'EXCEPTION_HOME')
 
 localenv = env.Clone()
 
