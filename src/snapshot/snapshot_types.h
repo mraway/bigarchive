@@ -66,6 +66,7 @@ public:
     /* override */ int64_t GetSize();
     uint64_t GetSegmentSize(size_t index);
     uint64_t Size();
+    void AddSegment(const SegmentMeta& sm);
 };
 
 #endif // _SNAPSHOT_TYPES_H_
