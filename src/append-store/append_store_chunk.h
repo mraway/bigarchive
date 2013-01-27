@@ -13,6 +13,9 @@
 #include "CompressionCodec.h"
 #include <stdio.h>
 
+
+using namespace std;
+
 struct Defaults
 {
     static const char* IDX_DIR;

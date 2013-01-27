@@ -4,7 +4,7 @@
 #include "exception.h"
 #include <map>
 #include <string>
-
+#include <timer.h>
 #include <log4cxx/logger.h>
 #include <log4cxx/xml/domconfigurator.h>
 
@@ -53,6 +53,8 @@ Scanner* PanguAppendStore::GetScanner()
 
 std::string PanguAppendStore::Append(const std::string& data)
 {
+    Timer t;
+    t.start();
     if (!mAppend) {
         THROW_EXCEPTION(AppendStoreWriteException, "Cannot append for read-only store");
     }
@@ -68,7 +70,7 @@ std::string PanguAppendStore::Append(const std::string& data)
     h.mChunkId = p_chunk->GetID();
 
     LOG4CXX_INFO(asimpl_logger, "Store::Append " << mRoot << "mChunkId : " << p_chunk->GetID() << ", mIndex : " << h.mIndex << ", size : " << data.size());
-
+    cout << endl << "Time : Store::Append() : " << t.stop() << " ms";
     return h.ToString();
 }
 
@@ -157,7 +159,9 @@ void PanguAppendStore::Remove(const std::string& h)
 }
 
 void PanguAppendStore::Close() {
- 
+ Timer t;
+ t.start();
+
 	if(mAppend) {
 		LOG4CXX_INFO(asimpl_logger, "In APPEND mode : Close last append chunk");
 		Chunk* p_chunk = mCurrentAppendChunk.get();//LoadAppendChunk(); 
@@ -180,6 +184,7 @@ void PanguAppendStore::Close() {
 	
 	LOG4CXX_INFO(asimpl_logger, "Store::Closed - All associated Chunks Closed");
 	mFileSystemHelper->DisConnect();
+  cout << endl << "Time Store::Close() : " << t.stop() << " ms";
 }
 
 void PanguAppendStore::Reload()
@@ -330,20 +335,24 @@ void PanguAppendStore::AllocNextChunk()
 
 Chunk* PanguAppendStore::LoadAppendChunk()
 {
+    Timer t;
+    t.start();
+  
     if (mCurrentAppendChunk.get() != 0)
     {
         if (mCurrentAppendChunk->IsChunkFull() == false)
         {
-	    	LOG4CXX_DEBUG(asimpl_logger, "Loaded Current chunk");
+	    LOG4CXX_DEBUG(asimpl_logger, "Loaded Current chunk");
+    	    cout << endl << "Time Store::LoadAppendChunk() : " << t.stop() << " ms";
             return mCurrentAppendChunk.get();
         }
         else
         {
-	 		/* Close previous chunk and allocate new chunk */
-	 		Chunk* p_chunk = mCurrentAppendChunk.get();
-	 		p_chunk->Close();
+	 	/* Close previous chunk and allocate new chunk */
+	 	Chunk* p_chunk = mCurrentAppendChunk.get();
+	 	p_chunk->Close();
 	        LOG4CXX_DEBUG(asimpl_logger, "Allocating next chunk, because current chunk is Full");	
-			AllocNextChunk();
+		AllocNextChunk();
         }
     }
     try
@@ -360,7 +369,8 @@ Chunk* PanguAppendStore::LoadAppendChunk()
     {
         THROW_EXCEPTION(AppendStoreWriteException, "Cannot get valid chunk for append");
     }
-	LOG4CXX_INFO(asimpl_logger, "Store::LoadedAppendChunk" );
+    LOG4CXX_INFO(asimpl_logger, "Store::LoadedAppendChunk" ); 
+    cout << endl << "Time Store::LoadAppendChunk() : " << t.stop() << " ms";
     return mCurrentAppendChunk.get();
 }
 

@@ -1,6 +1,6 @@
 #include "append_store_chunk.h"
 #include "exception.h"
-
+#include "timer.h"
 #include <log4cxx/logger.h>
 #include <log4cxx/xml/domconfigurator.h>
 
@@ -10,6 +10,7 @@ using namespace log4cxx::helpers;
 
 LoggerPtr logger(Logger::getLogger( "appendstore.chunk_impl"));
 
+//using namespace std;
 
 const char* Defaults::IDX_DIR = "index/";
 const char* Defaults::DAT_DIR = "data/";
@@ -119,6 +120,8 @@ void Chunk::Flush()
 
 IndexType Chunk::Append(const std::string& data)
 {
+    Timer t;
+    t.start();
     if (IsChunkFull() == true)
     {
         std::stringstream ss;
@@ -126,26 +129,36 @@ IndexType Chunk::Append(const std::string& data)
         THROW_EXCEPTION(AppendStoreWriteException, ss.str());
     }
 
+
     if (mBlockStream.str().size()+data.size() >= DF_MAX_BLOCK_SZ)
     {
         AppendIndex();
     }
 
-    IndexType new_index = GenerateIndex();
 
+    IndexType new_index = ++mMaxIndex; // GenerateIndex();
+
+    // Timer t1; t.start();
     DataRecord r(data, new_index);
     r.Serialize(mBlockStream);
+    // cout << endl <<"DataRecord serializing " << t1.stop() << " ms";
     mFlushCount++;
+
     if (mFlushCount >= mBlockIndexInterval)
     {
         AppendIndex();
     }
-	LOG4CXX_INFO(logger, "Chunk::Append Completed");
+
+    LOG4CXX_INFO(logger, "Chunk::Append Completed");
+    cout << endl << "Time Chunk::Append() : " << t.stop() << " ms";
     return new_index;
 }
 
 void Chunk::AppendIndex()
 {
+    Timer t;
+    t.start();
+
     if (mFlushCount == 0)
     {
         return;
@@ -172,12 +185,12 @@ void Chunk::AppendIndex()
     {
         try
         {
-            int fos = mIndexOutputFH->Flush(buffer, r.Size());
-	    	LOG4CXX_DEBUG(logger, "index flushed : data wrote -- " << buffer);
-		    LOG4CXX_DEBUG(logger, "index flushed : data size --- " << r.Size());
-		    LOG4CXX_DEBUG(logger, "index flushed : index file size (size + data) -- " << fos);
-		    LOG4CXX_DEBUG(logger, "index file size : getSize " << mFileSystemHelper->getSize(mIndexFileName));
-		LOG4CXX_WARN(logger, "Index Flushed into " << mIndexFileName << ":" << r.mIndex << ":" << r.mOffset);
+            int fos = mIndexOutputFH->Write(buffer, r.Size());
+	    LOG4CXX_DEBUG(logger, "index flushed : data wrote -- " << buffer);
+	    LOG4CXX_DEBUG(logger, "index flushed : data size --- " << r.Size());
+	    LOG4CXX_DEBUG(logger, "index flushed : index file size (size + data) -- " << fos);
+	    LOG4CXX_DEBUG(logger, "index file size : getSize " << mFileSystemHelper->getSize(mIndexFileName));
+	    LOG4CXX_WARN(logger, "Index Flushed into " << mIndexFileName << ":" << r.mIndex << ":" << r.mOffset);
             break;
         }
         catch(ExceptionBase& e)
@@ -207,7 +220,8 @@ void Chunk::AppendIndex()
             }
         }
     } while (retryCount <= 1);
-	LOG4CXX_INFO(logger, "Chunk::AppendIndex Completed");
+    LOG4CXX_INFO(logger, "Chunk::AppendIndex Completed");
+    cout << endl << "Time Chunk::AppendIndex : " << t.stop() << " ms";
 };
        
 
@@ -584,27 +598,34 @@ bool Chunk::ReadRaw(const OffsetType& offset, std::string& data)
 OffsetType Chunk::AppendRaw(const IndexType& index, const uint32_t numentry, const std::string& data)
 {
 /*
+	OffsetType result = -1;
+	Timer t;
+	t.start();
         try
         {
-            // CHKIT
+            Timer t;
+	    t.start();
             OffsetType fos = 0;            
             // std::cout << "\nactual data " << data.size(); // << ", data wrote : " << ssref.size();          
             fos = mDataOutputFH->Flush((char*)&data[0], data.size()); 
             //LOG4CXX_DEBUG(logger, "flush -- data wrote ------- " << ssref);
             //LOG4CXX_DEBUG(logger, "flush -- data size wrote -- " << ssref.size());
             LOG4CXX_DEBUG(logger, "flush return value is ----- " << fos);
-            //LOG4CXX_WARN(logger, "Data Flushed : " << ssref.size());
-            return fos;
+            cout << endl << "Write done " << t.stop() << " ms";
+            result = fos;
         }
         //catch(StreamCorruptedException& e)
         catch(ExceptionBase& e)
         {
 		LOG4CXX_ERROR(logger, "Exception while writing");
         }
-}
+	cout << "Time Chunk::AppendRaw : " << t.stop << " ms";
+	return result;
 */
-
     // compress data (data consists of multiple records)
+    Timer t;
+    OffsetType result = -1;
+    t.start();
     CompressionCodecPtr sharedptr = mChunkCodec.lock();
     if (sharedptr == NULL) 
     {
@@ -642,7 +663,9 @@ OffsetType Chunk::AppendRaw(const IndexType& index, const uint32_t numentry, con
 	    LOG4CXX_DEBUG(logger, "flush -- data size wrote -- " << ssref.size());
  	    LOG4CXX_DEBUG(logger, "flush return value is ----- " << fos);
 	    LOG4CXX_WARN(logger, "Data Flushed : " << ssref.size());
-            return fos;
+	    // cout << endl << "Compression and Flush took " << t.stop() << " ms";
+            result = fos;
+	    break;
         }
         //catch(StreamCorruptedException& e)
         catch(ExceptionBase& e)
@@ -675,6 +698,7 @@ OffsetType Chunk::AppendRaw(const IndexType& index, const uint32_t numentry, con
         }
     } while (retryCount <= 1);
 
-    return 0;
+    cout << endl << "Time Chunk::AppendRaw() Compressed : " << t.stop() << " ms";
+    return result;
 }
 

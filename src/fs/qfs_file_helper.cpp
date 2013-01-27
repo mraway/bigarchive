@@ -130,8 +130,8 @@ int QFSFileHelper::Write(char *buffer, int length) {
     }
 
     LOG4CXX_INFO(qfsfh_logger, "Wrote " << length << " bytes into file(" << filename << ")");    
-    int x = qfshelper->kfsClient->Tell(fd);
-    return x;
+    return qfshelper->kfsClient->Tell(fd);
+    // return x;
 }
 
 int QFSFileHelper::Append(char *buffer, int length) {
@@ -189,11 +189,10 @@ int QFSFileHelper::WriteData(char *buffer, int dataLength) {
 }
 
 int QFSFileHelper::Flush(char *buffer, int length) {
-    int bytes_wrote = Write(buffer, length);
+    int pos = Write(buffer, length);
     qfshelper->kfsClient->Sync(fd);
-    int x = qfshelper->kfsClient->Tell(fd);
-    LOG4CXX_INFO(qfsfh_logger, " calling tell instead of size in Flush : " << x);
-    return x; //Tell(fd)
+    LOG4CXX_INFO(qfsfh_logger, " calling tell instead of size in Flush : " << pos);
+    return pos; //Tell(fd)
     // return qfshelper->getSize(filename);
 }
 
