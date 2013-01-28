@@ -1,40 +1,6 @@
-import glob, shutil
+Import('env')
 
-Import('env', 'project', 'mymode', 'debugcflags', 'releasecflags', 'PROJECT_HOME', 'SOURCE_HOME', 'BINARY_HOME', 'LIB_HOME', 'INCLUDE_HOME'
-	, 'EXCEPTION_HOME')
+local_env = env.Clone()
 
-localenv = env.Clone()
-
-buildroot = BINARY_HOME + "/"  + mymode  #holds the root of the build directory tree
-
-builddir = buildroot + '/' + project   #holds the build directory for this project
-
-targetpath = builddir + '/' + project  #holds the path to the executable in the build directory
-
-print "-----------------------------------------------------------------------------"
-
-print "Building project ........ " + project
-
-localenv.Append(CPPPATH = [INCLUDE_HOME, EXCEPTION_HOME, SOURCE_HOME + "/" + "fs"])
-
-if mymode == 'debug':
-   localenv.Append(CCFLAGS=debugcflags)
-else:
-   localenv.Append(CCFLAGS=releasecflags)
-
-localenv.VariantDir(builddir, ".", duplicate=0)
-
-srclst = map(lambda x: x, glob.glob('*.cpp'))
-
-print "Compiling Sources " ,
-print srclst
-
-pgm = localenv.Object(srclst)
-
-objlst = []
-objlst += map(lambda x: x, glob.glob('*.o'))
-
-for obj in objlst:
-        shutil.copyfile(obj,  BINARY_HOME + "/" + obj)
-
-print "-----------------------------------------------------------------------------"
+appendstore = local_env.StaticLibrary(target = 'appendstore', source = ['append_store_types.cpp', 'common_data_store.cpp', 'append_store_impl.cpp', 'append_store_chunk_impl.cpp', 'append_store_index.cpp', 'append_store_utility.cpp', 'CompressionCodec.cpp', 'LzoCompressor.cpp'])
+local_env.Install(local_env['PROJECT_LIB_PATH'], appendstore)

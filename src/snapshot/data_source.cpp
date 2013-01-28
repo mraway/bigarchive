@@ -53,7 +53,7 @@ bool DataSource::GetSegment(SegmentMeta& sm)
         sm.block_list_.clear();
         sm.block_list_.reserve(seg.blocklist_.size());
         uint32_t offset = 0;
-        for (int i = 0; i < seg.blocklist_.size(); ++i) {
+        for (size_t i = 0; i < seg.blocklist_.size(); ++i) {
             if (seg.blocklist_[i].size_ > sample_data_size_)
                 return false;
             memcpy(bm.cksum_, seg.blocklist_[i].cksum_, CKSUM_LEN);

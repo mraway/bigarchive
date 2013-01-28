@@ -1,11 +1,11 @@
 #ifndef _APPEND_STORE_H
-#define _APPEND_STROE_H
+#define _APPEND_STORE_H
 
 #include <deque>
 #include <set>
 #include "store.h"
 #include "append_store_types.h"
-#include "exception.h"
+#include "../exception/exception.h"
 #include "append_store_chunk.h"
 #include "CompressionCodec.h"
 

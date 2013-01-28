@@ -4,7 +4,7 @@
 
 #include "file_helper.h"
 #include "qfs_file_system_helper.h"
-#include "exception.h"
+#include "../exception/exception.h"
 #include <fcntl.h>
 #include <stdlib.h>
 #include <cstring>
