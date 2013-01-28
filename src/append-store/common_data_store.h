@@ -9,7 +9,7 @@
 
 #include "serialize.h"
 #include "file_helper.h"
-#include "qfs_file_helper.h"
+#include "../fs/qfs_file_helper.h"
 
 /*
 #include "apsara/common/logging.h"

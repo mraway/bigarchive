@@ -1,6 +1,6 @@
 #include "append_store_index.h"
-#include "exception.h"
-#include "qfs_file_helper.h"
+#include "../exception/exception.h"
+#include "../fs/qfs_file_helper.h"
 
 #include <log4cxx/logger.h>
 #include <log4cxx/xml/domconfigurator.h>
