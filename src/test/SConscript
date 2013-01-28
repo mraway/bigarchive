@@ -1,54 +1,11 @@
-import glob, shutil, os
+Import('env')
 
-Import('env', 'project', 'mymode', 'debugcflags', 'releasecflags', 'PROJECT_HOME', 'SOURCE_HOME', 'BINARY_HOME', 'LIB_HOME', 'INCLUDE_HOME', 'EXCEPTION_HOME')
+local_env = env.Clone()
 
-localenv = env.Clone()
+env.Install(env['PROJECT_BIN_PATH'], 'sample_data')
 
-buildroot = BINARY_HOME + "/"  + mymode  #holds the root of the build directory tree
+data_source_test = env.Program(target = 'data_source_test', source = ['data_source_test.cpp'], LIBS = ['snapshot', 'exception', 'ssl'])
+env.Install(env['PROJECT_BIN_PATH'], data_source_test)
 
-builddir = buildroot + '/' + project   #holds the build directory for this project
-
-targetpath = builddir + '/' + project  #holds the path to the executable in the build directory
-
-print "-----------------------------------------------------------------------------"
-
-print "Building project ........ " + project
-
-
-localenv.Append(CPPFLAGS=['-pthread', '-Wall', '-g'])
-localenv.Append(CPPPATH = [INCLUDE_HOME, EXCEPTION_HOME, SOURCE_HOME + "/fs", "/usr/include/apr-1", "aprutil-1", "pthread"])
-
-localenv.VariantDir(builddir, ".", duplicate=0)
-
-srclst = [] # map(lambda x: x, glob.glob('*.h'))
-
-srclst += map(lambda x: x, glob.glob('*.cpp'))
-
-print "Compiling Sources " ,
-print srclst
-
-localenv.Program(source=['test_example.cpp', 
-			BINARY_HOME + "//exception.o"], 
-		target= BINARY_HOME + '//test//test_example')
-
-
-dict = localenv.ParseFlags(['-Wall', '-DBOOST_SP_USE_QUICK_ALLOCATOR', '-O2', '-g', '-fPIC', 'rdynamic'])
-print dict
-
-srclst = [ 'test_qfsconnect.cpp' , BINARY_HOME + '/qfs_file_helper.o',  BINARY_HOME + '/qfs_file_system_helper.o',  BINARY_HOME + '/exception.o', LIB_HOME + '/libqfs_client.a',  LIB_HOME + '/libqfs_qcdio.a',  LIB_HOME + '/libqfs_io.a',  LIB_HOME + '/libqfs_common.a',  LIB_HOME + '/libqfs_qcdio.a',  LIB_HOME + '/libqfs_qcrs.a', '/usr/local/lib/liblog4cxx.a']
-
-libs = ['pthread', 'rt', 'z', 'boost_regex-mt', 'crypt', 'apr-1', 'aprutil-1']
-
-libpaths = [SOURCE_HOME + '/include', SOURCE_HOME + '/fs', SOURCE_HOME + '/exception']
-
-localenv.Append(CPPDEFINES = ['BOOST_SP_USE_QUICK_ALLOCATOR'], CCFLAGS = ['-Wall', '-O2', '-g', '-fPIC'])
-
-# localenv
-
-localenv.Program(source= srclst, LIBS = libs, CPPPATH = libpaths, CPPDEFINES = ['BOOST_SP_USE_QUICK_ALLOCATOR'], CCFLAGS = ['-Wall', '-O2', '-g', '-fPIC'], target = BINARY_HOME + "//test//qfs_connect")
-
-print "-----------------------------------------------------------------------------"
-
-
-#[prakash@dhcp-46-222 bigarchive]$ g++ -Wall -DBOOST_SP_USE_QUICK_ALLOCATOR -O2 -g  -fPIC src/test/test_qfsconnect.cpp -o qfsconnect -rdynamic ./bin/qfs_file_helper.o ./bin/qfs_file_system_helper.o ./bin/exception.o ./lib/libqfs_client.a ./lib/libqfs_qcdio.a -lpthread -lrt ./lib/libqfs_io.a ./lib/libqfs_common.a ./lib/libqfs_qcdio.a -lpthread -lz -lrt -lboost_regex-mt -lcrypto ./lib/libqfs_qcrs.a -Isrc/include -Isrc/fs -Isrc/exception /usr/local/lib/liblog4cxx.a -lapr-1 -laprutil-1 
-
+append_store_read = env.Program(target = 'append_store_read', source = ['append_store_read.cpp'], LIBS = env['PROJ_LIBS'] + env['LOG_LIBS'] + env['QFS_LIBS'] + env['BASIC_LIBS'])
+env.Install(env['PROJECT_BIN_PATH'], append_store_read)
