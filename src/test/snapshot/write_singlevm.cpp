@@ -1,11 +1,11 @@
 #include "store.h"
-#include "append_store.h"
+#include "../../append-store/append_store.h"
 #include <iostream>
 #include <cstdlib>
 #include <time.h>
-#include "append_store_types.h"
+#include "../../append-store/append_store_types.h"
 #include "store.h"
-#include "data_source.h"
+#include "../../snapshot/data_source.h"
 #include "timer.h"
 
 using namespace std;
