@@ -4,7 +4,7 @@
 
 #include "file_system_helper.h"
 #include "KfsClient.h"
-#include "exception.h"
+#include "../exception/exception.h"
 #include "KfsAttr.h"
 #include <iostream>
 #include <fstream>
