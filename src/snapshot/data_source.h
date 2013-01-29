@@ -5,6 +5,7 @@
 #define _DATA_SOURCE_H_
 
 #include <fstream>
+#include <cstdlib>
 #include "snapshot_types.h"
 
 using namespace std;

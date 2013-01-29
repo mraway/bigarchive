@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
 	sp.mAppend = true;
 	pas = new PanguAppendStore(sp, true);
 	cout << endl << "For Append Store creation : " << timer.stop() << " ms";
-	// exit(-1);
+	exit(-1);
 	/* DataStore and snapshot types */
 	
 	DataSource ds(snapshotFile, sampleFile);	
@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
 	Handle h;
 
 	while(true) {
-		//timer.start();
+		timer.start();
 		bool gs = ds.GetSegment(segmentMeta);
 		if(!gs) break;
 		for(size_t i=0; i < segmentMeta.block_list_.size(); i++) {
@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
 			if(blkCnt == 10000) { 
 				cout << endl << "Wrote 10000 Blocks " << blkTimer.stop() << " ms";
 				blkCnt = 0;
-			}	
+			}
 		}
 		// serialize segmentMeta and write
 		sstream.str("");
@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
 		segmentMeta.handle_ = *reinterpret_cast<uint64_t*>(const_cast<char*>(&handle[0]));
 		// add segmentmeta to snapshotMeta
 		snapshotMeta.AddSegment(segmentMeta);
-		cout << endl << "segment done ";
+		cout << endl << "segment done " << timer.stop() << " ms";
 	}
 
 	

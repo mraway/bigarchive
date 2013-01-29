@@ -227,6 +227,7 @@ void Chunk::AppendIndex()
 
 bool Chunk::Read(IndexType index, std::string* data) 
 {
+    Timer t; t.start();
     IndexVector::const_index_iterator it;
     bool is_begin = false;
     if (!IsValid(index) || (it=mIndexMap->find(index, is_begin)) == mIndexMap->end())
@@ -238,7 +239,8 @@ bool Chunk::Read(IndexType index, std::string* data)
         return false;
     }
     
-    OffsetType startOffset = it->mOffset ;
+
+    OffsetType startOffset = it->mOffset;
 
     if(is_begin)
 	startOffset = 0;
@@ -246,12 +248,14 @@ bool Chunk::Read(IndexType index, std::string* data)
     std::string buf;
     bool ret = ReadRaw(startOffset, buf);
     ret = ret && ExtractDataFromBlock(buf, index, data);
-	LOG4CXX_INFO(logger, "Chunk::Read Completed");
+    LOG4CXX_INFO(logger, "Chunk::Read Completed");
+    cout << endl << "Time @ Chunk:Read : " << t.stop();
     return ret;
 }
 
 bool Chunk::ExtractDataFromBlock(const std::string& buf, IndexType index, std::string* data)
 {
+    Timer t; t.start();
     CachePtr cachesharedptr = mCachePtr.lock();
     if (cachesharedptr == NULL)
     {
@@ -287,7 +291,8 @@ bool Chunk::ExtractDataFromBlock(const std::string& buf, IndexType index, std::s
         }
         cachesharedptr->Insert(Handle(mChunkId, r.mIndex), r.mVal);
     } while(true);
-	LOG4CXX_INFO(logger, "Chunk::ExtractDataFromBlock Completed");
+    cout << endl << "Time @ Chunk:ExtractDataFromBlock : " << t.stop() << " ms";
+    LOG4CXX_INFO(logger, "Chunk::ExtractDataFromBlock Completed");
     return ret;
 }
 
@@ -543,8 +548,6 @@ bool Chunk::ReadRaw(const OffsetType& offset, std::string& data)
     try
     {
         mDataInputFH->Seek(offset);
-        // what is next log size ???
-        // CHECK WITH WEI : CHKIT
         uint32_t read_len = mDataInputFH->GetNextLogSize();
         std::string blkdata;
         blkdata.resize(read_len, 0);

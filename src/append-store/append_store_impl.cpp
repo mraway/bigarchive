@@ -11,6 +11,7 @@
 using namespace log4cxx;
 using namespace log4cxx::xml;
 using namespace log4cxx::helpers;
+using namespace std;
 
 LoggerPtr asimpl_logger(Logger::getLogger( "appendstore.impl"));
 
@@ -113,6 +114,7 @@ void PanguAppendStore::Flush()
 
 bool PanguAppendStore::Read(const std::string& h, std::string* data) 
 {
+    Timer t; t.start();
     bool bOK = false;
 
     Handle handle(h);
@@ -124,6 +126,7 @@ bool PanguAppendStore::Read(const std::string& h, std::string* data)
 
     if (mCache->Find(handle, data))
     {
+	cout << endl << "Time @ Store:Read : Cache Hit : " << t.stop() << " ms";
 	LOG4CXX_INFO(asimpl_logger, "Cache Hit in Store for Handle : " << handle.mChunkId << "," << handle.mIndex);
         return true;
     }
@@ -138,7 +141,7 @@ bool PanguAppendStore::Read(const std::string& h, std::string* data)
     bOK = p_chunk->Read(handle.mIndex, data);
 
     LOG4CXX_INFO(asimpl_logger, "Store::Read : " << mRoot << " & mChunkId : " << handle.mChunkId << " & mIndex : " <<  handle.mIndex);
-
+    cout << endl << "Time @ Store:Read : Cache Miss : " << t.stop() << " ms";
     return bOK;
 }
 
@@ -378,21 +381,30 @@ Chunk* PanguAppendStore::LoadAppendChunk()
 
 Chunk* PanguAppendStore::LoadRandomChunk(ChunkIDType id) 
 {
+    Timer t; t.start();
     if (ValidChunkID(id) == false)
     {
         return 0;
     }
 
+    if(mCurrentRandomChunk.get() != 0) {
+    	if(mCurrentRandomChunk.get()->GetID() == id) {
+	     cout << endl << "Time @ Store:LoadRandomChunk : InRandomChunkMap" << t.stop() << " ms";
+	     return mCurrentRandomChunk.get();
+	}
+    }
     ChunkMapType::const_iterator it = mChunkMap.find(id);
     if (it != mChunkMap.end())
     {
+	cout << endl << "Time @ Store:LoadRandomChunk : AlreadyinChunkMap : " << t.stop() << " ms";
         return it->second.get();
     }
 
     mCurrentRandomChunk.reset(new Chunk(mRoot, id, mMeta.maxChunkSize, false, mCodec, mCache));
     assert(mCurrentRandomChunk.get());
     mChunkMap.insert(std::make_pair(id, mCurrentRandomChunk));
-	LOG4CXX_INFO(asimpl_logger, "Store::LoadedRandomChunk" );
+    LOG4CXX_INFO(asimpl_logger, "Store::LoadedRandomChunk" );
+    cout << endl << "Time @ Store:LoadRandomChunk : LoadedNewChunk : " << t.stop() << " ms";
     return mCurrentRandomChunk.get();
 }
 
