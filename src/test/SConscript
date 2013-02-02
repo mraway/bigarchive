@@ -4,12 +4,20 @@ local_env = env.Clone()
 
 env.Install(env['PROJECT_BIN_PATH'], 'sample_data')
 
+# env.Install(env['PROJECT_BIN_PATH'], data_source_test)
+
+
+data_generator_put = env.Program(target = 'data_generator_put', source = ['data_generator_put.cpp'], LIBS = ['snapshot', 'exception', 'ssl'])
+env.Install(env['PROJECT_BIN_PATH'], data_generator_put)
+
+data_generator_get = env.Program(target = 'data_generator_get', source = ['data_generator_get.cpp'], LIBS = ['snapshot', 'exception', 'ssl'])
+env.Install(env['PROJECT_BIN_PATH'], data_generator_get)
+
 data_source_test = env.Program(target = 'data_source_test', source = ['data_source_test.cpp'], LIBS = ['snapshot', 'exception', 'ssl'])
 env.Install(env['PROJECT_BIN_PATH'], data_source_test)
 
 append_store_read = env.Program(target = 'append_store_read', source = ['append_store_read.cpp'], LIBS = env['PROJ_LIBS'] + env['LOG_LIBS'] + env['QFS_LIBS'] + env['BASIC_LIBS'])
 env.Install(env['PROJECT_BIN_PATH'], append_store_read)
-
 
 write_singlevm = env.Program(target = 'write_singlevm', source = ['./snapshot/write_singlevm.cpp'], LIBS = env['PROJ_LIBS'] + env['LOG_LIBS'] + env['QFS_LIBS'] + env['BASIC_LIBS'])
 env.Install(env['PROJECT_BIN_PATH'], write_singlevm)

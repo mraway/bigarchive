@@ -13,7 +13,7 @@ DataSource::DataSource(const string& trace_file, const string& sample_file)
         sample_data_size_ = sample_data_stream.tellg();
 	if(sample_data_size_ < (1024 * 1024)) {
 		cout << endl << "Error : sample data size is less than 1 MB" ;
-		return ;
+		// return ;
 	}
         sample_data_stream.seekg(0, ios_base::beg);
         sample_data_ = new char[sample_data_size_];
@@ -64,7 +64,7 @@ bool DataSource::GetSegment(SegmentMeta& sm)
             memcpy(bm.cksum_, seg.blocklist_[i].cksum_, CKSUM_LEN);
             offset += seg.blocklist_[i].size_;
             bm.end_offset_ = offset;
-	    start = rand() % (sample_data_size_ - (1024 * 1024)); // make sure the sample data is greater than 1 MB
+	    start = rand() % (sample_data_size_ - (10 * 1024)); // make sure the sample data is greater than 1 MB
             bm.data_ = sample_data_ + start; 
             bm.handle_ = 0;
             sm.block_list_.push_back(bm);
