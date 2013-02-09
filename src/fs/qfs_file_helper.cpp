@@ -15,7 +15,7 @@ LoggerPtr qfsfh_logger(Logger::getLogger( "appendstore.qfs_helper"));
 Consturctor for File Helper, performs file related opereations
 */
 QFSFileHelper::QFSFileHelper(QFSHelper *qfshelper, string fname, int mode) {
-    DOMConfigurator::configure("/home/prakash/log_config.xml");
+    DOMConfigurator::configure("Log4cxxConfig.xml");
     this->qfshelper = qfshelper;
     this->filename = fname;
     this->mode = mode;

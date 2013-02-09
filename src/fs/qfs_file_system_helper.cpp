@@ -14,7 +14,7 @@ LoggerPtr qfsfsh_logger(Logger::getLogger( "appendstore.qfsfsh_helper"));
 
 void QFSHelper::Connect() 
 {	
-    DOMConfigurator::configure("/home/prakash/log_config.xml");
+    DOMConfigurator::configure("Log4cxxConfig.xml");
     Connect(string("128.111.46.96"), 20000);
     LOG4CXX_INFO(qfsfsh_logger, "Connected to QFS Master Node");
 }
