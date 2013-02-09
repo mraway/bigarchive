@@ -24,14 +24,14 @@ public:
     /*
      * set one cds index entry
      */
-    bool Set(Checksum cksum, uint64_t offset);
+    bool Set(Checksum& cksum, uint64_t offset);
 
     /*
      * query cds index by block hash
      * return true on found, false on not found
      * if found, the offset of that block in CDS data file is stored in offset
      */
-    bool Get(Checksum cksum, uint64_t* offset);
+    bool Get(Checksum& cksum, uint64_t* offset);
 
     /*
      * query cds index by multiple keys
