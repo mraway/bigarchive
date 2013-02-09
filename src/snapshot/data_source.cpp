@@ -36,7 +36,7 @@ bool DataSource::GetBlock(BlockMeta& bm)
     {
         if (blk.size_ > sample_data_size_)
             return false;
-        memcpy(bm.cksum_, blk.cksum_, CKSUM_LEN);
+        cksum_ = blk.cksum_;
         bm.end_offset_ = blk.size_;
         bm.data_ = sample_data_;
         bm.handle_ = 0;
@@ -56,14 +56,14 @@ bool DataSource::GetSegment(SegmentMeta& sm)
         for (size_t i = 0; i < seg.blocklist_.size(); ++i) {
             if (seg.blocklist_[i].size_ > sample_data_size_)
                 return false;
-            memcpy(bm.cksum_, seg.blocklist_[i].cksum_, CKSUM_LEN);
+            bm.cksum_ = seg.blocklist_[i].cksum_;
             offset += seg.blocklist_[i].size_;
             bm.end_offset_ = offset;
             bm.data_ = sample_data_;
             bm.handle_ = 0;
             sm.block_list_.push_back(bm);
         }
-        memcpy(sm.cksum_, seg.cksum_, CKSUM_LEN);
+        sm.cksum_ = seg.cksum_;
         sm.end_offset_ = offset;
         sm.handle_ = 0;
         return true;

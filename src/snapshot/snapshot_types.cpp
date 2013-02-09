@@ -3,16 +3,18 @@
 
 void BlockMeta::Serialize(ostream& os) const
 {
-    os.write((char*)cksum_, CKSUM_LEN);
+    cksum_.ToStream(os);
     marshall::Serialize(end_offset_, os);
     marshall::Serialize(handle_, os);
+    marshall::Serialize(flags_, os);
 }
 
 void BlockMeta::Deserialize(istream &is)
 {
-    is.read((char*)cksum_, CKSUM_LEN);
+    cksum_.FromStream(is);
     marshall::Deserialize(end_offset_, is);
     marshall::Deserialize(handle_, is);
+    marshall::Deserialize(flags_, is);
 }
 
 BlockMeta* BlockMeta::New()
@@ -25,30 +27,37 @@ void BlockMeta::Copy(const Serializable& from)
     const BlockMeta& bm = dynamic_cast<const BlockMeta&>(from);
     handle_ = bm.handle_;
     data_ = bm.data_;
-    memcpy(cksum_, bm.cksum_, CKSUM_LEN);
+    cksum_ = bm.cksum_;
     end_offset_ = bm.end_offset_;
+    flags_ = bm.flags_;
+    size_ = bm.size_;
 }
 
 int64_t BlockMeta::GetSize()
 {
-    return sizeof(BlockMeta::end_offset_) + sizeof(BlockMeta::data_) + sizeof(BlockMeta::handle_) + CKSUM_LEN;
+    return sizeof(BlockMeta::end_offset_) + sizeof(BlockMeta::data_) 
+        + sizeof(BlockMeta::handle_) + sizeof(BlockMeta::flags_) + CKSUM_LEN;
 }
 
+uint32_t BlockMeta::GetBlockSize()
+{
+    return size_;
+}
+
+/************************** SegmentMeta **************************/
 
 void SegmentMeta::Serialize(ostream &os) const
 {
-    os.write((char*)cksum_, CKSUM_LEN);
+    cksum_.ToStream(os);
     marshall::Serialize(end_offset_, os);
     marshall::Serialize(handle_, os);
-    marshall::Serialize(block_list_, os);
 }
 
 void SegmentMeta::Deserialize(istream &is)
 {
-    is.read((char*)cksum_, CKSUM_LEN);
+    cksum_.FromStream(is);
     marshall::Deserialize(end_offset_, is);
     marshall::Deserialize(handle_, is);
-    marshall::Deserialize(block_list_, is);
 }
 
 SegmentMeta* SegmentMeta::New()
@@ -61,36 +70,54 @@ void SegmentMeta::Copy(Serializable const &from)
     const SegmentMeta& sm = dynamic_cast<const SegmentMeta&>(from);
     end_offset_ = sm.end_offset_;
     handle_ = sm.handle_;
-    memcpy(cksum_, sm.cksum_, CKSUM_LEN);
-    block_list_ = sm.block_list_;
+    cksum_ = sm.cksum_;
+    size_ = sm.size_;
+    segment_recipe_ = sm.segment_recipe_;
 }
 
 int64_t SegmentMeta::GetSize()
 {
-    return sizeof(SegmentMeta::end_offset_) + sizeof(SegmentMeta::handle_) + CKSUM_LEN;
+    return sizeof(SegmentMeta::end_offset_) + sizeof(SegmentMeta::handle_)
+        + sizeof(SegmentMeta::size_) + CKSUM_LEN;
 }
 
 uint32_t SegmentMeta::GetBlockSize(size_t index)
 {
-    if (index < block_list_.size()) {
-        if (index == 0)
-            return block_list_[index].end_offset_;
-        return block_list_[index].end_offset_ - block_list_[index - 1].end_offset_;
+    if (index < segment_recipe_.size()) {
+        return segment_recipe_[index].size_;
     }
     return 0;
 }    
 
-uint32_t SegmentMeta::Size()
+uint32_t SegmentMeta::GetSegmentSize()
 {
-    return block_list_.back().end_offset_;
+    return size_;
 }
+
+void SegmentMeta::SerializeRecipe(ostream& os) const
+{
+    marshall::Serialize(segment_recipe_, os);
+}
+
+void SegmentMeta::DeserializeRecipe(istream& is)
+{
+    marshall::Deserialize(segment_recipe_, is);
+    if (segment_recipe_.size() == 0)
+        return;
+    for (size_t i = 1; i < segment_recipe_.size(); ++i)
+    {
+        segment_recipe_[i].size_ = segment_recipe_[i].end_offset_ 
+            - segment_recipe_[i-1].end_offset_;
+    }
+}
+
+/************************** SnapshotMeta ***************************/
 
 void SnapshotMeta::Serialize(ostream& os) const
 {
     marshall::Serialize(vm_id_, os);
     marshall::Serialize(snapshot_id_, os);
     marshall::Serialize(size_, os);
-    marshall::Serialize(segment_list_, os);
 }
 
 void SnapshotMeta::Deserialize(istream &is)
@@ -98,7 +125,6 @@ void SnapshotMeta::Deserialize(istream &is)
     marshall::Deserialize(vm_id_, is);
     marshall::Deserialize(snapshot_id_, is);
     marshall::Deserialize(size_, is);
-    marshall::Deserialize(segment_list_, is);
 }
 
 SnapshotMeta* SnapshotMeta::New()
@@ -112,7 +138,7 @@ void SnapshotMeta::Copy(const Serializable& from)
     vm_id_ = sm.vm_id_;
     size_ = sm.size_;
     snapshot_id_ = sm.snapshot_id_;
-    segment_list_ = sm.segment_list_;
+    snapshot_recipe_ = sm.snapshot_recipe_;
 }
 
 int64_t SnapshotMeta::GetSize()
@@ -120,26 +146,41 @@ int64_t SnapshotMeta::GetSize()
     return sizeof(SnapshotMeta::size_) + vm_id_.size() + snapshot_id_.size();
 }
 
-uint64_t SnapshotMeta::GetSegmentSize(size_t index)
+uint32_t SnapshotMeta::GetSegmentSize(size_t index)
 {
-    if (index < segment_list_.size()) {
-        if (index == 0)
-            return segment_list_[index].end_offset_;
-        return segment_list_[index].end_offset_ - segment_list_[index - 1].end_offset_;
+    if (index < snapshot_recipe_.size()) {
+        return snapshot_recipe_[index].GetSegmentSize();
     }
     return 0;
 }
 
-uint64_t SnapshotMeta::Size()
+uint64_t SnapshotMeta::GetSnapshotSize()
 {
-    return segment_list_.back().end_offset_;
+    return size_;
 }
 
 void SnapshotMeta::AddSegment(const SegmentMeta& sm)
 {
-    segment_list_.push_back(sm);
-    size_ += segment_list_.back().Size();
-    segment_list_.back().end_offset_ = size_;
+    snapshot_recipe_.push_back(sm);
+    size_ += snapshot_recipe_.back().GetSegmentSize();
+    snapshot_recipe_.back().end_offset_ = size_;
+}
+
+void SnapshotMeta::SerializeRecipe(ostream& os) const
+{
+    marshall::Serialize(snapshot_recipe_, os);
+}
+
+void SnapshotMeta::DeserializeRecipe(istream& is)
+{
+    marshall::Deserialize(snapshot_recipe_, is);
+    if (snapshot_recipe_.size() == 0)
+        return;
+    for (size_t i = 1; i < snapshot_recipe_.size(); ++i)
+    {
+        snapshot_recipe_[i].size_ = snapshot_recipe_[i].end_offset_ 
+            - snapshot_recipe_[i-1].end_offset_;
+    }
 }
 
 
