@@ -15,7 +15,7 @@ LoggerPtr iv_logger(Logger::getLogger( "appendstore.chunk_impl"));
 
 IndexVector::IndexVector(const std::string& fname)
 {
-	DOMConfigurator::configure("/home/prakash/log_config.xml");
+	DOMConfigurator::configure("Log4cxxConfig.xml");
 	LoadFromFile(fname);
 }
  

@@ -21,7 +21,7 @@ PanguAppendStore::PanguAppendStore(const StoreParameter& para, bool iscreate)
      mAppendChunkId(0),
      mCompressionType(para.mCompressionFlag)
 {
-    DOMConfigurator::configure("/home/prakash/log_config.xml");
+    DOMConfigurator::configure("Log4cxxConfig.xml");
 
     if (mRoot.compare(mRoot.size()-1, 1, "/"))
     {

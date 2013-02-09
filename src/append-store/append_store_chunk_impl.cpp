@@ -33,7 +33,7 @@ Chunk::Chunk(const std::string& root, ChunkIDType chunk_id,
     mCachePtr(cacheptr),
     mBlockIndexInterval(index_interval)
 {
-    DOMConfigurator::configure("/home/prakash/log_config.xml");
+    DOMConfigurator::configure("Log4cxxConfig.xml");
 
     mFileSystemHelper = new QFSHelper();    
     mFileSystemHelper->Connect();
@@ -54,7 +54,7 @@ Chunk::Chunk(const std::string& root, ChunkIDType chunk_id)
     mLogFileName(GetIdxLogFname(root, chunk_id)), 
     mDirty(false)
 {
-	DOMConfigurator::configure("/home/prakash/log_config.xml");
+	DOMConfigurator::configure("Log4cxxConfig.xml");
 	mFileSystemHelper = new QFSHelper;
 	mFileSystemHelper->Connect();
 	LoadDeleteLog();
