@@ -120,8 +120,8 @@ void Chunk::Flush()
 
 IndexType Chunk::Append(const std::string& data)
 {
-    Timer t;
-    t.start();
+    //Timer t;
+    //t.start();
     if (IsChunkFull() == true)
     {
         std::stringstream ss;
@@ -129,12 +129,12 @@ IndexType Chunk::Append(const std::string& data)
         THROW_EXCEPTION(AppendStoreWriteException, ss.str());
     }
 
-
+/*
     if (mBlockStream.str().size()+data.size() >= DF_MAX_BLOCK_SZ)
     {
         AppendIndex();
     }
-
+*/
 
     IndexType new_index = ++mMaxIndex; // GenerateIndex();
 
@@ -150,14 +150,14 @@ IndexType Chunk::Append(const std::string& data)
     }
 
     LOG4CXX_INFO(logger, "Chunk::Append Completed");
-    cout << endl << "Time Chunk::Append() : " << t.stop() << " ms";
+    //cout << endl << "Time Chunk::Append() : " << t.stop() << " ms";
     return new_index;
 }
 
 void Chunk::AppendIndex()
 {
-    Timer t;
-    t.start();
+    //Timer t;
+    //t.start();
 
     if (mFlushCount == 0)
     {
@@ -221,12 +221,13 @@ void Chunk::AppendIndex()
         }
     } while (retryCount <= 1);
     LOG4CXX_INFO(logger, "Chunk::AppendIndex Completed");
-    cout << endl << "Time Chunk::AppendIndex : " << t.stop() << " ms";
+    // cout << endl << "Time Chunk::AppendIndex : " << t.stop() << " ms";
 };
        
 
 bool Chunk::Read(IndexType index, std::string* data) 
 {
+    Timer t; t.start();
     IndexVector::const_index_iterator it;
     bool is_begin = false;
     if (!IsValid(index) || (it=mIndexMap->find(index, is_begin)) == mIndexMap->end())
@@ -238,7 +239,8 @@ bool Chunk::Read(IndexType index, std::string* data)
         return false;
     }
     
-    OffsetType startOffset = it->mOffset ;
+
+    OffsetType startOffset = it->mOffset;
 
     if(is_begin)
 	startOffset = 0;
@@ -246,12 +248,14 @@ bool Chunk::Read(IndexType index, std::string* data)
     std::string buf;
     bool ret = ReadRaw(startOffset, buf);
     ret = ret && ExtractDataFromBlock(buf, index, data);
-	LOG4CXX_INFO(logger, "Chunk::Read Completed");
+    LOG4CXX_INFO(logger, "Chunk::Read Completed");
+    cout << endl << "Time @ Chunk:Read : " << t.stop();
     return ret;
 }
 
 bool Chunk::ExtractDataFromBlock(const std::string& buf, IndexType index, std::string* data)
 {
+    Timer t; t.start();
     CachePtr cachesharedptr = mCachePtr.lock();
     if (cachesharedptr == NULL)
     {
@@ -287,7 +291,8 @@ bool Chunk::ExtractDataFromBlock(const std::string& buf, IndexType index, std::s
         }
         cachesharedptr->Insert(Handle(mChunkId, r.mIndex), r.mVal);
     } while(true);
-	LOG4CXX_INFO(logger, "Chunk::ExtractDataFromBlock Completed");
+    cout << endl << "Time @ Chunk:ExtractDataFromBlock : " << t.stop() << " ms";
+    LOG4CXX_INFO(logger, "Chunk::ExtractDataFromBlock Completed");
     return ret;
 }
 
@@ -543,8 +548,6 @@ bool Chunk::ReadRaw(const OffsetType& offset, std::string& data)
     try
     {
         mDataInputFH->Seek(offset);
-        // what is next log size ???
-        // CHECK WITH WEI : CHKIT
         uint32_t read_len = mDataInputFH->GetNextLogSize();
         std::string blkdata;
         blkdata.resize(read_len, 0);
@@ -597,17 +600,17 @@ bool Chunk::ReadRaw(const OffsetType& offset, std::string& data)
 
 OffsetType Chunk::AppendRaw(const IndexType& index, const uint32_t numentry, const std::string& data)
 {
-/*
 	OffsetType result = -1;
 	Timer t;
 	t.start();
+/*
         try
         {
             Timer t;
 	    t.start();
             OffsetType fos = 0;            
             // std::cout << "\nactual data " << data.size(); // << ", data wrote : " << ssref.size();          
-            fos = mDataOutputFH->Flush((char*)&data[0], data.size()); 
+            fos = mDataOutputFH->Write((char*)&data[0], data.size()); 
             //LOG4CXX_DEBUG(logger, "flush -- data wrote ------- " << ssref);
             //LOG4CXX_DEBUG(logger, "flush -- data size wrote -- " << ssref.size());
             LOG4CXX_DEBUG(logger, "flush return value is ----- " << fos);
@@ -619,13 +622,16 @@ OffsetType Chunk::AppendRaw(const IndexType& index, const uint32_t numentry, con
         {
 		LOG4CXX_ERROR(logger, "Exception while writing");
         }
-	cout << "Time Chunk::AppendRaw : " << t.stop << " ms";
+	//cout << "Time Chunk::AppendRaw : " << t.stop << " ms";
 	return result;
-*/
+}
+
     // compress data (data consists of multiple records)
-    Timer t;
+    //Timer t;
     OffsetType result = -1;
-    t.start();
+    //t.start();
+    //
+*/
     CompressionCodecPtr sharedptr = mChunkCodec.lock();
     if (sharedptr == NULL) 
     {
@@ -698,7 +704,7 @@ OffsetType Chunk::AppendRaw(const IndexType& index, const uint32_t numentry, con
         }
     } while (retryCount <= 1);
 
-    cout << endl << "Time Chunk::AppendRaw() Compressed : " << t.stop() << " ms";
+    //cout << endl << "Time Chunk::AppendRaw() Compressed : " << t.stop() << " ms";
     return result;
 }
 

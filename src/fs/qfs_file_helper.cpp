@@ -78,7 +78,9 @@ void QFSFileHelper::Close() {
     	LOG4CXX_INFO(qfsfh_logger, "File Close : file descriptor, fd < 0 for file : " << filename); 
     }
     else {
-    	qfshelper->kfsClient->Sync(fd);
+	if(mode != O_RDONLY) {
+	    	qfshelper->kfsClient->Sync(fd);
+	}
     	qfshelper->kfsClient->Close(fd);
     	LOG4CXX_INFO(qfsfh_logger, "File Synced and Closed : " << filename); 
     }
@@ -88,7 +90,7 @@ int QFSFileHelper::Read(char *buffer, int length) {
     /* check whether its opened of not */
     if(fd == -1) {
 		Open();
-	}
+    }
 
     int bytes_read = qfshelper->kfsClient->Read(fd, buffer, length);
 
@@ -107,13 +109,20 @@ int QFSFileHelper::Read(char *buffer, int length) {
     return bytes_read;	
 }
 
+/**
+ * Write and Flush - returns the current write position (got by calling Tell)
+ * WriteData and FlushData - returns the number of bytes wrote
+ */ 
+
 int QFSFileHelper::Write(char *buffer, int length) {
 
-    if(fd == -1) {
-    	Open();
-	}
 
-	Header header(length);
+  // why care !! 
+    if(fd == -1) {	
+	LOG4CXX_ERROR(qfsfh_logger, "file not opened :" << filename);
+    }
+
+    Header header(length);
     int dataLength = length + sizeof(Header);    
 	string data(dataLength, 0);
 
@@ -135,11 +144,6 @@ int QFSFileHelper::Write(char *buffer, int length) {
 }
 
 int QFSFileHelper::Append(char *buffer, int length) {
-
-	if(fd == -1) {
-    	Open();
-	}
-
     int dataLength = length + sizeof(Header);
     Header header(length);
 
@@ -164,18 +168,12 @@ int QFSFileHelper::Append(char *buffer, int length) {
 }
 
 int QFSFileHelper::WriteData(char *buffer, int dataLength) {
+
     if(fd == -1) {
-	   	Open();
+	LOG4CXX_ERROR(qfsfh_logger, "file not opened :" << filename);
     }
 
-/*
-    int dataLength = length;
-    string data(dataLength, 0);
-    memcpy(&data[0], buffer, length);
-*/
     int bytes_wrote = qfshelper->kfsClient->Write(fd, buffer, dataLength);
-
-    
     if( bytes_wrote != dataLength) {
                 string bytes_wrote_str = "" + bytes_wrote;
                 string length_str = "" + dataLength;
@@ -183,7 +181,7 @@ int QFSFileHelper::WriteData(char *buffer, int dataLength) {
                 THROW_EXCEPTION(AppendStoreWriteException,  "Was able to write only " + bytes_wrote_str + ", instead of " + length_str);
     }
 
-	LOG4CXX_INFO(qfsfh_logger, "WriteDATA " << dataLength << " bytes into file(" << filename << ")");    
+    LOG4CXX_INFO(qfsfh_logger, "WriteDATA " << dataLength << " bytes into file(" << filename << ")");    
     
     return bytes_wrote;
 }
@@ -192,15 +190,14 @@ int QFSFileHelper::Flush(char *buffer, int length) {
     int pos = Write(buffer, length);
     qfshelper->kfsClient->Sync(fd);
     LOG4CXX_INFO(qfsfh_logger, " calling tell instead of size in Flush : " << pos);
-    return pos; //Tell(fd)
-    // return qfshelper->getSize(filename);
+    return pos; 
 }
 
 
 int QFSFileHelper::FlushData(char *buffer, int length) { 
     int bytes_wrote = WriteData(buffer, length);
     qfshelper->kfsClient->Sync(fd);
-    return qfshelper->getSize(filename);
+    return bytes_wrote;
 }
 
 

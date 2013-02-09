@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
 	sp.mAppend = true;
 	pas = new PanguAppendStore(sp, true);
 	cout << endl << "For Append Store creation : " << timer.stop() << " ms";
-	// exit(-1);
+	exit(-1);
 	/* DataStore and snapshot types */
 	
 	DataSource ds(snapshotFile, sampleFile);	
@@ -79,31 +79,32 @@ int main(int argc, char *argv[]) {
 	vector<BlockMeta> blockMetaVec;
 	stringstream sstream;
 	cout << endl << "reading segments started ";
+	Handle h;
 
 	while(true) {
-		//timer.start();
+		timer.start();
 		bool gs = ds.GetSegment(segmentMeta);
 		if(!gs) break;
 		for(size_t i=0; i < segmentMeta.block_list_.size(); i++) {
 			if(blkCnt == 0) blkTimer.start();
 			string new_string(segmentMeta.block_list_[i].data_, segmentMeta.GetBlockSize(i)); 
 			handle = pas->Append(new_string);
-			memcpy(& (segmentMeta.block_list_[i].handle_), &handle, 
-					sizeof(segmentMeta.block_list_[i].handle_));	
+			segmentMeta.block_list_[i].handle_ = *reinterpret_cast<uint64_t*>(const_cast<char*>(&handle[0]));
 			blkCnt++;
 			if(blkCnt == 10000) { 
 				cout << endl << "Wrote 10000 Blocks " << blkTimer.stop() << " ms";
 				blkCnt = 0;
-			}	
+			}
 		}
 		// serialize segmentMeta and write
 		sstream.str("");
 		segmentMeta.Serialize(sstream);
 		handle = pas->Append(sstream.str().c_str());
 		// update segmentMeta handle
-		memcpy(& (segmentMeta.handle_), &handle, sizeof(segmentMeta.handle_));
+		segmentMeta.handle_ = *reinterpret_cast<uint64_t*>(const_cast<char*>(&handle[0]));
 		// add segmentmeta to snapshotMeta
 		snapshotMeta.AddSegment(segmentMeta);
+		cout << endl << "segment done " << timer.stop() << " ms";
 	}
 
 	
@@ -112,12 +113,13 @@ int main(int argc, char *argv[]) {
 	QFSHelper *fsh = new QFSHelper();
 	fsh->Connect();
 	stream.str("");
-	stream << "ROOT_DIRECTORY" << "/" << vmName;
+	stream << ROOT_DIRECTORY << "/" << vmName;
 	fsh->CreateDirectory(stream.str());
 	QFSFileHelper *fh = new QFSFileHelper(fsh, stream.str() + "/" + snapshotID, O_WRONLY);
 	sstream.str("");
 	snapshotMeta.Serialize(sstream);
 	fh->Create();
+	cout << "data size into stream " << sstream.str().size();
 	fh->Write((char *)sstream.str().c_str(), sstream.str().size());
 	fh->Close();
 	pas->Flush();

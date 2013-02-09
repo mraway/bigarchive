@@ -11,6 +11,7 @@
 using namespace log4cxx;
 using namespace log4cxx::xml;
 using namespace log4cxx::helpers;
+using namespace std;
 
 LoggerPtr asimpl_logger(Logger::getLogger( "appendstore.impl"));
 
@@ -53,8 +54,8 @@ Scanner* PanguAppendStore::GetScanner()
 
 std::string PanguAppendStore::Append(const std::string& data)
 {
-    Timer t;
-    t.start();
+    //Timer t;
+    //t.start();
     if (!mAppend) {
         THROW_EXCEPTION(AppendStoreWriteException, "Cannot append for read-only store");
     }
@@ -70,7 +71,7 @@ std::string PanguAppendStore::Append(const std::string& data)
     h.mChunkId = p_chunk->GetID();
 
     LOG4CXX_INFO(asimpl_logger, "Store::Append " << mRoot << "mChunkId : " << p_chunk->GetID() << ", mIndex : " << h.mIndex << ", size : " << data.size());
-    cout << endl << "Time : Store::Append() : " << t.stop() << " ms";
+    //cout << endl << "Time : Store::Append() : " << t.stop() << " ms";
     return h.ToString();
 }
 
@@ -113,6 +114,7 @@ void PanguAppendStore::Flush()
 
 bool PanguAppendStore::Read(const std::string& h, std::string* data) 
 {
+    Timer t; t.start();
     bool bOK = false;
 
     Handle handle(h);
@@ -124,6 +126,7 @@ bool PanguAppendStore::Read(const std::string& h, std::string* data)
 
     if (mCache->Find(handle, data))
     {
+	cout << endl << "Time @ Store:Read : Cache Hit : " << t.stop() << " ms";
 	LOG4CXX_INFO(asimpl_logger, "Cache Hit in Store for Handle : " << handle.mChunkId << "," << handle.mIndex);
         return true;
     }
@@ -138,7 +141,7 @@ bool PanguAppendStore::Read(const std::string& h, std::string* data)
     bOK = p_chunk->Read(handle.mIndex, data);
 
     LOG4CXX_INFO(asimpl_logger, "Store::Read : " << mRoot << " & mChunkId : " << handle.mChunkId << " & mIndex : " <<  handle.mIndex);
-
+    cout << endl << "Time @ Store:Read : Cache Miss : " << t.stop() << " ms";
     return bOK;
 }
 
@@ -283,6 +286,7 @@ bool PanguAppendStore::ReadMetaInfo()
         {
 	    	FileHelper* metaInputFH = new QFSFileHelper((QFSHelper *)mFileSystemHelper, metaFileName, O_RDONLY);
 			char *read_buffer = new char[sizeof(StoreMetaData)]; 
+			metaInputFH->Open();
  		    metaInputFH->Read(read_buffer, sizeof(StoreMetaData));
 		    metaInputFH->Close();
 		    mMeta.fromBuffer(read_buffer);
@@ -308,6 +312,7 @@ void PanguAppendStore::WriteMetaInfo(const std::string& root, const StoreMetaDat
     try
     {	
 		FileHelper* metaOutputFH = new QFSFileHelper((QFSHelper *)mFileSystemHelper, metaFileName, O_WRONLY);
+		metaOutputFH->Open();
         char *write_buffer = new char[sizeof(StoreMetaData)]; 
 	 	/* Copying into buffer from StoreMetaData */
 		    LOG4CXX_DEBUG(asimpl_logger, "before reading mMeta values : " << mMeta.storeminor << 
@@ -335,15 +340,15 @@ void PanguAppendStore::AllocNextChunk()
 
 Chunk* PanguAppendStore::LoadAppendChunk()
 {
-    Timer t;
-    t.start();
+    //Timer t;
+    //t.start();
   
     if (mCurrentAppendChunk.get() != 0)
     {
         if (mCurrentAppendChunk->IsChunkFull() == false)
         {
 	    LOG4CXX_DEBUG(asimpl_logger, "Loaded Current chunk");
-    	    cout << endl << "Time Store::LoadAppendChunk() : " << t.stop() << " ms";
+    	    //cout << endl << "Time Store::LoadAppendChunk() : " << t.stop() << " ms";
             return mCurrentAppendChunk.get();
         }
         else
@@ -370,27 +375,36 @@ Chunk* PanguAppendStore::LoadAppendChunk()
         THROW_EXCEPTION(AppendStoreWriteException, "Cannot get valid chunk for append");
     }
     LOG4CXX_INFO(asimpl_logger, "Store::LoadedAppendChunk" ); 
-    cout << endl << "Time Store::LoadAppendChunk() : " << t.stop() << " ms";
+    //cout << endl << "Time Store::LoadAppendChunk() : " << t.stop() << " ms";
     return mCurrentAppendChunk.get();
 }
 
 Chunk* PanguAppendStore::LoadRandomChunk(ChunkIDType id) 
 {
+    Timer t; t.start();
     if (ValidChunkID(id) == false)
     {
         return 0;
     }
 
+    if(mCurrentRandomChunk.get() != 0) {
+    	if(mCurrentRandomChunk.get()->GetID() == id) {
+	     cout << endl << "Time @ Store:LoadRandomChunk : InRandomChunkMap" << t.stop() << " ms";
+	     return mCurrentRandomChunk.get();
+	}
+    }
     ChunkMapType::const_iterator it = mChunkMap.find(id);
     if (it != mChunkMap.end())
     {
+	cout << endl << "Time @ Store:LoadRandomChunk : AlreadyinChunkMap : " << t.stop() << " ms";
         return it->second.get();
     }
 
     mCurrentRandomChunk.reset(new Chunk(mRoot, id, mMeta.maxChunkSize, false, mCodec, mCache));
     assert(mCurrentRandomChunk.get());
     mChunkMap.insert(std::make_pair(id, mCurrentRandomChunk));
-	LOG4CXX_INFO(asimpl_logger, "Store::LoadedRandomChunk" );
+    LOG4CXX_INFO(asimpl_logger, "Store::LoadedRandomChunk" );
+    cout << endl << "Time @ Store:LoadRandomChunk : LoadedNewChunk : " << t.stop() << " ms";
     return mCurrentRandomChunk.get();
 }
 
