@@ -3,6 +3,7 @@ Import('env')
 local_env = env.Clone()
 
 env.Install(env['PROJECT_BIN_PATH'], 'sample_data')
+env.Install(env['PROJECT_BIN_PATH'], 'Log4cxxConfig.xml')
 
 data_source_test = env.Program(target = 'data_source_test', source = ['data_source_test.cpp'], LIBS = ['snapshot', 'exception', 'ssl'])
 env.Install(env['PROJECT_BIN_PATH'], data_source_test)

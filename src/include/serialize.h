@@ -5,7 +5,7 @@
 #include <map>
 #include <vector>
 #include <string>
-#include "../exception/exception.h"
+#include "exception.h"
 #include <stdint.h>
 
 namespace marshall
@@ -151,6 +151,25 @@ inline void Deserialize<int8_t>(int8_t& t, std::istream& is)
     else
     {
         is.read((char*)&t, sizeof(int8_t));
+        if (is.bad())
+            throw StreamCorruptedException("");
+    }
+}
+
+template<>
+inline void Serialize<uint16_t>(const uint16_t& t, std::ostream& os)
+{
+    os.write((char*)&t, sizeof(uint16_t));
+}
+
+template<>
+inline void Deserialize<uint16_t>(uint16_t& t, std::istream& is)
+{
+    if (is.eof())
+        throw UnexpectedEndOfStreamException("");
+    else
+    {
+        is.read((char*)&t, sizeof(uint16_t));
         if (is.bad())
             throw StreamCorruptedException("");
     }
