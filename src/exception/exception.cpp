@@ -1,4 +1,4 @@
-#include "exception.h"
+#include "../include/exception.h"
 #include <string>
 #include <execinfo.h>
 #include <stdlib.h>
@@ -6,10 +6,10 @@
 
 
 std::string operator+(const std::string& lhs, int n) {
- //std::ostringstream os;
- //os << lhs << ":" << n;
- //return os.str();
- return lhs;
+    //std::ostringstream os;
+    //os << lhs << ":" << n;
+    //return os.str();
+    return lhs;
 }
 
 ExceptionBase::ExceptionBase(const std::string& message) throw()
@@ -112,54 +112,54 @@ const std::string& ExceptionBase::GetExceptionChain() const
 
 std::string ExceptionBase::GetStackTrace() const
 {
-/*
-    if (mStackTraceSize == 0)
-        return "<No stack trace>\n";
-    char** strings = backtrace_symbols(mStackTrace, mStackTraceSize);
-    if (strings == NULL) // Since this is for debug only thus
-                         // non-critical, don't throw an exception.
-        return "<Unknown error: backtrace_symbols returned NULL>\n";
+    /*
+      if (mStackTraceSize == 0)
+      return "<No stack trace>\n";
+      char** strings = backtrace_symbols(mStackTrace, mStackTraceSize);
+      if (strings == NULL) // Since this is for debug only thus
+      // non-critical, don't throw an exception.
+      return "<Unknown error: backtrace_symbols returned NULL>\n";
 
-    std::string result;
-    for (size_t i = 0; i < mStackTraceSize; ++i)
-    {
-        std::string mangledName = strings[i];
-        std::string::size_type begin = mangledName.find('(');
-        std::string::size_type end = mangledName.find('+', begin);
-        if (begin == std::string::npos || end == std::string::npos)
-        {
-            result += mangledName;
-            result += '\n';
-            continue;
-        }
-        ++begin;
-        int status;
-        char* s = abi::__cxa_demangle(mangledName.substr(begin, end-begin).c_str(),
-                                      NULL, 0, &status);
-        if (status != 0)
-        {
-            result += mangledName;
-            result += '\n';
-            continue;
-        }
-        std::string demangledName(s);
-        free(s);
-        // Ignore ExceptionBase::Init so the top frame is the
-        // user's frame where this exception is thrown.
-        //
-        // Can't just ignore frame#0 because the compiler might
-        // inline ExceptionBase::Init.
-        if (i == 0
-            && demangledName == "apsara::ExceptionBase::Init(char const*, char const*, int)")
-            continue;
-        result += mangledName.substr(0, begin);
-        result += demangledName;
-        result += mangledName.substr(end);
-        result += '\n';
-    }
-    free(strings);
-    return result;
-*/
+      std::string result;
+      for (size_t i = 0; i < mStackTraceSize; ++i)
+      {
+      std::string mangledName = strings[i];
+      std::string::size_type begin = mangledName.find('(');
+      std::string::size_type end = mangledName.find('+', begin);
+      if (begin == std::string::npos || end == std::string::npos)
+      {
+      result += mangledName;
+      result += '\n';
+      continue;
+      }
+      ++begin;
+      int status;
+      char* s = abi::__cxa_demangle(mangledName.substr(begin, end-begin).c_str(),
+      NULL, 0, &status);
+      if (status != 0)
+      {
+      result += mangledName;
+      result += '\n';
+      continue;
+      }
+      std::string demangledName(s);
+      free(s);
+      // Ignore ExceptionBase::Init so the top frame is the
+      // user's frame where this exception is thrown.
+      //
+      // Can't just ignore frame#0 because the compiler might
+      // inline ExceptionBase::Init.
+      if (i == 0
+      && demangledName == "apsara::ExceptionBase::Init(char const*, char const*, int)")
+      continue;
+      result += mangledName.substr(0, begin);
+      result += demangledName;
+      result += mangledName.substr(end);
+      result += '\n';
+      }
+      free(strings);
+      return result;
+    */
 }
 
 
