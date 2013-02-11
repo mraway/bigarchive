@@ -1,6 +1,4 @@
 #include "qfs_file_system_helper.h"
-
-
 #include <log4cxx/logger.h>
 #include <log4cxx/xml/domconfigurator.h>
 
@@ -36,7 +34,8 @@ bool QFSHelper::IsFileExists(string fname)
 {
 	bool value = kfsClient->Exists(fname.c_str());
 	LOG4CXX_INFO(qfsfsh_logger, "IsFileExists(" << fname << ") - " << value);
-    return value;}
+    return value;
+}
 
 bool QFSHelper::IsDirectoryExists(string dirname)
 {
@@ -58,7 +57,7 @@ int QFSHelper::ListDir(string pathname, vector<string> &result)
     return kfsClient->Readdir(pathname.c_str(), result);
 }
 
-int QFSHelper::CreateDirectory(string pathname) {
+int QFSHelper::CreateDirectory(const string& pathname) {
     int res = kfsClient->Mkdirs(pathname.c_str());
     if (res < 0 && res != -EEXIST) {
 		LOG4CXX_ERROR(qfsfsh_logger, "Directory Creation failed : " << pathname);
@@ -67,5 +66,45 @@ int QFSHelper::CreateDirectory(string pathname) {
 	LOG4CXX_INFO(qfsfsh_logger, "Directory Created(" << pathname << ")" );
     return res;
 }
+
+int QFSHelper::CreateFile(const string& pathname)
+{
+    int fd = kfsClient->Create(pathname.c_str());
+    if (fd < 0) { 
+		LOG4CXX_ERROR(qfsfsh_logger, "File Creation failed : " << pathname);
+		THROW_EXCEPTION(FileCreationException, "Failed while creating file : " + pathname);
+    }
+    LOG4CXX_INFO(qfsfsh_logger, "File Created : " << pathname);
+    return fd;
+}
+
+int QFSHelper::RemoveFile(const string& pathname)
+{
+    int res = kfsClient->Remove(pathname.c_str());
+    if (res < 0) {
+        LOG4CXX_ERROR(qfsfsh_logger, "file deletion failed : " << pathname);
+        THROW_EXCEPTION(FileDeletionException, "Failed while creating file : " + pathname);
+    }
+    LOG4CXX_INFO(qfsfsh_logger, "File deleted : " << pathname);
+    return res;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

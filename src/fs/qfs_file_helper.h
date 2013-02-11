@@ -2,9 +2,9 @@
 #ifndef QFS_FILE_HELPER_H
 #define QFS_FILE_HELPER_H
 
-#include "file_helper.h"
+#include "../include/file_helper.h"
 #include "qfs_file_system_helper.h"
-#include "../exception/exception.h"
+#include "../include/exception.h"
 #include <fcntl.h>
 #include <stdlib.h>
 #include <cstring>

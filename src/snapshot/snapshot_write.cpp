@@ -8,10 +8,10 @@
 #include <log4cxx/xml/domconfigurator.h>
 
 #include "../include/store.h"
+#include "../include/exception.h"
 #include "../append-store/append_store_types.h"
 #include "../append-store/append_store.h"
 #include "data_source.h"
-#include "../exception/exception.h"
 #include "snapshot_control.h"
 #include "snapshot_types.h"
 

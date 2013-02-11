@@ -92,6 +92,7 @@ private:
     friend void FromJson(ExceptionBase& e, const Any& a);
 };
 
+// TODO: move exception definitions to their components directory
 
 class AppendStoreExceptionBase : public  ExceptionBase
 {
@@ -117,6 +118,13 @@ class FileCreationException : public AppendStoreExceptionBase
 public:
   DEFINE_EXCEPTION(FileCreationException, AppendStoreExceptionBase);
 };
+
+class FileDeletionException : public AppendStoreExceptionBase
+{
+public:
+  DEFINE_EXCEPTION(FileDeletionException, AppendStoreExceptionBase);
+};
+
 
 class FileOpenException : public AppendStoreExceptionBase
 {

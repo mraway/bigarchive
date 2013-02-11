@@ -2,8 +2,8 @@
 #define  _APPENDSTORE_TYPES_H
 
 #include <string>
-#include "serialize.h"
-#include "store.h" 
+#include "../include/serialize.h"
+#include "../include/store.h" 
 #include "stdio.h"
 #include <cstring>
 // #include "apsara/common/logging.h" 

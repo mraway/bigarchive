@@ -4,8 +4,8 @@
 #include <string>
 #include <map>
 
-#include "file_system_helper.h"
-#include "file_helper.h"
+#include "../include/file_system_helper.h"
+#include "../include/file_helper.h"
 #include "../fs/qfs_file_helper.h"
 // #include "qfs_file_system_helper.h"
 #include "append_store_types.h"

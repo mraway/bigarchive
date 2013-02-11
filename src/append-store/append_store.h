@@ -3,9 +3,9 @@
 
 #include <deque>
 #include <set>
-#include "store.h"
+#include "../include/store.h"
 #include "append_store_types.h"
-#include "../exception/exception.h"
+#include "../include/exception.h"
 #include "append_store_chunk.h"
 #include "CompressionCodec.h"
 

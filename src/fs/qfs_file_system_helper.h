@@ -2,10 +2,10 @@
 #define QFS_FILESYSTEM_HELPER_H
 
 
-#include "file_system_helper.h"
-#include "KfsClient.h"
-#include "../exception/exception.h"
-#include "KfsAttr.h"
+#include "../include/file_system_helper.h"
+#include "../include/KfsClient.h"
+#include "../include/exception.h"
+#include "../include/KfsAttr.h"
 #include <iostream>
 #include <fstream>
 #include <cerrno>
@@ -26,15 +26,16 @@ using std::string;
 class QFSHelper : public FileSystemHelper {
 
 public:
-    void Connect(); 
-    void Connect(string metaserverhost, int metaserverport);
-    void DisConnect();
-    bool IsFileExists(string fname);
-    bool IsDirectoryExists(string dirname);
-    long getSize(string fname);
-    int ListDir(string pathname, vector<string> &result);
-    int CreateDirectory(string pathname);
-
+    /* override */ void Connect(); 
+    /* override */ void Connect(string metaserverhost, int metaserverport);
+    /* override */ void DisConnect();
+    /* override */ bool IsFileExists(string fname);
+    /* override */ bool IsDirectoryExists(string dirname);
+    /* override */ long getSize(string fname);
+    /* override */ int ListDir(string pathname, vector<string> &result);
+    /* override */ int CreateDirectory(const string& pathname);
+    /* override */ int CreateFile(const string& pathname);
+    /* override */ int RemoveFile(const string& pathname);
 public:	
     KFS::KfsClient *kfsClient;
 };
