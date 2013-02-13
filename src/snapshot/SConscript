@@ -3,8 +3,8 @@ Import('env')
 local_env = env.Clone()
 local_env.Append(CCFLAGS = '-std=c++0x')
 
-snapshot = local_env.StaticLibrary(target = 'snapshot', source = ['trace_types.cpp', 'snapshot_types.cpp', 'data_source.cpp', 'dirty_bit.cpp', 'cds_cache.cpp', 'cds_index.cpp', 'cds_data_cache.cpp'])
+snapshot = local_env.StaticLibrary(target = 'snapshot', source = ['trace_types.cpp', 'snapshot_types.cpp', 'snapshot_control.cpp', 'data_source.cpp', 'dirty_bit.cpp', 'cds_cache.cpp', 'cds_index.cpp', 'cds_data_cache.cpp'])
 local_env.Install(local_env['PROJECT_LIB_PATH'], snapshot)
 
-snapshot_write = local_env.Program(target = 'snapshot_write', source = ['snapshot_write.cpp'], LIBS = env['PROJ_LIBS'] + env['QFS_LIBS'] + env['LOG_LIBS'] + env['BASIC_LIBS'])
+snapshot_write = local_env.Program(target = 'snapshot_write', source = ['snapshot_write.cpp'], LIBS = env['PROJ_LIBS'] + env['QFS_LIBS'] + env['LOG_LIBS'] + env['CACHE_LIBS'] + env['BASIC_LIBS'])
 local_env.Install(local_env['PROJECT_BIN_PATH'], snapshot_write)

@@ -2,5 +2,5 @@ Import('env')
 
 local_env = env.Clone()
 
-appendstore = local_env.StaticLibrary(target = 'appendstore', source = ['append_store_types.cpp', 'common_data_store.cpp', 'append_store_impl.cpp', 'append_store_chunk_impl.cpp', 'append_store_index.cpp', 'append_store_utility.cpp', 'CompressionCodec.cpp', 'LzoCompressor.cpp'])
+appendstore = local_env.StaticLibrary(target = 'appendstore', source = ['append_store_types.cpp', 'append_store_impl.cpp', 'append_store_chunk_impl.cpp', 'append_store_index.cpp', 'append_store_utility.cpp', 'CompressionCodec.cpp', 'LzoCompressor.cpp'])
 local_env.Install(local_env['PROJECT_LIB_PATH'], appendstore)
