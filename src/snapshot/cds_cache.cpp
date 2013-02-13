@@ -14,10 +14,22 @@ uint32_t first_4_bytes(const char *key, size_t key_length, void *context)
         return 0;
 }
 
+CdsCache::CdsCache()
+{
+    options_ = kMemcacheOptions;
+    Init();
+}
+
 CdsCache::CdsCache(const string& mc_options)
 {
+    options_ = mc_options;
+    Init();
+}
+
+void CdsCache::Init()
+{
     memcached_return_t rc;
-    p_memcache_ = memcached(mc_options.c_str(), mc_options.size());
+    p_memcache_ = memcached(options_.c_str(), options_.size());
     hashkit_st *p_newkit = hashkit_create(NULL);
     if (p_newkit != NULL) {
         hashkit_return_t hash_rc = hashkit_set_custom_function(p_newkit, first_4_bytes, NULL);

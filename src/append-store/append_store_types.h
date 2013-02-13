@@ -107,6 +107,8 @@ public:
 
     explicit Handle(const std::string& src);
 
+    explicit Handle(const uint64_t& src);
+
     explicit Handle(ChunkIDType id = (uint16_t)-1, IndexType index = (uint64_t)-1);
 
     Handle(const Handle&);  
@@ -117,6 +119,8 @@ public:
        not for printing;
     */
     std::string ToString();
+
+    uint64_t ToInt();
 
     bool isValid() const;
 

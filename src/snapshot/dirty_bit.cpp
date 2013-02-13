@@ -1,5 +1,5 @@
 #include "dirty_bit.h"
-#include "dedup_types.h"
+#include "trace_types.h"
 
 DirtyBitMap::DirtyBitMap()
 {
@@ -46,7 +46,7 @@ void DirtyBitMap::FromStream(istream& is)
     is.read(bitmap_.data(), size);
 }
 
-bool DirtyBitMap::Test(int pos)
+bool DirtyBitMap::Test(size_t pos)
 {
     if (pos < bitmap_.size())
         return bitmap_[pos];

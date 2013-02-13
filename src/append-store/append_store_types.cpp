@@ -116,6 +116,12 @@ bool DeleteRecord::isValid() const
     //return (mIndex != (IndexType)-1);
 }
 
+Handle::Handle(const uint64_t& src)
+{
+    mChunkId = (src>>48) & 0xffff;
+    mIndex = src & 0x0000ffffffffffffllu;
+}
+
 Handle::Handle(const std::string& src)
 {
     if (src.size() != 8)
@@ -148,6 +154,11 @@ std::string Handle::ToString()
     ret.append(reinterpret_cast<char*>(&tmp), sizeof(tmp));
     return ret;
 }
+
+uint64_t Handle::ToInt()
+{
+    return ((0xffffffffff & mChunkId) << 48) | mIndex;
+}    
 
 bool Handle::isValid() const
 {

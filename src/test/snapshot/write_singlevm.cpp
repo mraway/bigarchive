@@ -85,11 +85,11 @@ int main(int argc, char *argv[]) {
 		timer.start();
 		bool gs = ds.GetSegment(segmentMeta);
 		if(!gs) break;
-		for(size_t i=0; i < segmentMeta.block_list_.size(); i++) {
+		for(size_t i=0; i < segmentMeta.segment_recipe_.size(); i++) {
 			if(blkCnt == 0) blkTimer.start();
-			string new_string(segmentMeta.block_list_[i].data_, segmentMeta.GetBlockSize(i)); 
+			string new_string(segmentMeta.segment_recipe_[i].data_, segmentMeta.GetBlockSize(i)); 
 			handle = pas->Append(new_string);
-			segmentMeta.block_list_[i].handle_ = *reinterpret_cast<uint64_t*>(const_cast<char*>(&handle[0]));
+			segmentMeta.segment_recipe_[i].handle_ = *reinterpret_cast<uint64_t*>(const_cast<char*>(&handle[0]));
 			blkCnt++;
 			if(blkCnt == 10000) { 
 				cout << endl << "Wrote 10000 Blocks " << blkTimer.stop() << " ms";

@@ -1,5 +1,5 @@
 /*
- * This is the class library for data source generation from trace
+ * Generates fake data from the scan trace, fake data shall come from a real vm image file
  */
 #ifndef _DATA_SOURCE_H_
 #define _DATA_SOURCE_H_
@@ -10,7 +10,8 @@
 
 using namespace std;
 
-#define DATA_SOURCE_BUFFER_SIZE (4 * 1024 * 1024)
+#define MAX_BLOCK_SIZE (8 * 1024 * 1024)	// the last 8MB in sample data is reserved
+#define SAMPLE_REGION_SIZE (128 * 1024 * 1024)	// use the first 128MB of vm image as sample data
 
 class DataSource
 {
@@ -23,14 +24,15 @@ public:
 
     /*
      * Segment is aligned with 2MB boundary
-     * Should not call this api if GetBlock is already called
+     * Should not call this api if GetBlock is already used
      */
     bool GetSegment(SegmentMeta& sm);
 
 private:
-    ifstream trace_stream_;
+    bool BlockToBlockMeta(BlockMeta& bm, const Block& blk);
+private:
     char* sample_data_;
-    size_t sample_data_size_;
+    ifstream trace_stream_;
 };
 
 #endif // _DATA_SOURCE_H_

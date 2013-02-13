@@ -1,6 +1,15 @@
 #include "snapshot_types.h"
 #include "string.h"
 
+BlockMeta::BlockMeta()
+{
+    handle_ = 0;
+    flags_ = 0;
+    end_offset_ = 0;
+    size_ = 0;
+    data_ = NULL;
+}
+
 void BlockMeta::Serialize(ostream& os) const
 {
     cksum_.ToStream(os);
@@ -42,6 +51,20 @@ int64_t BlockMeta::GetSize()
 uint32_t BlockMeta::GetBlockSize()
 {
     return size_;
+}
+
+uint64_t BlockMeta::SetHandle(const string& handle)
+{
+    if (handle.size() != sizeof(HandleType))
+        return 0;
+    memcpy((char*)&handle_, handle.c_str(), sizeof(HandleType));
+    return handle_;
+}
+
+string BlockMeta::GetHandle()
+{
+    string handle((char*)&handle_, sizeof(HandleType));
+    return handle;
 }
 
 /************************** SegmentMeta **************************/
@@ -109,6 +132,36 @@ void SegmentMeta::DeserializeRecipe(istream& is)
         segment_recipe_[i].size_ = segment_recipe_[i].end_offset_ 
             - segment_recipe_[i-1].end_offset_;
     }
+}
+
+uint64_t SegmentMeta::SetHandle(const string& handle)
+{
+    if (handle.size() != sizeof(HandleType))
+        return 0;
+    memcpy((char*)&handle_, handle.c_str(), sizeof(HandleType));
+    return handle_;
+}
+
+string SegmentMeta::GetHandle()
+{
+    string handle((char*)&handle_, sizeof(HandleType));
+    return handle;
+}
+
+void SegmentMeta::BuildIndex()
+{
+    if (blkmap_.size() != 0)
+        blkmap_.clear();
+    for (size_t i = 0; i < segment_recipe_.size() ; ++i)
+        blkmap_[segment_recipe_[i].cksum_] = &segment_recipe_[i];
+}
+
+BlockMeta* SegmentMeta::SearchBlock(const Checksum& cksum)
+{
+    map<Checksum, BlockMeta*>::iterator it = blkmap_.find(cksum);
+    if (it == blkmap_.end())
+        return NULL;
+    return it->second;
 }
 
 /************************** SnapshotMeta ***************************/

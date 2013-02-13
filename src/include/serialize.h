@@ -312,8 +312,6 @@ void DeserializeMap(T& t, std::istream& is)
     }
 }
 
-
-
 template<typename T>
 void Serialize(const std::vector<T>& v, std::ostream& os)
 {

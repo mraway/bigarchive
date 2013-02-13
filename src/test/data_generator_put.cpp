@@ -31,15 +31,15 @@ int main(int argc, char** argv)
     uint32_t totalsize = 0;
 
     while (source.GetSegment(sm)) {
-        for (size_t i = 0; i < sm.block_list_.size(); ++i)
+        for (size_t i = 0; i < sm.segment_recipe_.size(); ++i)
         {
             blksize = sm.GetBlockSize(i);
             totalsize = sizeof(put) + CKSUM_LEN + blksize;
             // Writing the total size of the data to be sent before sending the data.
             ss.write((char*)&totalsize, sizeof(totalsize));
             ss.write((char*)&put, sizeof(put));
-            ss.write((char*)sm.block_list_[i].cksum_, CKSUM_LEN);
-            ss.write(sm.block_list_[i].data_, blksize);
+            ss.write((char*)sm.segment_recipe_[i].cksum_.data_, CKSUM_LEN);
+            ss.write(sm.segment_recipe_[i].data_, blksize);
         }
     }
 

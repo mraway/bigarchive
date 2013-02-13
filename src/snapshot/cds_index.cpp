@@ -25,7 +25,7 @@ bool CdsIndex::Set(Checksum& cksum, uint64_t offset)
     return true;
 }
 
-bool CdsIndex::Get(Checksum& cksum, uint64_t* offset)
+bool CdsIndex::Get(const Checksum& cksum, uint64_t* offset)
 {
     memcached_return_t rc;
     size_t len = 0;
@@ -39,11 +39,15 @@ bool CdsIndex::Get(Checksum& cksum, uint64_t* offset)
     return true;
 }
 
-bool CdsIndex::BatchGet(const char * const *p_cksums, size_t num_cksums, bool *results, uint64_t *offsets)
+bool CdsIndex::BatchGet(const Checksum* cksums, size_t num_cksums, bool *results, uint64_t *offsets)
 {
     size_t *key_length = new size_t[num_cksums];
-    for (int i = 0; i < num_cksums; ++i)
+    for (size_t i = 0; i < num_cksums; ++i)
         key_length[i] = CKSUM_LEN;
+
+    char** p_cksums = new char*[num_cksums];
+    for (size_t i = 0; i < num_cksums; ++i)
+        p_cksums[i] = (char*)cksums[i].data_;
 
     memcached_return_t rc = memcached_mget(p_memcache_, p_cksums, key_length, num_cksums);
     if (rc != MEMCACHED_SUCCESS) {
@@ -54,7 +58,7 @@ bool CdsIndex::BatchGet(const char * const *p_cksums, size_t num_cksums, bool *r
     memcached_result_st *p_result;
     unordered_map<string, uint64_t> result_map;
     uint64_t offset;
-    while (p_result = memcached_fetch_result(p_memcache_, NULL, &rc)) {
+    while ((p_result = memcached_fetch_result(p_memcache_, NULL, &rc))) {
         if (rc == MEMCACHED_SUCCESS) {
             memcpy(&offset, memcached_result_value(p_result), memcached_result_length(p_result));
             result_map[string(memcached_result_key_value(p_result), memcached_result_key_length(p_result))] = offset;
@@ -62,7 +66,7 @@ bool CdsIndex::BatchGet(const char * const *p_cksums, size_t num_cksums, bool *r
         memcached_result_free(p_result);
     }
 
-    for (int i = 0; i < num_cksums; ++i) {
+    for (size_t i = 0; i < num_cksums; ++i) {
         unordered_map<string, uint64_t>::iterator it = result_map.find(string(p_cksums[i], CKSUM_LEN));
         if (it == result_map.end())
             results[i] = false;
@@ -71,6 +75,9 @@ bool CdsIndex::BatchGet(const char * const *p_cksums, size_t num_cksums, bool *r
             offsets[i] = it->second;
         }
     }
+
+    delete[] p_cksums;
+    delete[] key_length;
     return true;
 }
 

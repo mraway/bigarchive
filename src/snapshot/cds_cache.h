@@ -15,13 +15,13 @@ using namespace log4cxx;
 using namespace log4cxx::xml;
 using namespace log4cxx::helpers;
 
-/*
-const char* CdsIndex::options_ = "--SERVER=128.111.46.222:11211 "
+
+const static char* kMemcacheOptions = "--SERVER=128.111.46.222:11211 "
     "--SERVER=128.111.46.96:11211 --SERVER=128.111.46.221:11211 "
     "--SERVER=128.111.46.132:11211 --BINARY-PROTOCOL";
-*/
+
 /*
-const char* CdsIndex::options_ = "--SERVER=128.111.46.222:11211 "
+const char* kMemcacheOptions = "--SERVER=128.111.46.222:11211 "
     "--BINARY-PROTOCOL";
 */
 
@@ -29,10 +29,13 @@ uint32_t first_4_bytes(const char *key, size_t key_length, void *context);
 
 class CdsCache {
 public:
+    CdsCache();
     CdsCache(const string& mc_options);
-
     ~CdsCache();
+
 protected:
+    void Init();
+    string options_;
     memcached_st* p_memcache_;
 };
 

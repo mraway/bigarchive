@@ -1,5 +1,5 @@
 #include "append_store_chunk.h"
-#include "../exception/exception.h"
+#include "../include/exception.h"
 #include "timer.h"
 #include <log4cxx/logger.h>
 #include <log4cxx/xml/domconfigurator.h>

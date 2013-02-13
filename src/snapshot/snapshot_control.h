@@ -18,7 +18,7 @@ using namespace log4cxx::xml;
 using namespace log4cxx::helpers;
 using namespace std;
 
-static string append_store_base_path = "root";
+static string base_path = "root";
 
 class SnapshotControl {
 public:
@@ -26,19 +26,16 @@ public:
     ~SnapshotControl();
     bool LoadSnapshotMeta();
     bool SaveSnapshotMeta();
-    /*
-    bool LoadSegmentMeta();
-    bool SaveSegmentMeta();
-    */
+    bool LoadSegmentRecipe(SegmentMeta& sm);
+    bool SaveSegmentRecipe(SegmentMeta& sm);
+    bool SaveBlockData(BlockMeta& bm);
     void SetAppendStore(PanguAppendStore* pas);
 public:
     string trace_file_;
     string os_type_;
     string disk_type_;
-    string vm_id_;
-    string snapshot_id_;
     string store_path_;
-    string ss_meta_filename_;
+    string ss_meta_pathname_;
     SnapshotMeta ss_meta_;
 private:
     void ParseTraceFile();
@@ -46,6 +43,7 @@ private:
     PanguAppendStore* pas_;
     SnapshotMeta ssmeta_;
     static LoggerPtr logger_;
+    int seg_pos_;
 };
 
 

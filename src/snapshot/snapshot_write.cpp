@@ -14,11 +14,14 @@
 #include "data_source.h"
 #include "snapshot_control.h"
 #include "snapshot_types.h"
+#include "cds_index.h"
 
 using namespace std;
 using namespace log4cxx;
 using namespace log4cxx::xml;
 using namespace log4cxx::helpers;
+
+#define BATCH_QUERY_BUFFER_SIZE 2048
 
 LoggerPtr ss_write_logger(Logger::getLogger("Snapshot_write"));
 
@@ -27,7 +30,7 @@ PanguAppendStore* init_append_store(string& vm_id)
     try {
         PanguAppendStore *pas = NULL;
         StoreParameter sp = StoreParameter(); ;
-        string store_name = "/" + ROOT_DIRECTORY + "/" + vm_id + "/" + "append";
+        string store_name = "/" + base_path + "/" + vm_id + "/" + "append";
         sp.mPath = store_name;
         sp.mAppend = true;
         pas = new PanguAppendStore(sp, true);
@@ -65,7 +68,7 @@ int main(int argc, char *argv[]) {
         parent = new SnapshotControl(parent_file);
         if (current->os_type_ != parent->os_type_ || 
             current->disk_type_ != parent->disk_type_ || 
-            current->vm_id_ != parent->vm_id_) {
+            current->ss_meta_.vm_id_ != parent->ss_meta_.vm_id_) {
             LOG4CXX_ERROR(ss_write_logger, 
                           "Current snapshot and parent snapshot belong to different VM");
             return -1;
@@ -74,7 +77,7 @@ int main(int argc, char *argv[]) {
 
     // 1. init append store
     // TODO: change appendstore factory to singleton
-    PanguAppendStore* pas = init_append_store(current->vm_id_);
+    PanguAppendStore* pas = init_append_store(current->ss_meta_.vm_id_);
     if (pas == NULL) {
         LOG4CXX_ERROR(ss_write_logger, "Unable to init append store");
         return -1;
@@ -84,48 +87,72 @@ int main(int argc, char *argv[]) {
 
     // 2. load parent snapshot meta from qfs, init current snapshot meta
     parent->LoadSnapshotMeta();
-    current->InitSnapshotMeta();
 
     // 3. init data source
     DataSource ds(snapshot_file, sample_file);
 
     // 4. for every loaded segment, do
-    //  d) write new data
-    //  e) write segment meta
-    SegmentMeta current_segment, parent_segment;
-    HandleType handle;
+    SegmentMeta cur_seg, par_seg;
+    BlockMeta* bm;
     CdsIndex cds_index;
-    while (ds.GetSegment(current_segment)) {
+    int num_queries = 0;
+    Checksum* cksums = new Checksum[BATCH_QUERY_BUFFER_SIZE];
+    bool* results = new bool[BATCH_QUERY_BUFFER_SIZE];
+    BlockMeta** pending_blks = new BlockMeta* [BATCH_QUERY_BUFFER_SIZE];
+    uint64_t* offsets = new uint64_t[BATCH_QUERY_BUFFER_SIZE];
+    while (ds.GetSegment(cur_seg)) {
+        num_queries = 0;
+
         //  a) load and compare parent segment meta by cksum
-        parent->LoadSegmentMeta(par_sm);
+        parent->LoadSegmentRecipe(par_seg);
         if (cur_seg.cksum_ == par_seg.cksum_) {
-            cur_seg.Copy(par_sm);
+            cur_seg.handle_ = par_seg.handle_;
             continue;
         }
+
         //  b) compare block by hash
-        for (size_t i = 0; i < cur_seg.block_list_.size(); ++i)
+        cur_seg.BuildIndex();
+        for (size_t i = 0; i < cur_seg.segment_recipe_.size(); ++i)
         {
-            handle = par_seg.SearchBlock(cur_seg.block_list_[i].cksum_);
-            if (handle != 0)
-                cur_seg.block_list_[i].handle_ = handle;
-            else
-                p_cksums[j++] = cur_seg.block_list_[i].cksum_;
+            bm = par_seg.SearchBlock(cur_seg.segment_recipe_[i].cksum_);
+            if (bm != NULL) {
+                cur_seg.segment_recipe_[i].handle_ = bm->handle_;
+                cur_seg.segment_recipe_[i].flags_ = bm->flags_ | IN_PARENT;
+            }
+            else {
+                cksums[num_queries] = cur_seg.segment_recipe_[i].cksum_;
+                pending_blks[num_queries++] = bm;
+            }
         }
+
         //  c) check with cds
-        for (size_t i = 0; i < cur_seg.block_list_.size(); ++i)
-        {
-            if (curhandle_
-        cds_index.Get(
+        cds_index.BatchGet(cksums, num_queries, results, offsets);
+        for (int i = 0; i < num_queries; i++) {
+            if (results[i] == true) {
+                pending_blks[i]->handle_ = offsets[i];
+                pending_blks[i]->flags_ |= IN_CDS;
+            }
+            //  d) write new data
+            else {
+                current->SaveBlockData(*pending_blks[i]);
+            }
+        }
+        
+        //  e) write segment recipe
+        current->SaveSegmentRecipe(cur_seg);
     }
 
     // 5. write snapshot meta to qfs
-    if (has_parent)
-        parent->SaveSnapshotMeta();
+    current->SaveSnapshotMeta();
+
 	pas->Flush();
 	pas->Close();
 
     delete pas;
-
+    delete[] cksums;
+    delete[] results;
+    delete[] offsets;
+    delete[] pending_blks;
 	return 0;
 }
 

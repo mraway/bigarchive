@@ -29,13 +29,13 @@ int main(int argc, char** argv)
     uint16_t put = 0;
     uint32_t blksize = 0;
     while (source.GetSegment(sm)) {
-        for (size_t i = 0; i < sm.block_list_.size(); ++i)
+        for (size_t i = 0; i < sm.segment_recipe_.size(); ++i)
         {
             ss.write((char*)&put, sizeof(put));
-            ss.write((char*)sm.block_list_[i].cksum_, CKSUM_LEN);
+            ss.write((char*)sm.segment_recipe_[i].cksum_.data_, CKSUM_LEN);
             blksize = sm.GetBlockSize(i); 
             ss.write((char*)&blksize, sizeof(blksize));
-            ss.write(sm.block_list_[i].data_, blksize);
+            ss.write(sm.segment_recipe_[i].data_, blksize);
         }
     }
 

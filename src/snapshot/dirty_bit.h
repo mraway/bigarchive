@@ -25,7 +25,7 @@ public:
 
     void FromStream(istream& is);
 
-    bool Test(int pos);
+    bool Test(size_t pos);
 
 private:
     vector<char> bitmap_;

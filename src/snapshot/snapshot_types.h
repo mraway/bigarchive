@@ -13,6 +13,7 @@ using namespace std;
 
 #define IN_CDS 0x1	// in common data store
 #define IN_AS 0x2	// in VM's own append store
+#define IN_PARENT 0x4	// duplicate with parent
 
 /* although append store use string as handle type,
  * in our metadata it's still better to use 8 bytes int to avoid string allocation
@@ -30,6 +31,7 @@ public:
     char* data_;
 
 public:
+    BlockMeta();
 	// serialize the metadata of a block
     /* override */ void Serialize(ostream& os) const;
     /* override */ void Deserialize(istream& is);
@@ -38,6 +40,8 @@ public:
     /* override */ void Copy(const Serializable& from);
     /* override */ int64_t GetSize();
     uint32_t GetBlockSize();
+    uint64_t SetHandle(const string& handle);
+    string GetHandle();
 };
 
 class SegmentMeta : public marshall::Serializable
@@ -64,6 +68,13 @@ public:
     // serialize the recipe of segment
     void SerializeRecipe(ostream& os) const;
     void DeserializeRecipe(istream& is);
+
+    uint64_t SetHandle(const string& handle);
+    string GetHandle();
+    void BuildIndex();
+    BlockMeta* SearchBlock(const Checksum& cksum);
+private:
+    map<Checksum, BlockMeta*> blkmap_;
 };
 
 class SnapshotMeta : public marshall::Serializable

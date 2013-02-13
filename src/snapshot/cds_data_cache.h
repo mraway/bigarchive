@@ -6,7 +6,7 @@
 #define _CDS_DATA_CACHE_H_
 
 #include "cds_cache.h"
-#include "dedup_types.h"
+#include "trace_types.h"
 
 class CdsDataCache : public CdsCache
 {
@@ -18,12 +18,12 @@ public:
     /*
      * given a hash, return data if found in memcached
      */
-    bool Get(Checksum cksum, char* buf, size_t* len);
+    bool Get(Checksum& cksum, char* buf, size_t* len);
 
     /*
      * add data to memcached
      */
-    bool Set(Checksum cksum, char* buf, size_t len);
+    bool Set(Checksum& cksum, char* buf, size_t len);
 };
 
 #endif

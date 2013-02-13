@@ -35,6 +35,10 @@ struct Checksum
     bool FromStream(istream& is);
 
     string ToString();
+
+    uint32_t First4Bytes();
+
+    uint32_t Last4Bytes();
 };
 
 /*
