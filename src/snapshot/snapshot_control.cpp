@@ -83,6 +83,7 @@ bool SnapshotControl::SaveSnapshotMeta()
 	LOG4CXX_INFO(logger_, "Snapshot meta size " << buffer.str().size());
     fh.Write((char *)buffer.str().c_str(), buffer.str().size());
     fh.Close();
+    fsh.DisConnect();
     return true;
 }
 

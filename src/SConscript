@@ -4,10 +4,11 @@ env['BASIC_LIBS'] = ['lzo2', 'pthread', 'rt', 'ssl']
 env['LOG_LIBS'] = ['apr-1', 'aprutil-1', 'log4cxx']
 env['QFS_LIBS'] = ['qfs_client', 'qfs_common', 'qfs_emulator', 'qfs_io', 'qfs_meta', 'qfs_qcdio', 'qfs_qcrs', 'qfs_tools']
 env['CACHE_LIBS'] = ['memcached', 'hashkit']
-env['PROJ_LIBS'] = ['appendstore', 'exception', 'fs', 'snapshot']
+env['PROJ_LIBS'] = ['snapshot', 'appendstore', 'fs', 'exception']
 
 SConscript('exception/SConscript')
 SConscript('fs/SConscript')
 SConscript('append-store/SConscript')
 SConscript('snapshot/SConscript')
 SConscript('test/SConscript')
+SConscript('tools/SConscript')

@@ -1,0 +1,6 @@
+Import('env')
+
+local_env = env.Clone()
+
+hash_distribution = local_env.Program(target = 'hash_distribution', source = ['hash_distribution.cpp'], LIBS = env['PROJ_LIBS'] + env['BASIC_LIBS'])
+local_env.Install(local_env['PROJECT_BIN_PATH'], hash_distribution)

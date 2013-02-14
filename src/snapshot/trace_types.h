@@ -36,9 +36,9 @@ struct Checksum
 
     string ToString();
 
-    uint32_t First4Bytes();
+    uint32_t First4Bytes() const;
 
-    uint32_t Last4Bytes();
+    uint32_t Last4Bytes() const;
 };
 
 /*

@@ -125,6 +125,11 @@ public:
   DEFINE_EXCEPTION(FileDeletionException, AppendStoreExceptionBase);
 };
 
+class DirectoryDeletionException : public AppendStoreExceptionBase
+{
+public:
+  DEFINE_EXCEPTION(DirectoryDeletionException, AppendStoreExceptionBase);
+};
 
 class FileOpenException : public AppendStoreExceptionBase
 {

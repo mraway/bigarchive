@@ -83,12 +83,22 @@ int QFSHelper::RemoveFile(const string& pathname)
     int res = kfsClient->Remove(pathname.c_str());
     if (res < 0) {
         LOG4CXX_ERROR(qfsfsh_logger, "file deletion failed : " << pathname);
-        THROW_EXCEPTION(FileDeletionException, "Failed while creating file : " + pathname);
+        THROW_EXCEPTION(FileDeletionException, "Failed while deleting file : " + pathname);
     }
     LOG4CXX_INFO(qfsfsh_logger, "File deleted : " << pathname);
     return res;
 }
 
+int QFSHelper::RemoveDirectory(const string& dirname)
+{
+    int res = kfsClient->Rmdir(dirname.c_str());
+    if (res < 0) {
+        LOG4CXX_ERROR(qfsfsh_logger, "directory deletion failed : " << dirname);
+        THROW_EXCEPTION(DirectoryDeletionException, "Failed while deleting directory : " + dirname);
+    }
+    LOG4CXX_INFO(qfsfsh_logger, "Directory deleted : " << dirname);
+    return res;
+}
 
 
 

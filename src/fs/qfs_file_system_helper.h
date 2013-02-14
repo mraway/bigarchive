@@ -36,6 +36,7 @@ public:
     /* override */ int CreateDirectory(const string& pathname);
     /* override */ int CreateFile(const string& pathname);
     /* override */ int RemoveFile(const string& pathname);
+    /* override */ int RemoveDirectory(const string& dirname);
 public:	
     KFS::KfsClient *kfsClient;
 };

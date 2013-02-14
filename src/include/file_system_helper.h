@@ -32,6 +32,8 @@ public:
     virtual int CreateFile(const string& pathname) = 0;
     /* remove a file */
     virtual int RemoveFile(const string& pathname) = 0;
+    /* remove a dir */
+    virtual int RemoveDirectory(const string& dirname) = 0;
 };
 
 #endif /* FILE_SYSTEM_HELPER_H */

@@ -5,6 +5,8 @@ VariantDir('build', 'src', duplicate=0)
 env = Environment()
 env.SConsignFile()
 
+#env['CXX'] = 'clang'
+
 if ARGUMENTS.get('mode', 'debug') == 'release':
     print "*** Release build ***"
     env['CCFLAGS'] = ['-O2', '-DNDEBUG']

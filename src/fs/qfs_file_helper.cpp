@@ -12,7 +12,7 @@ LoggerPtr qfsfh_logger(Logger::getLogger( "appendstore.qfs_helper"));
 
 
 /**
-Consturctor for File Helper, performs file related opereations
+   Consturctor for File Helper, performs file related opereations
 */
 QFSFileHelper::QFSFileHelper(QFSHelper *qfshelper, string fname, int mode) {
     DOMConfigurator::configure("Log4cxxConfig.xml");
@@ -24,7 +24,7 @@ QFSFileHelper::QFSFileHelper(QFSHelper *qfshelper, string fname, int mode) {
 }
 
 /**
-Create file
+   Create file
 */
 void QFSFileHelper::Create()
 {
@@ -38,7 +38,7 @@ void QFSFileHelper::Create()
 }
 
 /**
-Opens file on specified mode
+   Opens file on specified mode
 */
 void QFSFileHelper::Open() {
 
@@ -78,9 +78,9 @@ void QFSFileHelper::Close() {
     	LOG4CXX_INFO(qfsfh_logger, "File Close : file descriptor, fd < 0 for file : " << filename); 
     }
     else {
-	if(mode != O_RDONLY) {
+        if(mode != O_RDONLY) {
 	    	qfshelper->kfsClient->Sync(fd);
-	}
+        }
     	qfshelper->kfsClient->Close(fd);
     	LOG4CXX_INFO(qfsfh_logger, "File Synced and Closed : " << filename); 
     }
@@ -115,11 +115,9 @@ int QFSFileHelper::Read(char *buffer, int length) {
  */ 
 
 int QFSFileHelper::Write(char *buffer, int length) {
-
-
-  // why care !! 
+    // why care !! 
     if(fd == -1) {	
-	LOG4CXX_ERROR(qfsfh_logger, "file not opened :" << filename);
+        LOG4CXX_ERROR(qfsfh_logger, "file not opened :" << filename);
     }
 
     Header header(length);
@@ -170,15 +168,15 @@ int QFSFileHelper::Append(char *buffer, int length) {
 int QFSFileHelper::WriteData(char *buffer, int dataLength) {
 
     if(fd == -1) {
-	LOG4CXX_ERROR(qfsfh_logger, "file not opened :" << filename);
+        LOG4CXX_ERROR(qfsfh_logger, "file not opened :" << filename);
     }
 
     int bytes_wrote = qfshelper->kfsClient->Write(fd, buffer, dataLength);
     if( bytes_wrote != dataLength) {
-                string bytes_wrote_str = "" + bytes_wrote;
-                string length_str = "" + dataLength;
-                LOG4CXX_ERROR(qfsfh_logger, "Was able to write only " << bytes_wrote_str << ", instead of " << length_str);
-                THROW_EXCEPTION(AppendStoreWriteException,  "Was able to write only " + bytes_wrote_str + ", instead of " + length_str);
+        string bytes_wrote_str = "" + bytes_wrote;
+        string length_str = "" + dataLength;
+        LOG4CXX_ERROR(qfsfh_logger, "Was able to write only " << bytes_wrote_str << ", instead of " << length_str);
+        THROW_EXCEPTION(AppendStoreWriteException,  "Was able to write only " + bytes_wrote_str + ", instead of " + length_str);
     }
 
     LOG4CXX_INFO(qfsfh_logger, "WriteDATA " << dataLength << " bytes into file(" << filename << ")");    
@@ -219,9 +217,9 @@ uint32_t QFSFileHelper::GetNextLogSize() {
 
 string QFSFileHelper::get_mode() {
 	switch(mode) {
-		case O_RDONLY : return "READ_ONLY";
-		case O_WRONLY : return "WRITE_ONLY";
-		case O_APPEND : return "APPEND";
-		default : return "DEFAULT";
+    case O_RDONLY : return "READ_ONLY";
+    case O_WRONLY : return "WRITE_ONLY";
+    case O_APPEND : return "APPEND";
+    default : return "DEFAULT";
 	}
 }
