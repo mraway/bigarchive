@@ -12,7 +12,8 @@ if ARGUMENTS.get('mode', 'debug') == 'release':
     env['CCFLAGS'] = ['-O2', '-DNDEBUG']
 else:
     print "*** Debug build ***"
-    env['CCFLAGS'] = ['-g', '-Wall', '-DDEBUG']
+    env['CCFLAGS'] = ['-g', '-Wall', '-DDEBUG', '-pg']
+    env['LINKFLAGS'] = ['-pg']
 
 env['PROJECT_HOME'] = os.getcwd()
 env['PROJECT_LIB_PATH'] = env['PROJECT_HOME'] + '/lib'

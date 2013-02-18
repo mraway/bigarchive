@@ -2,5 +2,5 @@ Import('env')
 
 local_env = env.Clone()
 
-exception = local_env.StaticLibrary(target = 'exception', source = ['exception.cpp'])
-local_env.Install(local_env['PROJECT_LIB_PATH'], exception)
+common = local_env.StaticLibrary(target = 'common', source = ['exception.cpp', 'timer.cpp'])
+local_env.Install(local_env['PROJECT_LIB_PATH'], common)
