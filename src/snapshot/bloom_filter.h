@@ -8,7 +8,7 @@
 #include <tr1/functional>
 #include <tr1/memory>
 #include "exception.h"
-#include "dynamic_buffer.h"
+//#include "dynamic_buffer.h"
 #include <iostream>
 
 class BloomFilterExceptionBase : public ExceptionBase
@@ -95,7 +95,7 @@ public:
         }
         mTotalBits = newSize;
     }
-
+    /*
     inline void Serialization(DynamicBuffer& buffer)
     {
         uint64_t lenTemp = static_cast<uint64_t>((mTotalBits + 7) / 8);
@@ -124,7 +124,32 @@ public:
         memcpy(mBitsSpace, curr, ((mTotalBits + 7) / 8));
         return true;
     }
-        
+    */  
+    inline void Serialization(ostream& os)
+    {
+        uint64_t lenTemp = static_cast<uint64_t>((mTotalBits + 7) / 8);
+        os.write(reinterpret_cast<char*>(&mTotalBits), sizeof(uint64_t));
+        os.write(mBitsSpace, lenTemp);
+    }        
+
+    inline bool DeSerialization(istream& is)
+    {
+        is.read(reinterpret_cast<char*>(&mTotalBits), sizeof(uint64_t));
+        if (is.gcount() != sizeof(uint64_t))
+            return false;
+        mMaxTotalBits = mTotalBits;
+        if (mBitsSpace && mOwns)
+        {
+            delete[] mBitsSpace;
+        }
+        uint64_t lenTemp = static_cast<uint64_t>((mTotalBits + 7) / 8);
+        mBitsSpace = new char[lenTemp];
+        is.read(mBitsSpace, lenTemp);
+        if (static_cast<uint64_t>(is.gcount()) != lenTemp)
+            return false;
+        return true;
+    }
+
     uint64_t GetCurrentTotalBits()
     {
         return mTotalBits;
@@ -254,18 +279,38 @@ public:
     /**
      * Serialization to Dynamicbuffer
      */
+    /*
     void Serialization(DynamicBuffer& buffer)
     {
         mBitsSpace->Serialization(buffer);
     }
-        
+    */
     /**
      * DeSerialization from  Dynamicbuffer
      */
+    /*
     bool DeSerialization(DynamicBuffer& buffer)
     {
-        mBitsSpace->DeSerialization(buffer);
-        mTotalBits = mBitsSpace->GetCurrentTotalBits();
+        if (mBitsSpace->DeSerialization(buffer)) {
+            mTotalBits = mBitsSpace->GetCurrentTotalBits();
+            return true;
+        }
+        return false;
+    }
+    */
+    /*
+     * Serialize to stream
+     */
+    void Serialization(ostream& os) {
+        mBitsSpace->Serialization(os);
+    }
+
+    bool DeSerialization(istream& is) {
+        if (mBitsSpace->DeSerialization(is)) {
+            mTotalBits = mBitsSpace->GetCurrentTotalBits();
+            return true;
+        }
+        return false;
     }
 
     uint64_t GetCurrentTotalBits()
