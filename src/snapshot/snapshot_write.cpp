@@ -30,7 +30,7 @@ PanguAppendStore* init_append_store(string& vm_id)
     try {
         PanguAppendStore *pas = NULL;
         StoreParameter sp = StoreParameter(); ;
-        string store_name = "/" + base_path + "/" + vm_id + "/" + "append";
+        string store_name = "/" + kBasePath + "/" + vm_id + "/" + "append";
         sp.mPath = store_name;
         sp.mAppend = true;
         pas = new PanguAppendStore(sp, true);
@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
         parent_file = argv[3];
         has_parent = true;
     }
-    
+
     SnapshotControl* current = NULL;
     SnapshotControl* parent = NULL;
     current = new SnapshotControl(snapshot_file);
@@ -102,6 +102,7 @@ int main(int argc, char *argv[]) {
     uint64_t* offsets = new uint64_t[BATCH_QUERY_BUFFER_SIZE];
     while (ds.GetSegment(cur_seg)) {
         num_queries = 0;
+        current->UpdateBloomFilters(cur_seg);
 
         //  a) load and compare parent segment meta by cksum
         parent->LoadSegmentRecipe(par_seg);
@@ -144,7 +145,7 @@ int main(int argc, char *argv[]) {
 
     // 5. write snapshot meta to qfs
     current->SaveSnapshotMeta();
-
+    current->SaveBloomFilters();
 	pas->Flush();
 	pas->Close();
 

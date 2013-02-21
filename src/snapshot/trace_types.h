@@ -116,10 +116,3 @@ private:
 };
 
 #endif /* _TRACE_TYPES_H_ */
-
-
-
-
-
-
-

@@ -7,9 +7,11 @@
 #include <vector>
 #include <tr1/functional>
 #include <tr1/memory>
-#include "exception.h"
+#include "../include/exception.h"
 //#include "dynamic_buffer.h"
 #include <iostream>
+
+using namespace std;
 
 class BloomFilterExceptionBase : public ExceptionBase
 {
@@ -125,14 +127,14 @@ public:
         return true;
     }
     */  
-    inline void Serialization(ostream& os)
+    inline void Serialize(ostream& os)
     {
         uint64_t lenTemp = static_cast<uint64_t>((mTotalBits + 7) / 8);
         os.write(reinterpret_cast<char*>(&mTotalBits), sizeof(uint64_t));
         os.write(mBitsSpace, lenTemp);
     }        
 
-    inline bool DeSerialization(istream& is)
+    inline bool Deserialize(istream& is)
     {
         is.read(reinterpret_cast<char*>(&mTotalBits), sizeof(uint64_t));
         if (is.gcount() != sizeof(uint64_t))
@@ -301,12 +303,12 @@ public:
     /*
      * Serialize to stream
      */
-    void Serialization(ostream& os) {
-        mBitsSpace->Serialization(os);
+    void Serialize(ostream& os) {
+        mBitsSpace->Serialize(os);
     }
 
-    bool DeSerialization(istream& is) {
-        if (mBitsSpace->DeSerialization(is)) {
+    bool Deserialize(istream& is) {
+        if (mBitsSpace->Deserialize(is)) {
             mTotalBits = mBitsSpace->GetCurrentTotalBits();
             return true;
         }

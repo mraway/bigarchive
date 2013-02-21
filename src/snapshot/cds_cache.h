@@ -16,14 +16,7 @@ using namespace log4cxx::xml;
 using namespace log4cxx::helpers;
 
 
-const static char* kMemcacheOptions = "--SERVER=128.111.46.222:11211 "
-    "--SERVER=128.111.46.96:11211 --SERVER=128.111.46.221:11211 "
-    "--SERVER=128.111.46.132:11211 --BINARY-PROTOCOL";
-
-/*
-const char* kMemcacheOptions = "--SERVER=128.111.46.222:11211 "
-    "--BINARY-PROTOCOL";
-*/
+extern const char* kMemcacheOptions;
 
 uint32_t first_4_bytes(const char *key, size_t key_length, void *context);
 
