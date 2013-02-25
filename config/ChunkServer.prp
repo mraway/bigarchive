@@ -1,0 +1,15 @@
+# address of the metaserver, host names should not be used
+# 128.111.46.96 is our metaserver
+chunkServer.metaServer.hostname = 128.111.46.96
+
+# metaserver port for chunk server to use
+chunkServer.metaServer.port = 30000
+
+# chunk server client listener port
+chunkServer.clientPort = 22000
+
+# locations to store chunk data, independent spindles should be used
+chunkServer.chunkDir = /mnt/data1/qfs
+
+# unique cluster id
+chunkServer.clusterKey = backup_cluster

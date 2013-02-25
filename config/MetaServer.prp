@@ -1,0 +1,32 @@
+# port used by clients to connect to the metaserver
+metaServer.clientPort = 20000
+
+# port used by chunk servers to connect to the metaserver
+metaServer.chunkServerPort = 30000
+
+# chunk placement groups by IP address or first three octets
+metaServer.rackPrefixes = 128.111.46.96 1 128.111.46.222 2 128.111.46.221 3 128.111.46.132 4
+
+# create new file system if no transaction logs or checkpoints are found
+metaServer.createEmptyFs = 1
+
+# location to write transaction logs
+metaServer.logDir = /home/bgtest/qfs_log
+
+# location to write checkpoints, this needs be pruned periodically
+metaServer.cpDir = /home/bgtest/qfs_checkpoint
+
+# unique cluster id
+metaServer.clusterKey = backup_cluster
+
+# Root directory gid. Used only when the file system is first initialized.
+metaServer.rootDirGroup = 10
+
+# Root directory permissions. Used only when the file system is first initialized
+metaServer.rootDirMode = 0755
+
+# Root directory uid. Used only when the file system is first initialized
+metaServer.rootDirUser = 502
+
+# metaServer.defaultLoadUser 
+metaServer.defaultLoadUser = 502
