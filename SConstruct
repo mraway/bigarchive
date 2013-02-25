@@ -7,6 +7,7 @@ env.SConsignFile()
 
 #env['CXX'] = 'clang'
 
+# debug/release mode
 if ARGUMENTS.get('mode', 'debug') == 'release':
     print "*** Release build ***"
     env['CCFLAGS'] = ['-O2', '-DNDEBUG']
@@ -15,6 +16,11 @@ else:
     env['CCFLAGS'] = ['-g', '-Wall', '-DDEBUG', '-pg']
     env['LINKFLAGS'] = ['-pg']
 
+# parallel build
+num_cpu = int(os.environ.get('NUM_CPU', 4))
+SetOption('num_jobs', num_cpu)
+
+# build directories
 env['PROJECT_HOME'] = os.getcwd()
 env['PROJECT_LIB_PATH'] = env['PROJECT_HOME'] + '/lib'
 env['PROJECT_BIN_PATH'] = env['PROJECT_HOME'] + '/bin'
