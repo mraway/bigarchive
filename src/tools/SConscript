@@ -7,4 +7,5 @@ local_env.Install(local_env['PROJECT_BIN_PATH'], hash_distribution)
 
 local_env.Install(local_env['PROJECT_BIN_PATH'], 'memcached_start.sh')
 local_env.Install(local_env['PROJECT_BIN_PATH'], 'memcached_stop.sh')
-
+local_env.Install(local_env['PROJECT_BIN_PATH'], 'metaserver_start.sh')
+local_env.Install(local_env['PROJECT_BIN_PATH'], 'chunkserver_start.sh')
