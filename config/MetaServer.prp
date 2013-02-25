@@ -17,16 +17,43 @@ metaServer.logDir = /home/bgtest/qfs_log
 metaServer.cpDir = /home/bgtest/qfs_checkpoint
 
 # unique cluster id
-metaServer.clusterKey = backup_cluster
+metaServer.clusterKey = bg_cluster
+
+# Default user to set on files and directories which have no ownership associated with them when loaded from checkpoint.
+metaServer.defaultLoadUser = 505
+
+# Default group to set on files and directories that have no group ownership associated with them when loaded from checkpoint
+metaServer.defaultLoadUser = 10
+
+# Default file mode to set on files that have no access permissions set on them when loaded from checkpoint
+metaServer.defaultLoadFileMode = 0666
+
+# Default directory mode to set on directories that have no access permissions set on them when loaded from checkpoint.
+metaServer.defaultLoadDirMode = 0777
 
 # Root directory gid. Used only when the file system is first initialized.
 metaServer.rootDirGroup = 10
 
 # Root directory permissions. Used only when the file system is first initialized
-metaServer.rootDirMode = 0755
+metaServer.rootDirMode = 0777
 
 # Root directory uid. Used only when the file system is first initialized
-metaServer.rootDirUser = 502
+metaServer.rootDirUser = 505
 
-# metaServer.defaultLoadUser 
-metaServer.defaultLoadUser = 502
+# Default user to use for a client that does not support user permissions. Default is no user.
+metaServer.defaultUser = 505
+
+# Default group to use for a client that does not support group permissions. Default is no group.
+metaServer.defaultGroup	= 10
+
+# Default file mode to use for a client that does not support file permissions
+metaServer.defaultFileMode = 0666
+
+# Default directory mode to use for a client that does not support directory permissions
+metaServer.defaultDirMode = 0777
+
+# Force effective user to root always. This effectively turns off permissions control. The default is 0 which is off.
+#metaServer.forceEUserToRoot = 0
+
+# When allocating a chunk, prefer chunk servers with a lower load averages. For a write intensive file system turning this mode on is recommended. This parameter is mutually exclusive with metaServer.sortCandidatesBySpaceUtilization. When both values are set true metaServer.sortCandidatesBySpaceUtilization takes precedence
+metaServer.sortCandidatesByLoadAvg = 1

@@ -12,4 +12,4 @@ chunkServer.clientPort = 22000
 chunkServer.chunkDir = /mnt/data1/qfs
 
 # unique cluster id
-chunkServer.clusterKey = backup_cluster
+chunkServer.clusterKey = bg_cluster
