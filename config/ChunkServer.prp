@@ -13,3 +13,6 @@ chunkServer.chunkDir = /mnt/data1/qfs
 
 # unique cluster id
 chunkServer.clusterKey = bg_cluster
+
+# Message log level FATAL, ALERT, CRIT, ERROR, WARN, NOTICE, INFO, DEBUG
+chunkServer.msgLogWriter.logLevel = DEBUG

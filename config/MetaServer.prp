@@ -57,3 +57,6 @@ metaServer.defaultDirMode = 0777
 
 # When allocating a chunk, prefer chunk servers with a lower load averages. For a write intensive file system turning this mode on is recommended. This parameter is mutually exclusive with metaServer.sortCandidatesBySpaceUtilization. When both values are set true metaServer.sortCandidatesBySpaceUtilization takes precedence
 metaServer.sortCandidatesByLoadAvg = 1
+
+# Message log level FATAL, ALERT, CRIT, ERROR, WARN, NOTICE, INFO, DEBUG. The default is DEBUG; for non debug builds with NDEBUG defined, INFO is the default.
+metaServer.msgLogWriter.logLevel = DEBUG
