@@ -2,7 +2,7 @@
 metaServer.clientPort = 20000
 
 # port used by chunk servers to connect to the metaserver
-metaServer.chunkServerPort = 30000
+metaServer.chunkServerPort = 20100
 
 # chunk placement groups by IP address or first three octets
 metaServer.rackPrefixes = 128.111.46.96 1 128.111.46.222 2 128.111.46.221 3 128.111.46.132 4
@@ -60,3 +60,7 @@ metaServer.sortCandidatesByLoadAvg = 1
 
 # Message log level FATAL, ALERT, CRIT, ERROR, WARN, NOTICE, INFO, DEBUG. The default is DEBUG; for non debug builds with NDEBUG defined, INFO is the default.
 metaServer.msgLogWriter.logLevel = DEBUG
+
+metaServer.minChunkservers = 1
+metaServer.recoveryInterval = 1
+metaServer.clientThreadCount = 4

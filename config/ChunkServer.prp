@@ -3,10 +3,10 @@
 chunkServer.metaServer.hostname = 128.111.46.96
 
 # metaserver port for chunk server to use
-chunkServer.metaServer.port = 30000
+chunkServer.metaServer.port = 20100
 
 # chunk server client listener port
-chunkServer.clientPort = 22000
+chunkServer.clientPort = 20101
 
 # locations to store chunk data, independent spindles should be used
 chunkServer.chunkDir = /mnt/data1/qfs
@@ -16,3 +16,7 @@ chunkServer.clusterKey = bg_cluster
 
 # Message log level FATAL, ALERT, CRIT, ERROR, WARN, NOTICE, INFO, DEBUG
 chunkServer.msgLogWriter.logLevel = DEBUG
+
+chunkServer.rackId = 0
+chunkServer.diskIo.crashOnError = 1
+chunkServer.abortOnChecksumMismatchFlag = 1
