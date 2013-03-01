@@ -1,3 +1,3 @@
 #!/bin/bash
 
-/home/qfs/webui/qfsstatus.py ../config/WebUi.cfg > ~/webui.log 2>&1 &
+../qfs/webui/qfsstatus.py ../config/WebUi.cfg > ~/webui.log 2>&1 &
