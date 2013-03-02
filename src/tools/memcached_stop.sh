@@ -1,3 +1,3 @@
 #!/bin/bash
 
-pssh -i -h pssh_hosts killall memcached
+pssh -i -h ../config/pssh_hosts killall memcached
