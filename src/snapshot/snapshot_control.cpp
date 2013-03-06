@@ -8,16 +8,9 @@ SnapshotControl::SnapshotControl(const string& trace_file)
 {
     trace_file_ = trace_file;
     ParseTraceFile();
-
-    vm_path_ = "/" + kBasePath + "/" + ss_meta_.vm_id_;
-    store_path_ = vm_path_ + "/" + "appendstore";
-    ss_meta_pathname_ = vm_path_ + "/" + ss_meta_.snapshot_id_ + ".meta";
-    primary_filter_pathname_ = vm_path_ + "/" + ss_meta_.snapshot_id_ + ".bm1";
-    secondary_filter_pathname_ = vm_path_ + "/" + ss_meta_.snapshot_id_ + ".bm2";
-
-    seg_pos_ = 0;
-    ss_meta_.size_ = 0;
+    Init();
 }
+
 
 SnapshotControl::SnapshotControl(const string& os_type, const string& disk_type, const string& vm_id, const string& ss_id)
 {
@@ -25,13 +18,17 @@ SnapshotControl::SnapshotControl(const string& os_type, const string& disk_type,
     disk_type_ = disk_type;
     ss_meta_.vm_id_ = vm_id;
     ss_meta_.snapshot_id_ = ss_id;
+    Init();
+}
 
+void SnapshotControl::Init()
+{
     vm_path_ = "/" + kBasePath + "/" + ss_meta_.vm_id_;
+    vm_meta_pathname_ = vm_path_ + "/vm.meta";
     store_path_ = vm_path_ + "/" + "appendstore";
     ss_meta_pathname_ = vm_path_ + "/" + ss_meta_.snapshot_id_ + ".meta";
     primary_filter_pathname_ = vm_path_ + "/" + ss_meta_.snapshot_id_ + ".bm1";
     secondary_filter_pathname_ = vm_path_ + "/" + ss_meta_.snapshot_id_ + ".bm2";
-
     seg_pos_ = 0;
     ss_meta_.size_ = 0;
 }
@@ -75,9 +72,9 @@ bool SnapshotControl::LoadSnapshotMeta()
 
     stringstream buffer;
     buffer.write(data, read_length);
-    ssmeta_.Deserialize(buffer);
-    ssmeta_.DeserializeRecipe(buffer);
-    LOG4CXX_INFO(logger_, "Snapshot meta loaded: " << ssmeta_.vm_id_ << " " << ssmeta_.snapshot_id_);
+    ss_meta_.Deserialize(buffer);
+    ss_meta_.DeserializeRecipe(buffer);
+    LOG4CXX_INFO(logger_, "Snapshot meta loaded: " << ss_meta_.vm_id_ << " " << ss_meta_.snapshot_id_);
 
 	fh.Close();
 	fsh.DisConnect();
@@ -98,8 +95,8 @@ bool SnapshotControl::SaveSnapshotMeta()
 	fh.Create();
 
 	stringstream buffer;
-	ssmeta_.Serialize(buffer);
-    ssmeta_.SerializeRecipe(buffer);
+	ss_meta_.Serialize(buffer);
+    ss_meta_.SerializeRecipe(buffer);
 	LOG4CXX_INFO(logger_, "Snapshot meta size " << buffer.str().size());
     fh.Write((char *)buffer.str().c_str(), buffer.str().size());
 
@@ -138,6 +135,59 @@ bool SnapshotControl::SaveBlockData(BlockMeta& bm)
     string handle = store_ptr_->Append(data);
     bm.SetHandle(handle);
     bm.flags_ |= IN_AS;
+    return true;
+}
+
+bool SnapshotControl::InitBloomFilters(uint64_t snapshot_size)
+{
+	QFSHelper fsh;
+	fsh.Connect();
+	if (!fsh.IsFileExists(vm_meta_pathname_)) {
+        // init bloom filter params and store into vm meta
+        LOG4CXX_INFO(logger_, "VM meta not found, will create " << vm_meta_pathname_);
+        vm_meta_.filter_num_items_ = snapshot_size / AVG_BLOCK_SIZE;
+        vm_meta_.filter_num_funcs_ = BLOOM_FILTER_NUM_FUNCS;
+        vm_meta_.filter_fp_rate_ = BLOOM_FILTER_FP_RATE;
+
+        QFSFileHelper fh(&fsh, vm_meta_pathname_, O_WRONLY);
+        fh.Create();
+        stringstream buffer;
+        vm_meta_.Serialize(buffer);
+        LOG4CXX_INFO(logger_, "VM meta size " << buffer.str().size());
+        fh.WriteData((char *)buffer.str().c_str(), buffer.str().size());
+        fh.Close();
+	}
+    else {
+        // read bloom filter params
+        QFSFileHelper fh(&fsh, vm_meta_pathname_, O_RDONLY);
+        fh.Open();
+        long read_length = fsh.GetSize(vm_meta_pathname_);
+        char *data = new char[read_length];
+        fh.Read(data, read_length);
+        LOG4CXX_INFO(logger_, "Read " << read_length << " from file");
+
+        stringstream buffer;
+        buffer.write(data, read_length);
+        vm_meta_.Deserialize(buffer);
+        LOG4CXX_INFO(logger_, "VM meta loaded: " 
+                     << vm_meta_.filter_num_items_ << " " 
+                     << vm_meta_.filter_num_funcs_ << ""
+                     << vm_meta_.filter_fp_rate_);
+        fh.Close();
+        delete[] data;
+    }
+	fsh.DisConnect();
+
+    // params ready, now init bloom filters
+    primary_filter_ptr_ = new BloomFilter<Checksum>(vm_meta_.filter_num_items_, 
+                                                   vm_meta_.filter_fp_rate_, 
+                                                   kBloomFilterFunctions, 
+                                                   vm_meta_.filter_num_funcs_);
+    // for fine-grained deletion we need a bigger filter
+    secondary_filter_ptr_ = new BloomFilter<Checksum>(vm_meta_.filter_num_items_ * 2, 
+                                                   vm_meta_.filter_fp_rate_, 
+                                                   kBloomFilterFunctions, 
+                                                   vm_meta_.filter_num_funcs_);
     return true;
 }
 

@@ -3,6 +3,11 @@
 
 #include "trace_types.h"
 #include "string.h"
+
+// see http://pages.cs.wisc.edu/~cao/papers/summary-cache/node8.html
+#define BLOOM_FILTER_FP_RATE 0.01
+#define BLOOM_FILTER_NUM_FUNCS 7
+
 /*
  * pick the first eight bytes start from func_id as bloom filter hash
  */
@@ -53,13 +58,6 @@ ADD_HASH_FUNCTION(19);
 typedef uint64_t (*BloomFilterFunctionPtr)(const Checksum& cksum);
 
 extern const BloomFilterFunctionPtr kBloomFilterFunctions[];
-
-/*
-const BloomFilterFunctionPtr kBloomFilterFunctions[CKSUM_LEN] = {
-    &hash_function_0, &hash_function_3, &hash_function_6, &hash_function_9, &hash_function_12, &hash_function_15, &hash_function_18,
-    &hash_function_1, &hash_function_4, &hash_function_7, &hash_function_10, &hash_function_13, &hash_function_16, &hash_function_19,
-    &hash_function_2, &hash_function_5, &hash_function_8, &hash_function_11, &hash_function_14, &hash_function_17 };
-*/
 
 #endif // _BLOOM_FILTER_FUNCTIONS_H_
 

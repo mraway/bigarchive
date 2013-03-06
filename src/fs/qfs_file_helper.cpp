@@ -9,7 +9,7 @@ using namespace log4cxx::xml;
 using namespace log4cxx::helpers;
 
 LoggerPtr qfsfh_logger(Logger::getLogger( "appendstore.qfs_helper"));
-
+//Karim: Each QFSFileHelper object has a QFSHelper object, a filename, mode, and a file descriptor associated with it.
 
 /**
    Consturctor for File Helper, performs file related opereations
@@ -28,7 +28,7 @@ QFSFileHelper::QFSFileHelper(QFSHelper *qfshelper, string fname, int mode) {
 */
 void QFSFileHelper::Create()
 {
-    fd = qfshelper->kfsClient->Create(filename.c_str());
+    fd = qfshelper->kfsClient->Create(filename.c_str());//Karim: I think this is just a wrapper for QFS that creates the file and returns the file descriptor.
 
     if (fd < 0) { 
 		LOG4CXX_ERROR(qfsfh_logger, "File Creation failed : " << filename);
@@ -43,7 +43,7 @@ void QFSFileHelper::Create()
 void QFSFileHelper::Open() {
 
     if( ! qfshelper->IsFileExists(filename)) {
-		Create();
+		Create();  // Karim: If file does not exist then create it.
 	}
 
     bool append = false;
@@ -66,7 +66,7 @@ void QFSFileHelper::Open() {
     if(append) {
 		mode = O_APPEND;
 		LOG4CXX_INFO(qfsfh_logger, "Opening in Write mode and seeking to end of file : " << filename);
-		Seek(qfshelper->getSize(filename));
+		Seek(qfshelper->GetSize(filename));
     }
 
 	LOG4CXX_INFO(qfsfh_logger, "File Opened : filename(" << filename << "), mode(" << get_mode() << ")");
@@ -86,12 +86,13 @@ void QFSFileHelper::Close() {
     }
 }
 
+
 int QFSFileHelper::Read(char *buffer, int length) {
     /* check whether its opened of not */
     if(fd == -1) {
 		Open();
     }
-
+    //Karim: If file already open then read "length" bytes and put them in buffer
     int bytes_read = qfshelper->kfsClient->Read(fd, buffer, length);
 
     if(bytes_read != length) {
@@ -104,7 +105,7 @@ int QFSFileHelper::Read(char *buffer, int length) {
 		}
     }
 
-	LOG4CXX_INFO(qfsfh_logger, "Read " << length << " bytes from file(" << filename << ")");    
+	LOG4CXX_DEBUG(qfsfh_logger, "Read " << length << " bytes from file(" << filename << ")");    
 
     return bytes_read;	
 }
@@ -136,7 +137,7 @@ int QFSFileHelper::Write(char *buffer, int length) {
 		THROW_EXCEPTION(AppendStoreWriteException,  "Was able to write only " + bytes_wrote_str + ", instead of " + length_str);
     }
 
-    LOG4CXX_INFO(qfsfh_logger, "Wrote " << length << " bytes into file(" << filename << ")");    
+    LOG4CXX_DEBUG(qfsfh_logger, "Wrote " << length << " bytes into file(" << filename << ")");    
     return qfshelper->kfsClient->Tell(fd);
     // return x;
 }
@@ -160,7 +161,7 @@ int QFSFileHelper::Append(char *buffer, int length) {
         THROW_EXCEPTION(AppendStoreWriteException,  "Was able to append only " + bytes_wrote_str + ", instead of " + length_str);
     }
 
-	LOG4CXX_INFO(qfsfh_logger, "Append " << length << " bytes into file(" << filename << ")");    
+	LOG4CXX_DEBUG(qfsfh_logger, "Append " << length << " bytes into file(" << filename << ")");    
 
     return bytes_wrote;
 }
@@ -179,7 +180,7 @@ int QFSFileHelper::WriteData(char *buffer, int dataLength) {
         THROW_EXCEPTION(AppendStoreWriteException,  "Was able to write only " + bytes_wrote_str + ", instead of " + length_str);
     }
 
-    LOG4CXX_INFO(qfsfh_logger, "WriteDATA " << dataLength << " bytes into file(" << filename << ")");    
+    LOG4CXX_DEBUG(qfsfh_logger, "WriteDATA " << dataLength << " bytes into file(" << filename << ")");    
     
     return bytes_wrote;
 }
@@ -203,14 +204,16 @@ void QFSFileHelper::Seek(int offset) {
     qfshelper->kfsClient->Seek(fd, offset);
 }
 
+
+//Karim: I think this function reads the header part from a file and return the real data length
 uint32_t QFSFileHelper::GetNextLogSize() {
     char *buffer = new char[sizeof(Header)];
 	/* setting the buffer to zero, to avoid garbage data */
     memset(buffer, 0, sizeof(Header));
-    Header *header = new Header(-1);
+    Header *header = new Header(-1);// Karim: I think the new here is unnecessary because the pointer will later be reassigned??
     Read(buffer, sizeof(Header));
     header = (Header *)buffer;
-	LOG4CXX_INFO(qfsfh_logger, "GetNextLogSize - " << filename << " - " << header->data_length);    
+	LOG4CXX_DEBUG(qfsfh_logger, "GetNextLogSize - " << filename << " - " << header->data_length);    
     return header->data_length;
 }
 

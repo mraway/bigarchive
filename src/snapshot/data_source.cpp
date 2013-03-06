@@ -6,7 +6,16 @@ DataSource::DataSource(const string& trace_file, const string& sample_file)
 {
     sample_data_ = NULL;
     try {
+        // read the last record to get the snapshot size
         trace_stream_.open(trace_file.c_str(), ios_base::binary | ios_base::in);
+        trace_stream_.seekg(-RECORD_SIZE, ios::end);
+        Block blk;
+        blk.FromStream(trace_stream_);
+        snapshot_size_ = blk.offset_ + blk.size_;
+        trace_stream_.clear();
+        trace_stream_.seekg(0, ios::beg);
+
+        // read some sample data from file
         ifstream sample_data_stream(sample_file.c_str(), ios_base::binary | ios_base::in);
         sample_data_stream.seekg(0, ios_base::end);
         size_t sample_data_size = sample_data_stream.tellg();
@@ -49,7 +58,7 @@ bool DataSource::BlockToBlockMeta(BlockMeta &bm, const Block& blk)
         return false;
     }
     if (blk.size_ > MAX_BLOCK_SIZE) {
-        cout << "Error : block size is too big" << endl;
+        cout << "Error : block size is too big: " << blk.size_ << endl;
         return false;
     }
     bm.cksum_ = blk.cksum_;
@@ -85,23 +94,7 @@ bool DataSource::GetSegment(SegmentMeta& sm)
     return false;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+uint64_t DataSource::GetSnapshotSize()
+{
+    return snapshot_size_;
+}

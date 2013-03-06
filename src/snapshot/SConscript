@@ -14,3 +14,6 @@ local_env.Install(local_env['PROJECT_BIN_PATH'], cds_loader)
 
 bf_test = local_env.Program(target = 'bf_test', source = ['bloom_filter_test.cpp'], LIBS = env['PROJ_LIBS'] + env['LOG_LIBS'] + env['BASIC_LIBS'])
 local_env.Install(local_env['PROJECT_BIN_PATH'], bf_test)
+
+prog = local_env.Program(target = 'cds_verify', source = ['cds_verify.cpp'], LIBS = env['PROJ_LIBS'] + env['LOG_LIBS'] + env['CACHE_LIBS'] + env['BASIC_LIBS'])
+local_env.Install(local_env['PROJECT_BIN_PATH'], prog)

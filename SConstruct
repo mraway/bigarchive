@@ -10,7 +10,7 @@ env.SConsignFile()
 # debug/release mode
 if ARGUMENTS.get('mode', 'debug') == 'release':
     print "*** Release build ***"
-    env['CCFLAGS'] = ['-O2', '-DNDEBUG']
+    env['CCFLAGS'] = ['-O3', '-DNDEBUG']
 else:
     print "*** Debug build ***"
     env['CCFLAGS'] = ['-g', '-Wall', '-DDEBUG', '-pg']

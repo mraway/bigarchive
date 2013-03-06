@@ -28,11 +28,15 @@ public:
      */
     bool GetSegment(SegmentMeta& sm);
 
+    uint64_t GetSnapshotSize();
+
 private:
     bool BlockToBlockMeta(BlockMeta& bm, const Block& blk);
+
 private:
     char* sample_data_;
     ifstream trace_stream_;
+    uint64_t snapshot_size_;
 };
 
 #endif // _DATA_SOURCE_H_

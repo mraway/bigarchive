@@ -5,6 +5,12 @@ local_env = env.Clone()
 hash_distribution = local_env.Program(target = 'hash_distribution', source = ['hash_distribution.cpp'], LIBS = env['PROJ_LIBS'] + env['BASIC_LIBS'] + env['LOG_LIBS'])
 local_env.Install(local_env['PROJECT_BIN_PATH'], hash_distribution)
 
+prog = local_env.Program(target = 'trace_analysis', source = ['trace_analysis.cpp'], LIBS = env['PROJ_LIBS'] + env['BASIC_LIBS'])
+local_env.Install(local_env['PROJECT_BIN_PATH'], prog)
+
+prog = local_env.Program(target = 'hash_hit_length', source = ['hash_hit_length.cpp'], LIBS = env['PROJ_LIBS'] + env['BASIC_LIBS'] + env['LOG_LIBS'])
+local_env.Install(local_env['PROJECT_BIN_PATH'], prog)
+
 local_env.Install(local_env['PROJECT_BIN_PATH'], 'memcached_start.sh')
 local_env.Install(local_env['PROJECT_BIN_PATH'], 'memcached_stop.sh')
 local_env.Install(local_env['PROJECT_BIN_PATH'], 'metaserver_start.sh')

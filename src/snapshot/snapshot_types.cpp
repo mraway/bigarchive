@@ -236,6 +236,39 @@ void SnapshotMeta::DeserializeRecipe(istream& is)
     }
 }
 
+/************************** VMmeta ***************************/
+
+void VMMeta::Serialize(ostream& os) const
+{
+    marshall::Serialize(filter_num_items_, os);
+    marshall::Serialize(filter_num_funcs_, os);
+    marshall::Serialize(filter_fp_rate_, os);
+}
+
+void VMMeta::Deserialize(istream &is)
+{
+    marshall::Deserialize(filter_num_items_, is);
+    marshall::Deserialize(filter_num_funcs_, is);
+    marshall::Deserialize(filter_fp_rate_, is);
+}
+
+VMMeta* VMMeta::New()
+{
+    return new VMMeta;
+}
+
+void VMMeta::Copy(const Serializable& from)
+{
+    const VMMeta& vm = dynamic_cast<const VMMeta&>(from);
+    filter_num_items_ = vm.filter_num_items_;
+    filter_num_funcs_ = vm.filter_num_funcs_;
+    filter_fp_rate_ = vm.filter_fp_rate_;
+}
+
+int64_t VMMeta::GetSize()
+{
+    return sizeof(VMMeta::filter_num_items_) + sizeof(VMMeta::filter_num_funcs_) + sizeof(VMMeta::filter_fp_rate_);
+}
 
 
 

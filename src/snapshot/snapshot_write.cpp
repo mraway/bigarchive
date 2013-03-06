@@ -15,6 +15,8 @@
 #include "snapshot_control.h"
 #include "snapshot_types.h"
 #include "cds_index.h"
+#include <execinfo.h>
+#include <signal.h>
 
 using namespace std;
 using namespace log4cxx;
@@ -24,6 +26,19 @@ using namespace log4cxx::helpers;
 #define BATCH_QUERY_BUFFER_SIZE 2048
 
 LoggerPtr ss_write_logger(Logger::getLogger("Snapshot_write"));
+
+void crash_handler(int sig) {
+    void *array[10];
+    size_t size;
+
+    // get void*'s for all entries on the stack
+    size = backtrace(array, 10);
+
+    // print out all the frames to stderr
+    fprintf(stderr, "Error: signal %d:\n", sig);
+    backtrace_symbols_fd(array, size, 2);
+    exit(1);
+}
 
 PanguAppendStore* init_append_store(string& vm_id)
 {
@@ -46,8 +61,10 @@ PanguAppendStore* init_append_store(string& vm_id)
 }
 
 int main(int argc, char *argv[]) {
+    signal(SIGSEGV, crash_handler);
+
 	if(argc != 3 && argc != 4) { 
-		cout << "Usage: %s sample_data snapshot_trace parent_snapshot_trace" << argv[0] << endl;
+		cout << "Usage: " << argv[0] << " sample_data snapshot_trace parent_snapshot_trace" << endl;
 		return -1;
 	}
 
@@ -61,6 +78,8 @@ int main(int argc, char *argv[]) {
         has_parent = true;
     }
 
+
+    DataSource ds(snapshot_file, sample_file);
     SnapshotControl* current = NULL;
     SnapshotControl* parent = NULL;
     current = new SnapshotControl(snapshot_file);
@@ -83,59 +102,65 @@ int main(int argc, char *argv[]) {
         return -1;
     }
     current->SetAppendStore(pas);
-    parent->SetAppendStore(pas);
 
     // 2. load parent snapshot meta from qfs, init current snapshot meta
-    parent->LoadSnapshotMeta();
+    if (has_parent) {
+        parent->SetAppendStore(pas);
+        parent->LoadSnapshotMeta();
+    }
 
-    // 3. init data source
-    DataSource ds(snapshot_file, sample_file);
-
-    // 4. for every loaded segment, do
+    // 3. for every loaded segment, do
     SegmentMeta cur_seg, par_seg;
     BlockMeta* bm;
     CdsIndex cds_index;
     int num_queries = 0;
     Checksum* cksums = new Checksum[BATCH_QUERY_BUFFER_SIZE];
     bool* results = new bool[BATCH_QUERY_BUFFER_SIZE];
-    BlockMeta** pending_blks = new BlockMeta* [BATCH_QUERY_BUFFER_SIZE];
+    BlockMeta** blks_to_query = new BlockMeta* [BATCH_QUERY_BUFFER_SIZE];
     uint64_t* offsets = new uint64_t[BATCH_QUERY_BUFFER_SIZE];
     while (ds.GetSegment(cur_seg)) {
         num_queries = 0;
         current->UpdateBloomFilters(cur_seg);
 
         //  a) load and compare parent segment meta by cksum
-        parent->LoadSegmentRecipe(par_seg);
-        if (cur_seg.cksum_ == par_seg.cksum_) {
-            cur_seg.handle_ = par_seg.handle_;
-            continue;
-        }
-
-        //  b) compare block by hash
-        cur_seg.BuildIndex();
-        for (size_t i = 0; i < cur_seg.segment_recipe_.size(); ++i)
-        {
-            bm = par_seg.SearchBlock(cur_seg.segment_recipe_[i].cksum_);
-            if (bm != NULL) {
-                cur_seg.segment_recipe_[i].handle_ = bm->handle_;
-                cur_seg.segment_recipe_[i].flags_ = bm->flags_ | IN_PARENT;
+        if (has_parent) {
+            parent->LoadSegmentRecipe(par_seg);
+            if (cur_seg.cksum_ == par_seg.cksum_) {
+                cur_seg.handle_ = par_seg.handle_;
+                continue;
             }
-            else {
-                cksums[num_queries] = cur_seg.segment_recipe_[i].cksum_;
-                pending_blks[num_queries++] = bm;
+
+            //  b) compare block by hash
+            par_seg.BuildIndex();
+            for (size_t i = 0; i < cur_seg.segment_recipe_.size(); ++i)
+            {
+                bm = par_seg.SearchBlock(cur_seg.segment_recipe_[i].cksum_);
+                if (bm != NULL) {
+                    cur_seg.segment_recipe_[i].handle_ = bm->handle_;
+                    cur_seg.segment_recipe_[i].flags_ = bm->flags_ | IN_PARENT;
+                }
+                else {
+                    cksums[num_queries] = cur_seg.segment_recipe_[i].cksum_;
+                    blks_to_query[num_queries++] = &cur_seg.segment_recipe_[i];
+                }
             }
         }
-
+        else {
+            for (size_t i = 0; i < cur_seg.segment_recipe_.size(); ++i) {
+                cksums[num_queries]= cur_seg.segment_recipe_[i].cksum_;
+                blks_to_query[num_queries++] = &cur_seg.segment_recipe_[i];
+            }
+        }
         //  c) check with cds
         cds_index.BatchGet(cksums, num_queries, results, offsets);
         for (int i = 0; i < num_queries; i++) {
             if (results[i] == true) {
-                pending_blks[i]->handle_ = offsets[i];
-                pending_blks[i]->flags_ |= IN_CDS;
+                blks_to_query[i]->handle_ = offsets[i];
+                blks_to_query[i]->flags_ |= IN_CDS;
             }
             //  d) write new data
             else {
-                current->SaveBlockData(*pending_blks[i]);
+                current->SaveBlockData(*blks_to_query[i]);
             }
         }
         
@@ -143,7 +168,7 @@ int main(int argc, char *argv[]) {
         current->SaveSegmentRecipe(cur_seg);
     }
 
-    // 5. write snapshot meta to qfs
+    // 4. write snapshot meta to qfs
     current->SaveSnapshotMeta();
     current->SaveBloomFilters();
 	pas->Flush();
@@ -153,7 +178,7 @@ int main(int argc, char *argv[]) {
     delete[] cksums;
     delete[] results;
     delete[] offsets;
-    delete[] pending_blks;
+    delete[] blks_to_query;
 	return 0;
 }
 

@@ -102,6 +102,20 @@ public:
     void DeserializeRecipe(istream& is);
 };
 
+class VMMeta : public marshall::Serializable
+{
+public:
+    uint64_t filter_num_items_;
+    uint32_t filter_num_funcs_;
+    double filter_fp_rate_;
+
+public:
+    /* override */ void Serialize(ostream& os) const;
+    /* override */ void Deserialize(istream& is);
+    /* override */ VMMeta* New();
+    /* override */ void Copy(const Serializable& from);
+    /* override */ int64_t GetSize();
+};
 #endif // _SNAPSHOT_TYPES_H_
 
 

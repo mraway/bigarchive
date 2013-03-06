@@ -45,16 +45,11 @@ bool Checksum::FromStream(istream& is)
 
 string Checksum::ToString()
 {
-    stringstream ss;
-    unsigned char hexchar[16];
-    for (unsigned char i = 0; i < 16; ++i)
-        hexchar[i] = '0' + i;
-    for (int i = 0; i < CKSUM_LEN; ++i)
-    {
-        ss << hexchar[data_[i] >> 4];
-        ss << hexchar[data_[i] & 0xF];
-    }
-    return ss.str();
+    string s(2 * CKSUM_LEN, '0');
+    for (int i = 0; i < CKSUM_LEN; i++) {
+		sprintf(&s[2 * i], "%02x", data_[i]);
+	}
+	return s;
 }
 
 uint32_t Checksum::First4Bytes() const

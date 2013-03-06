@@ -189,7 +189,7 @@ void Chunk::AppendIndex()
 	    LOG4CXX_DEBUG(logger, "index flushed : data wrote -- " << buffer);
 	    LOG4CXX_DEBUG(logger, "index flushed : data size --- " << r.Size());
 	    LOG4CXX_DEBUG(logger, "index flushed : index file size (size + data) -- " << fos);
-	    LOG4CXX_DEBUG(logger, "index file size : getSize " << mFileSystemHelper->getSize(mIndexFileName));
+	    LOG4CXX_DEBUG(logger, "index file size : getSize " << mFileSystemHelper->GetSize(mIndexFileName));
 	    LOG4CXX_WARN(logger, "Index Flushed into " << mIndexFileName << ":" << r.mIndex << ":" << r.mOffset);
             break;
         }
@@ -360,7 +360,7 @@ bool Chunk::LoadData(bool flag)
     {
         try
         {
-            mLastData = mFileSystemHelper->getSize(mDataFileName);
+            mLastData = mFileSystemHelper->GetSize(mDataFileName);
         }
         catch(ExceptionBase& e)
         {
@@ -387,7 +387,7 @@ uint32_t Chunk::GetChunkSize(const std::string& root, ChunkIDType chunk_id)
     std::string dat_file = GetDatFname(root, chunk_id);
     FileSystemHelper *fsh = new QFSHelper();
     fsh->Connect();//"host", 30000);
-    return fsh->getSize(dat_file);
+    return fsh->GetSize(dat_file);
 }
 
 uint16_t Chunk::GetMaxChunkID(const std::string& root)
@@ -543,12 +543,15 @@ bool Chunk::Close()
 }
 
 
+//Karim
+//Reads the chunk at Offset and the REAL data excluding the header and stored it in the variable data
 bool Chunk::ReadRaw(const OffsetType& offset, std::string& data) 
 {
     try
     {
-        mDataInputFH->Seek(offset);
-        uint32_t read_len = mDataInputFH->GetNextLogSize();
+        mDataInputFH->Seek(offset);//Karim: goes to the given offset in the chunk data file
+        uint32_t read_len = mDataInputFH->GetNextLogSize();//Karim: get the data length from the dataInputFH=>put it in read_len
+        //Karim: Also remember that GetNextLogSize reads the whole header so the file offset now is at the beginning of the real data (chunk date)
         std::string blkdata;
         blkdata.resize(read_len, 0);
         uint32_t size = read_len;
