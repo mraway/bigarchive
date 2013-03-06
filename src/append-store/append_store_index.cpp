@@ -87,7 +87,7 @@ void IndexVector::LoadFromFile(const std::string& fname)
     QFSHelper *qfsHelper = new QFSHelper();
     qfsHelper->Connect();//"host", 30000);
     
-    int file_size = qfsHelper->getSize(fname);
+    int file_size = qfsHelper->GetSize(fname);
 
     LOG4CXX_DEBUG(iv_logger, "index file size is : " << file_size);
 

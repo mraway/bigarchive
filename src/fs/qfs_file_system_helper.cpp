@@ -44,7 +44,7 @@ bool QFSHelper::IsDirectoryExists(string dirname)
     return value;
 }
 
-long QFSHelper::getSize(string fname)
+long QFSHelper::GetSize(string fname)
 {
     KFS::KfsFileAttr kfsattr; 
     kfsClient->Stat(fname.c_str(), kfsattr); 

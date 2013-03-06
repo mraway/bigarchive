@@ -31,7 +31,7 @@ public:
     /* override */ void DisConnect();
     /* override */ bool IsFileExists(string fname);
     /* override */ bool IsDirectoryExists(string dirname);
-    /* override */ long getSize(string fname);
+    /* override */ long GetSize(string fname);
     /* override */ int ListDir(string pathname, vector<string> &result);
     /* override */ int CreateDirectory(const string& pathname);
     /* override */ int CreateFile(const string& pathname);

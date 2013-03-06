@@ -25,7 +25,7 @@ public:
     /* checks whether directory "dirname" exits or not */
     virtual bool IsDirectoryExists(string dirname) = 0;
     /* gets file Size */
-    virtual long getSize(string fname) = 0;
+    virtual long GetSize(string fname) = 0;
     /* create Directory */
     virtual int CreateDirectory(const string& dirname) = 0;
     /* create a file */
