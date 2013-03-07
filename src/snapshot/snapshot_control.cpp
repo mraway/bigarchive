@@ -143,6 +143,8 @@ bool SnapshotControl::InitBloomFilters(uint64_t snapshot_size)
 	QFSHelper fsh;
 	fsh.Connect();
 	if (!fsh.IsFileExists(vm_meta_pathname_)) {
+        if (!fsh.IsDirectoryExists(vm_path_))
+            fsh.CreateDirectory(vm_path_);
         // init bloom filter params and store into vm meta
         LOG4CXX_INFO(logger_, "VM meta not found, will create " << vm_meta_pathname_);
         vm_meta_.filter_num_items_ = snapshot_size / AVG_BLOCK_SIZE;
@@ -183,10 +185,10 @@ bool SnapshotControl::InitBloomFilters(uint64_t snapshot_size)
                                                    vm_meta_.filter_fp_rate_, 
                                                    kBloomFilterFunctions, 
                                                    vm_meta_.filter_num_funcs_);
-    // for fine-grained deletion we need a bigger filter
+    // for fine-grained deletion we need a bigger filter, using different group of hash functions
     secondary_filter_ptr_ = new BloomFilter<Checksum>(vm_meta_.filter_num_items_ * 2, 
                                                    vm_meta_.filter_fp_rate_, 
-                                                   kBloomFilterFunctions, 
+                                                   &kBloomFilterFunctions[8], 
                                                    vm_meta_.filter_num_funcs_);
     return true;
 }

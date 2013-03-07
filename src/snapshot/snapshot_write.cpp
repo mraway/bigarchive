@@ -93,6 +93,7 @@ int main(int argc, char *argv[]) {
             return -1;
         }
     }
+    current->InitBloomFilters(ds.GetSnapshotSize());
 
     // 1. init append store
     // TODO: change appendstore factory to singleton
