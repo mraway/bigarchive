@@ -52,6 +52,9 @@ public:
     static void PrintAll();
 };
 
+// At most of the time we only need to measure the time within a single function,
+// so we define the following local timer interface. If one want to start/stop timer
+// at different functions, he can use TimerPool directly.
 #define TIMER_START()	\
     do {	\
     	string timer_name = __FILE__;	\
