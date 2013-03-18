@@ -1,19 +1,19 @@
 /*
- * CDS data in memcached cache
+ * CDS data access interface
  */
 
-#ifndef _CDS_DATA_CACHE_H_
-#define _CDS_DATA_CACHE_H_
+#ifndef _CDS_DATA_H_
+#define _CDS_DATA_H_
 
 #include "cds_cache.h"
 #include "trace_types.h"
 
-class CdsDataCache : public CdsCache
+class CdsData : public CdsCache
 {
 public:
-    CdsDataCache(const string& mc_options) : CdsCache(mc_options) {};
+    CdsData(const string& mc_options) : CdsCache(mc_options) {};
 
-    ~CdsDataCache() {};
+    ~CdsData() {};
 
     /*
      * given a hash, return data if found in memcached

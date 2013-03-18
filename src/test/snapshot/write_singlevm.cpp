@@ -7,6 +7,7 @@
 #include "store.h"
 #include "../../snapshot/data_source.h"
 #include "timer.h"
+#include "../../fs/qfs_file_system_helper.h"
 
 using namespace std;
 
@@ -57,6 +58,7 @@ int main(int argc, char *argv[]) {
 
 	// exit(-1);
 
+    QFSHelper::Connect();
 	/* Init Append Store */
 	timer.start();
 	stream.str("");
@@ -110,12 +112,10 @@ int main(int argc, char *argv[]) {
 	
 	// write snapshotMeta to file !! 
 	timer.start();
-	QFSHelper *fsh = new QFSHelper();
-	fsh->Connect();
 	stream.str("");
 	stream << ROOT_DIRECTORY << "/" << vmName;
-	fsh->CreateDirectory(stream.str());
-	QFSFileHelper *fh = new QFSFileHelper(fsh, stream.str() + "/" + snapshotID, O_WRONLY);
+	FileSystemHelper::GetInstance()->CreateDirectory(stream.str());
+	FileHelper *fh = FileSystemHelper::GetInstance()->CreateFileHelper(stream.str() + "/" + snapshotID, O_WRONLY);
 	sstream.str("");
 	snapshotMeta.Serialize(sstream);
 	fh->Create();

@@ -1,8 +1,8 @@
 #ifndef QFS_FILESYSTEM_HELPER_H
 #define QFS_FILESYSTEM_HELPER_H
 
-
 #include "../include/file_system_helper.h"
+#include "../include/file_helper.h"
 #include "../include/KfsClient.h"
 #include "../include/exception.h"
 #include "../include/KfsAttr.h"
@@ -10,25 +10,21 @@
 #include <fstream>
 #include <cerrno>
 
-
-
-extern "C" {
-#include <sys/types.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdlib.h>
-#include <dirent.h>
-}
-
 using std::string;
+
+class QFSFileHelper;
 
 class QFSHelper : public FileSystemHelper {
 
 public:
-    /* override */ void Connect(); 
-    /* override */ void Connect(string metaserverhost, int metaserverport);
-    /* override */ void DisConnect();
+    /*
+     *  Create the single instance of file system helper,
+     *  shall be called at the beginning of main program to initiate a connection to QFS.
+     */
+    static void Connect(); 
+    static void Connect(string metaserverhost, int metaserverport);
+    /* override */ FileHelper* CreateFileHelper(string fname, int mode);
+    /* override */ void DestroyFileHelper(FileHelper* p_fh);
     /* override */ bool IsFileExists(string fname);
     /* override */ bool IsDirectoryExists(string dirname);
     /* override */ long GetSize(string fname);
@@ -39,6 +35,10 @@ public:
     /* override */ int RemoveDirectory(const string& dirname);
 public:	
     KFS::KfsClient *kfsClient;
+protected:
+    QFSHelper();
+    /* suppose to disconnect QFS here, but we didn't find a disconnect API in QFS */
+    ~QFSHelper();
 };
 
 #endif

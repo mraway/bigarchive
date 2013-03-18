@@ -17,26 +17,25 @@ const char* Defaults::DAT_DIR = "data/";
 const char* Defaults::LOG_DIR = "log/";
 
 Chunk::Chunk(const std::string& root, ChunkIDType chunk_id, 
-    uint64_t max_chunk_sz, bool append_flag, CompressionCodecWeakPtr weakptr, 
-    CacheWeakPtr cacheptr, uint32_t index_interval)
+             uint64_t max_chunk_sz, bool append_flag, CompressionCodecWeakPtr weakptr, 
+             CacheWeakPtr cacheptr, uint32_t index_interval)
     : mRoot(root), 
-    mChunkId(chunk_id), 
-    mIndexFileName(GetIdxFname(root, chunk_id)), 
-    mLogFileName(GetIdxLogFname(root, chunk_id)), 
-    mDataFileName(GetDatFname(root, chunk_id)), 
-    mMaxIndex(0), 
-    mLastData(0), 
-    mMaxChunkSize(max_chunk_sz), 
-    mFlushCount(0), 
-    mDirty(append_flag), 
-    mChunkCodec(weakptr),
-    mCachePtr(cacheptr),
-    mBlockIndexInterval(index_interval)
+      mChunkId(chunk_id), 
+      mIndexFileName(GetIdxFname(root, chunk_id)), 
+      mLogFileName(GetIdxLogFname(root, chunk_id)), 
+      mDataFileName(GetDatFname(root, chunk_id)), 
+      mMaxIndex(0), 
+      mLastData(0), 
+      mMaxChunkSize(max_chunk_sz), 
+      mFlushCount(0), 
+      mDirty(append_flag), 
+      mChunkCodec(weakptr),
+      mCachePtr(cacheptr),
+      mBlockIndexInterval(index_interval)
 {
     DOMConfigurator::configure("Log4cxxConfig.xml");
 
-    mFileSystemHelper = new QFSHelper();    
-    mFileSystemHelper->Connect();
+    mFileSystemHelper = FileSystemHelper::GetInstance(); 
 
     mDataInputFH = NULL;
     mDataOutputFH = NULL;
@@ -50,19 +49,18 @@ Chunk::Chunk(const std::string& root, ChunkIDType chunk_id,
 
 Chunk::Chunk(const std::string& root, ChunkIDType chunk_id)
     : mRoot(root), 
-    mChunkId(chunk_id), 
-    mLogFileName(GetIdxLogFname(root, chunk_id)), 
-    mDirty(false)
+      mChunkId(chunk_id), 
+      mLogFileName(GetIdxLogFname(root, chunk_id)), 
+      mDirty(false)
 {
 	DOMConfigurator::configure("Log4cxxConfig.xml");
-	mFileSystemHelper = new QFSHelper;
-	mFileSystemHelper->Connect();
+	mFileSystemHelper = FileSystemHelper::GetInstance();
 	LoadDeleteLog();
 }
 
 void Chunk::LoadDeleteLog()
 {
-	mDeleteLogFH = new QFSFileHelper((QFSHelper*) mFileSystemHelper, mLogFileName, O_APPEND);
+	mDeleteLogFH = FileSystemHelper::GetInstance()->CreateFileHelper(mLogFileName, O_APPEND);
 	if(mFileSystemHelper->IsFileExists(mLogFileName) == false) {
 		mDeleteLogFH->Create();
 	}
@@ -92,11 +90,13 @@ void Chunk::CheckIfNew()
 
     if (!dexist && !iexist)
     {
-		QFSFileHelper *t;
-    	t = new QFSFileHelper((QFSHelper*)mFileSystemHelper, mDataFileName, O_WRONLY); 
-		t->Create();
-       	t = new QFSFileHelper((QFSHelper*)mFileSystemHelper, mIndexFileName, O_WRONLY); 
-        t->Create();
+    	FileHelper* fh = mFileSystemHelper->CreateFileHelper(mDataFileName, O_WRONLY); 
+		fh->Create();
+        mFileSystemHelper->DestroyFileHelper(fh);
+
+       	fh = mFileSystemHelper->CreateFileHelper(mIndexFileName, O_WRONLY); 
+        fh->Create();
+        mFileSystemHelper->DestroyFileHelper(fh);
     }
 	LOG4CXX_INFO(logger, "Chunk::CheckIfNew() Completed");
 }
@@ -129,12 +129,12 @@ IndexType Chunk::Append(const std::string& data)
         THROW_EXCEPTION(AppendStoreWriteException, ss.str());
     }
 
-/*
-    if (mBlockStream.str().size()+data.size() >= DF_MAX_BLOCK_SZ)
-    {
-        AppendIndex();
-    }
-*/
+    /*
+      if (mBlockStream.str().size()+data.size() >= DF_MAX_BLOCK_SZ)
+      {
+      AppendIndex();
+      }
+    */
 
     IndexType new_index = ++mMaxIndex; // GenerateIndex();
 
@@ -186,11 +186,11 @@ void Chunk::AppendIndex()
         try
         {
             int fos = mIndexOutputFH->Write(buffer, r.Size());
-	    LOG4CXX_DEBUG(logger, "index flushed : data wrote -- " << buffer);
-	    LOG4CXX_DEBUG(logger, "index flushed : data size --- " << r.Size());
-	    LOG4CXX_DEBUG(logger, "index flushed : index file size (size + data) -- " << fos);
-	    LOG4CXX_DEBUG(logger, "index file size : getSize " << mFileSystemHelper->GetSize(mIndexFileName));
-	    LOG4CXX_WARN(logger, "Index Flushed into " << mIndexFileName << ":" << r.mIndex << ":" << r.mOffset);
+            LOG4CXX_DEBUG(logger, "index flushed : data wrote -- " << buffer);
+            LOG4CXX_DEBUG(logger, "index flushed : data size --- " << r.Size());
+            LOG4CXX_DEBUG(logger, "index flushed : index file size (size + data) -- " << fos);
+            LOG4CXX_DEBUG(logger, "index file size : getSize " << mFileSystemHelper->GetSize(mIndexFileName));
+            LOG4CXX_WARN(logger, "Index Flushed into " << mIndexFileName << ":" << r.mIndex << ":" << r.mOffset);
             break;
         }
         catch(ExceptionBase& e)
@@ -210,7 +210,7 @@ void Chunk::AppendIndex()
                 usleep(3000000);
             }
 
-            mIndexOutputFH = new QFSFileHelper((QFSHelper *)mFileSystemHelper, mIndexFileName, O_APPEND); 
+            mIndexOutputFH = mFileSystemHelper->CreateFileHelper(mIndexFileName, O_APPEND); 
             mIndexOutputFH->Open();
 
             if (retryCount > 1)
@@ -243,7 +243,7 @@ bool Chunk::Read(IndexType index, std::string* data)
     OffsetType startOffset = it->mOffset;
 
     if(is_begin)
-	startOffset = 0;
+        startOffset = 0;
 
     std::string buf;
     bool ret = ReadRaw(startOffset, buf);
@@ -310,8 +310,8 @@ bool Chunk::Remove(const IndexType& index)
         	mDeleteLogFH->Flush(&tmp[0], tmp.size());
             break;
         }
-	// CHKIT - this exceptions is not throwed from our write method !!! 
-	// this will be never called	
+        // CHKIT - this exceptions is not throwed from our write method !!! 
+        // this will be never called	
         catch(ExceptionBase& e)
         {
             LOG4CXX_ERROR(logger, "DeleteLogStream corrupt " << e.ToString());
@@ -330,7 +330,7 @@ bool Chunk::Remove(const IndexType& index)
                 usleep(3000000);
             }
         
-            mDeleteLogFH = new QFSFileHelper((QFSHelper*)mFileSystemHelper, mLogFileName, O_APPEND); // WRITE);
+            mDeleteLogFH = mFileSystemHelper->CreateFileHelper(mLogFileName, O_APPEND); // WRITE);
 
             if (retryCount > 1)
             {
@@ -368,15 +368,14 @@ bool Chunk::LoadData(bool flag)
             throw;
         }
 
-
-        mDataOutputFH = new QFSFileHelper((QFSHelper *)mFileSystemHelper, mDataFileName, O_APPEND); // O_WRONLY);// WRITE);
+        mDataOutputFH = mFileSystemHelper->CreateFileHelper(mDataFileName, O_APPEND); // O_WRONLY);// WRITE);
         mDataOutputFH->Open();
-        mIndexOutputFH = new QFSFileHelper((QFSHelper *)mFileSystemHelper, mIndexFileName, O_APPEND); // O_WRONLY); //WRITE);
+        mIndexOutputFH = mFileSystemHelper->CreateFileHelper(mIndexFileName, O_APPEND); // O_WRONLY); //WRITE);
         mIndexOutputFH->Open();
     }
     else 
     {
-    	mDataInputFH = new QFSFileHelper((QFSHelper *)mFileSystemHelper, mDataFileName, O_RDONLY); // READ);
+    	mDataInputFH = mFileSystemHelper->CreateFileHelper(mDataFileName, O_RDONLY); // READ);
     	mDataInputFH->Open();
     }
     return true;
@@ -385,9 +384,7 @@ bool Chunk::LoadData(bool flag)
 uint32_t Chunk::GetChunkSize(const std::string& root, ChunkIDType chunk_id)
 {
     std::string dat_file = GetDatFname(root, chunk_id);
-    FileSystemHelper *fsh = new QFSHelper();
-    fsh->Connect();//"host", 30000);
-    return fsh->GetSize(dat_file);
+    return FileSystemHelper::GetInstance()->GetSize(dat_file);
 }
 
 uint16_t Chunk::GetMaxChunkID(const std::string& root)
@@ -397,10 +394,7 @@ uint16_t Chunk::GetMaxChunkID(const std::string& root)
     try
     {
     	// CHECK IT
-	FileSystemHelper *fsh;
-	fsh = new QFSHelper();
-	fsh->Connect();//"host", 30000);
-        fsh->ListDir(data_root, data_files);
+        FileSystemHelper::GetInstance()->ListDir(data_root, data_files);
     }
     catch(ExceptionBase& e)
     {
@@ -416,14 +410,14 @@ uint16_t Chunk::GetMaxChunkID(const std::string& root)
     {
         if (it->find("dat")!=0)
         {
-             continue;
+            continue;
         }
         std::string::size_type pos = it->find_last_of('.');
         if (pos != std::string::npos)
         {
-             std::string ext = it->substr(pos+1);
-             uint32_t tmp_id = strtol(ext.c_str(), 0, 16);
-             if (tmp_id > chunk_id) chunk_id = tmp_id;
+            std::string ext = it->substr(pos+1);
+            uint32_t tmp_id = strtol(ext.c_str(), 0, 16);
+            if (tmp_id > chunk_id) chunk_id = tmp_id;
         }
     }
     return chunk_id;
@@ -488,7 +482,7 @@ bool Chunk::Close()
         try
         {
             mDataInputFH->Close();
-	    mDataInputFH = NULL;
+            mDataInputFH = NULL;
         }
         catch(ExceptionBase& ex)
         {
@@ -501,7 +495,7 @@ bool Chunk::Close()
         try
         {
             mDataOutputFH->Close();
-	    mDataOutputFH = NULL;
+            mDataOutputFH = NULL;
         }
         catch(ExceptionBase& ex)
         {
@@ -515,7 +509,7 @@ bool Chunk::Close()
         try
         {
             mIndexOutputFH->Close();
-	    mIndexOutputFH = NULL;
+            mIndexOutputFH = NULL;
         }
         catch(ExceptionBase& ex)
         {
@@ -529,7 +523,7 @@ bool Chunk::Close()
         try
         {
             mDeleteLogFH->Close();
-	    mDeleteLogFH = NULL;
+            mDeleteLogFH = NULL;
         }
         catch(ExceptionBase& ex)
         {
@@ -555,14 +549,14 @@ bool Chunk::ReadRaw(const OffsetType& offset, std::string& data)
         std::string blkdata;
         blkdata.resize(read_len, 0);
         uint32_t size = read_len;
- 	// CHKIT
-	mDataInputFH->Read(&blkdata[0], read_len);
+        // CHKIT
+        mDataInputFH->Read(&blkdata[0], read_len);
 
         if (read_len != size)
         {
             std::stringstream ss;
             ss<<"DataInputStream file read error, need size: " << size <<" actual size: "<<read_len;
-		// CHKIT
+            // CHKIT
             THROW_EXCEPTION(AppendStoreReadException, ss.str());
         }
 
@@ -606,35 +600,35 @@ OffsetType Chunk::AppendRaw(const IndexType& index, const uint32_t numentry, con
 	OffsetType result = -1;
 	Timer t;
 	t.start();
-/*
-        try
-        {
-            Timer t;
-	    t.start();
-            OffsetType fos = 0;            
-            // std::cout << "\nactual data " << data.size(); // << ", data wrote : " << ssref.size();          
-            fos = mDataOutputFH->Write((char*)&data[0], data.size()); 
-            //LOG4CXX_DEBUG(logger, "flush -- data wrote ------- " << ssref);
-            //LOG4CXX_DEBUG(logger, "flush -- data size wrote -- " << ssref.size());
-            LOG4CXX_DEBUG(logger, "flush return value is ----- " << fos);
-            cout << endl << "Write done " << t.stop() << " ms";
-            result = fos;
-        }
-        //catch(StreamCorruptedException& e)
-        catch(ExceptionBase& e)
-        {
-		LOG4CXX_ERROR(logger, "Exception while writing");
-        }
-	//cout << "Time Chunk::AppendRaw : " << t.stop << " ms";
-	return result;
-}
+    /*
+      try
+      {
+      Timer t;
+      t.start();
+      OffsetType fos = 0;            
+      // std::cout << "\nactual data " << data.size(); // << ", data wrote : " << ssref.size();          
+      fos = mDataOutputFH->Write((char*)&data[0], data.size()); 
+      //LOG4CXX_DEBUG(logger, "flush -- data wrote ------- " << ssref);
+      //LOG4CXX_DEBUG(logger, "flush -- data size wrote -- " << ssref.size());
+      LOG4CXX_DEBUG(logger, "flush return value is ----- " << fos);
+      cout << endl << "Write done " << t.stop() << " ms";
+      result = fos;
+      }
+      //catch(StreamCorruptedException& e)
+      catch(ExceptionBase& e)
+      {
+      LOG4CXX_ERROR(logger, "Exception while writing");
+      }
+      //cout << "Time Chunk::AppendRaw : " << t.stop << " ms";
+      return result;
+      }
 
-    // compress data (data consists of multiple records)
-    //Timer t;
-    OffsetType result = -1;
-    //t.start();
-    //
-*/
+      // compress data (data consists of multiple records)
+      //Timer t;
+      OffsetType result = -1;
+      //t.start();
+      //
+      */
     CompressionCodecPtr sharedptr = mChunkCodec.lock();
     if (sharedptr == NULL) 
     {
@@ -664,17 +658,17 @@ OffsetType Chunk::AppendRaw(const IndexType& index, const uint32_t numentry, con
     {
         try
         {
-	    // CHKIT
+            // CHKIT
             OffsetType fos = 0;            
-	    // std::cout << "\nactual data " << data.size() << ", data wrote : " << ssref.size();	
-	    fos = mDataOutputFH->Write((char*)&ssref[0], ssref.size());	
-	    LOG4CXX_DEBUG(logger, "flush -- data wrote ------- " << ssref);
-	    LOG4CXX_DEBUG(logger, "flush -- data size wrote -- " << ssref.size());
- 	    LOG4CXX_DEBUG(logger, "flush return value is ----- " << fos);
-	    LOG4CXX_WARN(logger, "Data Flushed : " << ssref.size());
-	    // cout << endl << "Compression and Flush took " << t.stop() << " ms";
+            // std::cout << "\nactual data " << data.size() << ", data wrote : " << ssref.size();	
+            fos = mDataOutputFH->Write((char*)&ssref[0], ssref.size());	
+            LOG4CXX_DEBUG(logger, "flush -- data wrote ------- " << ssref);
+            LOG4CXX_DEBUG(logger, "flush -- data size wrote -- " << ssref.size());
+            LOG4CXX_DEBUG(logger, "flush return value is ----- " << fos);
+            LOG4CXX_WARN(logger, "Data Flushed : " << ssref.size());
+            // cout << endl << "Compression and Flush took " << t.stop() << " ms";
             result = fos;
-	    break;
+            break;
         }
         //catch(StreamCorruptedException& e)
         catch(ExceptionBase& e)
@@ -696,7 +690,7 @@ OffsetType Chunk::AppendRaw(const IndexType& index, const uint32_t numentry, con
                 usleep(3000000);
             }
 
-            mDataOutputFH = new QFSFileHelper((QFSHelper*)mFileSystemHelper, mDataFileName, O_APPEND); //WRONLY
+            mDataOutputFH = mFileSystemHelper->CreateFileHelper(mDataFileName, O_APPEND); //WRONLY
             mDataOutputFH->Open();
             
             if (retryCount > 1)

@@ -3,7 +3,7 @@
 
 LoggerPtr cds_data_logger(Logger::getLogger("CdsData"));
 
-bool CdsDataCache::Get(Checksum& cksum, char *buf, size_t* len)
+bool CdsData::Get(Checksum& cksum, char *buf, size_t* len)
 {
     memcached_return_t rc;
     char* value = memcached_get(p_memcache_, cksum.data_, CKSUM_LEN, len, uint32_t(0), &rc);
@@ -20,7 +20,7 @@ bool CdsDataCache::Get(Checksum& cksum, char *buf, size_t* len)
     return true;
 }
 
-bool CdsDataCache::Set(Checksum& cksum, char *buf, size_t len)
+bool CdsData::Set(Checksum& cksum, char *buf, size_t len)
 {
     memcached_return_t rc;
     rc = memcached_set(p_memcache_, cksum.data_, CKSUM_LEN, buf, len, (time_t)0, (uint32_t)0);
@@ -30,22 +30,5 @@ bool CdsDataCache::Set(Checksum& cksum, char *buf, size_t len)
     }
     return true;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

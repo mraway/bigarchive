@@ -7,6 +7,7 @@
 #include "store.h"
 #include "../../snapshot/data_source.h"
 #include "timer.h"
+#include "../../fs/qfs_file_system_helper.h"
 
 using namespace std;
 
@@ -29,7 +30,6 @@ int main(int argc, char *argv[]) {
 	Timer blkTimer = Timer();
 	fullTimer.start();
 	SnapshotMeta snapshotMeta;
-	long blkCnt = 0;
 	SegmentMeta segmentMeta;
 	BlockMeta blockMeta;
 	vector<BlockMeta> blockMetaVec;
@@ -62,18 +62,19 @@ int main(int argc, char *argv[]) {
 	stream.str("");
 	stream << "root" << "/" << vmName << "/" << snapshotID;
 	cout << endl << "Reading file : " << stream.str();
-	QFSHelper *fsh = new QFSHelper(); fsh->Connect();
-	if(! fsh->IsFileExists(stream.str())) {
+
+    QFSHelper::Connect();
+	if(! FileSystemHelper::GetInstance()->IsFileExists(stream.str())) {
 		cout << endl << "File not found " << endl;
 		return 0;
 	}
-	QFSFileHelper *fh = new QFSFileHelper(fsh, stream.str(), O_RDONLY);
+	FileHelper* fh = FileSystemHelper::GetInstance()->CreateFileHelper(stream.str(), O_RDONLY);
 	fh->Open();
 	int read_length = fh->GetNextLogSize();
 	char *data = new char[read_length];
 	fh->Read(data, read_length);
 	fh->Close();
-	fsh->DisConnect();
+	FileSystemHelper::GetInstance()->DestroyFileHelper(fh);
 	cout << endl << "Read " << read_length << " from file";
 	// data[read_length] = '\0';
 	sstream.str("");

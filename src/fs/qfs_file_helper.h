@@ -3,14 +3,12 @@
 #define QFS_FILE_HELPER_H
 
 #include "../include/file_helper.h"
-#include "qfs_file_system_helper.h"
 #include "../include/exception.h"
-#include <fcntl.h>
-#include <stdlib.h>
+#include "qfs_file_system_helper.h"
 #include <cstring>
 
 class QFSFileHelper : public FileHelper {
- public:
+public:
 	QFSFileHelper(QFSHelper *qfshelper, string fname, int mode);
 	void Create();
 	void Open();
@@ -23,15 +21,19 @@ class QFSFileHelper : public FileHelper {
     int Append(char *buffer, int length);
 	void Seek(int offset);
 	uint32_t GetNextLogSize();
- private:
+private:
+    /*
+     * store a pointer to the file system helper instance,
+     * this is just for convenience because we use a lot of qfs client APIs
+     */
 	QFSHelper *qfshelper;
 	string get_mode();
 };
 
 
 struct Header {
- Header(uint32_t len) : data_length(len) {}
- uint32_t data_length;
+    Header(uint32_t len) : data_length(len) {}
+    uint32_t data_length;
 };
 
 #endif

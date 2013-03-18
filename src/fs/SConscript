@@ -2,5 +2,5 @@ Import('env')
 
 local_env = env.Clone()
 
-fs = local_env.StaticLibrary(target = 'fs', source = ['qfs_file_helper.cpp', 'qfs_file_system_helper.cpp'])
+fs = local_env.StaticLibrary(target = 'fs', source = ['file_helper.cpp', 'file_system_helper.cpp', 'qfs_file_helper.cpp', 'qfs_file_system_helper.cpp'])
 local_env.Install(local_env['PROJECT_LIB_PATH'], fs)

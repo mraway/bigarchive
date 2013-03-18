@@ -29,8 +29,8 @@ void SnapshotControl::Init()
     ss_meta_pathname_ = vm_path_ + "/" + ss_meta_.snapshot_id_ + ".meta";
     primary_filter_pathname_ = vm_path_ + "/" + ss_meta_.snapshot_id_ + ".bm1";
     secondary_filter_pathname_ = vm_path_ + "/" + ss_meta_.snapshot_id_ + ".bm2";
-    seg_pos_ = 0;
     ss_meta_.size_ = 0;
+    store_ptr_ = NULL;
 }
 
 void SnapshotControl::SetAppendStore(PanguAppendStore* pas)
@@ -57,17 +57,15 @@ bool SnapshotControl::LoadSnapshotMeta()
 {
     // open the snapshot meta file in qfs and read it
     // TODO: currently the read/write apis provide a log style file
-	QFSHelper fsh; 
-    fsh.Connect();
-	if (!fsh.IsFileExists(ss_meta_pathname_)) {
+	if (!FileSystemHelper::GetInstance()->IsFileExists(ss_meta_pathname_)) {
         LOG4CXX_ERROR(logger_, "Couldn't find snapshot meta: " << ss_meta_.vm_id_ << " " << ss_meta_.snapshot_id_);
 		return false;
 	}
-	QFSFileHelper fh(&fsh, ss_meta_pathname_, O_RDONLY);
-	fh.Open();
-	int read_length = fh.GetNextLogSize();
+	FileHelper* fh = FileSystemHelper::GetInstance()->CreateFileHelper(ss_meta_pathname_, O_RDONLY);
+	fh->Open();
+	int read_length = fh->GetNextLogSize();
 	char *data = new char[read_length];
-	fh.Read(data, read_length);
+	fh->Read(data, read_length);
     LOG4CXX_INFO(logger_, "Read " << read_length << " from file");
 
     stringstream buffer;
@@ -76,40 +74,37 @@ bool SnapshotControl::LoadSnapshotMeta()
     ss_meta_.DeserializeRecipe(buffer);
     LOG4CXX_INFO(logger_, "Snapshot meta loaded: " << ss_meta_.vm_id_ << " " << ss_meta_.snapshot_id_);
 
-	fh.Close();
-	fsh.DisConnect();
+	fh->Close();
+    FileSystemHelper::GetInstance()->DestroyFileHelper(fh);
     delete[] data;
     return true;
 }
 
 bool SnapshotControl::SaveSnapshotMeta()
 {
-	QFSHelper fsh;
-	fsh.Connect();
-
-    if (!fsh.IsDirectoryExists(vm_path_))
-        fsh.CreateDirectory(vm_path_);
-    if (fsh.IsFileExists(ss_meta_pathname_))
-        fsh.RemoveFile(ss_meta_pathname_);
-	QFSFileHelper fh(&fsh, ss_meta_pathname_, O_WRONLY);
-	fh.Create();
+    if (!FileSystemHelper::GetInstance()->IsDirectoryExists(vm_path_))
+        FileSystemHelper::GetInstance()->CreateDirectory(vm_path_);
+    if (FileSystemHelper::GetInstance()->IsFileExists(ss_meta_pathname_))
+        FileSystemHelper::GetInstance()->RemoveFile(ss_meta_pathname_);
+	FileHelper* fh = FileSystemHelper::GetInstance()->CreateFileHelper(ss_meta_pathname_, O_WRONLY);
+	fh->Create();
 
 	stringstream buffer;
 	ss_meta_.Serialize(buffer);
     ss_meta_.SerializeRecipe(buffer);
 	LOG4CXX_INFO(logger_, "Snapshot meta size " << buffer.str().size());
-    fh.Write((char *)buffer.str().c_str(), buffer.str().size());
+    fh->Write((char *)buffer.str().c_str(), buffer.str().size());
 
-    fh.Close();
-    fsh.DisConnect();
+    fh->Close();
+    FileSystemHelper::GetInstance()->DestroyFileHelper(fh);
     return true;
 }
 
-bool SnapshotControl::LoadSegmentRecipe(SegmentMeta& sm)
+bool SnapshotControl::LoadSegmentRecipe(SegmentMeta& sm, uint32_t idx)
 {
-    if (seg_pos_ >= ssmeta_.snapshot_recipe_.size())
+    if (idx >= ss_meta_.snapshot_recipe_.size())
         return false;
-    sm = ssmeta_.snapshot_recipe_[seg_pos_++];
+    sm = ss_meta_.snapshot_recipe_[idx];
     string data;
     string handle((char*)&sm.handle_, sizeof(sm.handle_));
     store_ptr_->Read(handle, &data);
@@ -140,32 +135,31 @@ bool SnapshotControl::SaveBlockData(BlockMeta& bm)
 
 bool SnapshotControl::InitBloomFilters(uint64_t snapshot_size)
 {
-	QFSHelper fsh;
-	fsh.Connect();
-	if (!fsh.IsFileExists(vm_meta_pathname_)) {
-        if (!fsh.IsDirectoryExists(vm_path_))
-            fsh.CreateDirectory(vm_path_);
+	if (!FileSystemHelper::GetInstance()->IsFileExists(vm_meta_pathname_)) {
+        if (!FileSystemHelper::GetInstance()->IsDirectoryExists(vm_path_))
+            FileSystemHelper::GetInstance()->CreateDirectory(vm_path_);
         // init bloom filter params and store into vm meta
         LOG4CXX_INFO(logger_, "VM meta not found, will create " << vm_meta_pathname_);
         vm_meta_.filter_num_items_ = snapshot_size / AVG_BLOCK_SIZE;
         vm_meta_.filter_num_funcs_ = BLOOM_FILTER_NUM_FUNCS;
         vm_meta_.filter_fp_rate_ = BLOOM_FILTER_FP_RATE;
 
-        QFSFileHelper fh(&fsh, vm_meta_pathname_, O_WRONLY);
-        fh.Create();
+        FileHelper* fh = FileSystemHelper::GetInstance()->CreateFileHelper(vm_meta_pathname_, O_WRONLY);
+        fh->Create();
         stringstream buffer;
         vm_meta_.Serialize(buffer);
         LOG4CXX_INFO(logger_, "VM meta size " << buffer.str().size());
-        fh.WriteData((char *)buffer.str().c_str(), buffer.str().size());
-        fh.Close();
+        fh->WriteData((char *)buffer.str().c_str(), buffer.str().size());
+        fh->Close();
+        FileSystemHelper::GetInstance()->DestroyFileHelper(fh);
 	}
     else {
         // read bloom filter params
-        QFSFileHelper fh(&fsh, vm_meta_pathname_, O_RDONLY);
-        fh.Open();
-        long read_length = fsh.GetSize(vm_meta_pathname_);
+        FileHelper* fh = FileSystemHelper::GetInstance()->CreateFileHelper(vm_meta_pathname_, O_RDONLY);
+        fh->Open();
+        long read_length = FileSystemHelper::GetInstance()->GetSize(vm_meta_pathname_);
         char *data = new char[read_length];
-        fh.Read(data, read_length);
+        fh->Read(data, read_length);
         LOG4CXX_INFO(logger_, "Read " << read_length << " from file");
 
         stringstream buffer;
@@ -175,10 +169,11 @@ bool SnapshotControl::InitBloomFilters(uint64_t snapshot_size)
                      << vm_meta_.filter_num_items_ << " " 
                      << vm_meta_.filter_num_funcs_ << ""
                      << vm_meta_.filter_fp_rate_);
-        fh.Close();
+        fh->Close();
+        FileSystemHelper::GetInstance()->DestroyFileHelper(fh);
         delete[] data;
     }
-	fsh.DisConnect();
+
 
     // params ready, now init bloom filters
     primary_filter_ptr_ = new BloomFilter<Checksum>(vm_meta_.filter_num_items_, 
@@ -209,24 +204,21 @@ bool SnapshotControl::SaveBloomFilters()
 
 bool SnapshotControl::SaveBloomFilter(BloomFilter<Checksum>* pbf, const string& bf_name)
 {
-	QFSHelper fsh;
-	fsh.Connect();
+    if (!FileSystemHelper::GetInstance()->IsDirectoryExists(vm_path_))
+        FileSystemHelper::GetInstance()->CreateDirectory(vm_path_);
+    if (FileSystemHelper::GetInstance()->IsFileExists(bf_name))
+        FileSystemHelper::GetInstance()->RemoveFile(bf_name);
 
-    if (!fsh.IsDirectoryExists(vm_path_))
-        fsh.CreateDirectory(vm_path_);
-    if (fsh.IsFileExists(bf_name))
-        fsh.RemoveFile(bf_name);
-
-	QFSFileHelper fh(&fsh, bf_name, O_WRONLY);
-	fh.Create();
+	FileHelper* fh = FileSystemHelper::GetInstance()->CreateFileHelper(bf_name, O_WRONLY);
+	fh->Create();
 
 	stringstream buffer;
-	pbf ->Serialize(buffer);
+	pbf->Serialize(buffer);
 	LOG4CXX_INFO(logger_, "Bloom filter primary size " << buffer.str().size());
-    fh.Write((char *)buffer.str().c_str(), buffer.str().size());
+    fh->Write((char *)buffer.str().c_str(), buffer.str().size());
 
-    fh.Close();
-    fsh.DisConnect();
+    fh->Close();
+    FileSystemHelper::GetInstance()->DestroyFileHelper(fh);
     return true;
 }
 
@@ -238,27 +230,22 @@ bool SnapshotControl::RemoveBloomFilters()
 
 bool SnapshotControl::RemoveBloomFilter(const string& bf_name)
 {
-    QFSHelper fsh;
-    fsh.Connect();
-    if (fsh.IsFileExists(bf_name))
-        fsh.RemoveFile(bf_name);
-    fsh.DisConnect();
+    if (FileSystemHelper::GetInstance()->IsFileExists(bf_name))
+        FileSystemHelper::GetInstance()->RemoveFile(bf_name);
     return true;
 }
 
 bool SnapshotControl::LoadBloomFilter(BloomFilter<Checksum>* pbf, const string& bf_name)
 {
-	QFSHelper fsh; 
-    fsh.Connect();
-	if (!fsh.IsFileExists(bf_name)) {
+	if (!FileSystemHelper::GetInstance()->IsFileExists(bf_name)) {
         LOG4CXX_ERROR(logger_, "Couldn't find bloom filter: " << bf_name);
 		return false;
 	}
-	QFSFileHelper fh(&fsh, bf_name, O_RDONLY);
-	fh.Open();
-	int read_length = fh.GetNextLogSize();
+	FileHelper* fh = FileSystemHelper::GetInstance()->CreateFileHelper(bf_name, O_RDONLY);
+	fh->Open();
+	int read_length = fh->GetNextLogSize();
 	char *data = new char[read_length];
-	fh.Read(data, read_length);
+	fh->Read(data, read_length);
     LOG4CXX_INFO(logger_, "Read " << read_length << " from file " << bf_name);
 
     stringstream buffer;
@@ -266,8 +253,8 @@ bool SnapshotControl::LoadBloomFilter(BloomFilter<Checksum>* pbf, const string& 
     pbf->Deserialize(buffer);
     LOG4CXX_INFO(logger_, "Bloom filter loaded: " << bf_name);
 
-	fh.Close();
-	fsh.DisConnect();
+	fh->Close();
+	FileSystemHelper::GetInstance()->DestroyFileHelper(fh);
     delete[] data;
     return true;
 }

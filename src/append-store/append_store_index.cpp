@@ -1,6 +1,7 @@
 #include "append_store_index.h"
 #include "../include/exception.h"
-#include "../fs/qfs_file_helper.h"
+#include "../include/file_system_helper.h"
+#include "../include/file_helper.h"
 
 #include <log4cxx/logger.h>
 #include <log4cxx/xml/domconfigurator.h>
@@ -84,10 +85,7 @@ void IndexVector::LoadFromFile(const std::string& fname)
   
     LOG4CXX_DEBUG(iv_logger, "reading index from file : " << fname);
  
-    QFSHelper *qfsHelper = new QFSHelper();
-    qfsHelper->Connect();//"host", 30000);
-    
-    int file_size = qfsHelper->GetSize(fname);
+    int file_size = FileSystemHelper::GetInstance()->GetSize(fname);
 
     LOG4CXX_DEBUG(iv_logger, "index file size is : " << file_size);
 
@@ -96,7 +94,7 @@ void IndexVector::LoadFromFile(const std::string& fname)
     	return;
     }
 
-    QFSFileHelper *qfsFH = new QFSFileHelper(qfsHelper, fname, O_RDONLY); 
+    FileHelper *qfsFH = FileSystemHelper::GetInstance()->CreateFileHelper(fname, O_RDONLY); 
 
     try
     {
@@ -128,7 +126,6 @@ void IndexVector::LoadFromFile(const std::string& fname)
         }
         THROW_EXCEPTION(AppendStoreReadException, "Load index file exception " + e.ToString());
     }
-    qfsHelper->DisConnect();
     LOG4CXX_INFO(iv_logger,"IndexVector::LoadedfromFile " << fname);
 }
 

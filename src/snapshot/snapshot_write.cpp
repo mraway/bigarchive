@@ -1,6 +1,6 @@
 /*
  * Writes a snapshot into append store
- * Usage: snapshot_write sample_data snapshot_trace parent_snapshot_trace
+ * Usage: snapshot_write sample_data current_trace [parent_trace]
  */
 #include <iostream>
 #include <cstdlib>
@@ -11,6 +11,7 @@
 #include "../include/exception.h"
 #include "../append-store/append_store_types.h"
 #include "../append-store/append_store.h"
+#include "../fs/qfs_file_system_helper.h"
 #include "data_source.h"
 #include "snapshot_control.h"
 #include "snapshot_types.h"
@@ -40,6 +41,8 @@ void crash_handler(int sig) {
     exit(1);
 }
 
+// we should have only a single instance of append store,
+// which should be implemented as a singleton, but right now we just use this.
 PanguAppendStore* init_append_store(string& vm_id)
 {
     try {
@@ -64,11 +67,12 @@ int main(int argc, char *argv[]) {
     signal(SIGSEGV, crash_handler);
 
 	if(argc != 3 && argc != 4) { 
-		cout << "Usage: " << argv[0] << " sample_data snapshot_trace parent_snapshot_trace" << endl;
+		cout << "Usage: " << argv[0] << " sample_data current_trace [parent_trace]" << endl;
 		return -1;
 	}
 
     DOMConfigurator::configure("Log4cxxConfig.xml");
+    QFSHelper::Connect();
 	string sample_file(argv[1]);
 	string snapshot_file(argv[2]);
     string parent_file;
@@ -114,7 +118,8 @@ int main(int argc, char *argv[]) {
     SegmentMeta cur_seg, par_seg;
     BlockMeta* bm;
     CdsIndex cds_index;
-    int num_queries = 0;
+    int num_queries = 0;	// number of CDS queries
+    uint32_t seg_id = 0;	// numberical id of segment
     Checksum* cksums = new Checksum[BATCH_QUERY_BUFFER_SIZE];
     bool* results = new bool[BATCH_QUERY_BUFFER_SIZE];
     BlockMeta** blks_to_query = new BlockMeta* [BATCH_QUERY_BUFFER_SIZE];
@@ -123,15 +128,14 @@ int main(int argc, char *argv[]) {
         num_queries = 0;
         current->UpdateBloomFilters(cur_seg);
 
-        //  a) load and compare parent segment meta by cksum
-        if (has_parent) {
-            parent->LoadSegmentRecipe(par_seg);
+        if (has_parent && parent->LoadSegmentRecipe(par_seg, seg_id++)) {
+            //  a) first compare parent segment meta by cksum
             if (cur_seg.cksum_ == par_seg.cksum_) {
                 cur_seg.handle_ = par_seg.handle_;
                 continue;
             }
 
-            //  b) compare block by hash
+            //  b) then compare block by hash
             par_seg.BuildIndex();
             for (size_t i = 0; i < cur_seg.segment_recipe_.size(); ++i)
             {
@@ -141,12 +145,14 @@ int main(int argc, char *argv[]) {
                     cur_seg.segment_recipe_[i].flags_ = bm->flags_ | IN_PARENT;
                 }
                 else {
+                    // these blocks are not found in parent snapshot's segment, will ask CDS
                     cksums[num_queries] = cur_seg.segment_recipe_[i].cksum_;
                     blks_to_query[num_queries++] = &cur_seg.segment_recipe_[i];
                 }
             }
         }
         else {
+            // if there's no parent, then we can only ask CDS
             for (size_t i = 0; i < cur_seg.segment_recipe_.size(); ++i) {
                 cksums[num_queries]= cur_seg.segment_recipe_[i].cksum_;
                 blks_to_query[num_queries++] = &cur_seg.segment_recipe_[i];
@@ -156,10 +162,11 @@ int main(int argc, char *argv[]) {
         cds_index.BatchGet(cksums, num_queries, results, offsets);
         for (int i = 0; i < num_queries; i++) {
             if (results[i] == true) {
+                // if found in CDS, it should return the data offset in CDS data file
                 blks_to_query[i]->handle_ = offsets[i];
                 blks_to_query[i]->flags_ |= IN_CDS;
             }
-            //  d) write new data
+            //  d) write new data to append store
             else {
                 current->SaveBlockData(*blks_to_query[i]);
             }

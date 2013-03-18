@@ -55,12 +55,10 @@ uint64_t StoreUtility::GetDirectorySize(const std::string& dirName)
     uint64_t total_size = 0;
     std::vector<std::string> data_files;
 
-    QFSHelper *qfsHelper = new QFSHelper();
-    qfsHelper->Connect("host", 30000);
     try
     {
         // pangu::FileSystem::GetInstance()->ListDirectory(dirName, "", DF_MAXFILENO, data_files);
-	qfsHelper->ListDir(dirName.c_str(), data_files);
+        FileSystemHelper::GetInstance()->ListDir(dirName.c_str(), data_files);
     }
     catch (DirectoryNotExistException& e)
     {

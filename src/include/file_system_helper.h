@@ -5,19 +5,31 @@
 #ifndef FILE_SYSTEM_HELPER_H
 #define FILE_SYSTEM_HELPER_H
 
-#include<vector>
-#include<string>
+#include <log4cxx/logger.h>
 
-using std::vector;
-using std::string;
+extern "C" {
+#include <sys/types.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
+#include <dirent.h>
+}
+
+using namespace std;
+using namespace log4cxx;
+using namespace log4cxx::helpers;
+
+class FileHelper;
 
 class FileSystemHelper {
 public:
-    /* Connect method establishes a connection with FileSystem MetaServer (usually host name and port are passed)*/
-    virtual void Connect() = 0;
-    virtual void Connect(string host, int port) = 0;
-    /* */
-    virtual void DisConnect() = 0;
+    /* return the global single instance of file system helper */
+    static FileSystemHelper* GetInstance();
+    /* create and return a file helper object to manipulate files */
+    virtual FileHelper* CreateFileHelper(string fname, int mode) = 0;
+    /* destroy a file helper */
+    virtual void DestroyFileHelper(FileHelper* p_fh) = 0;
     /* list file contents */
     virtual int ListDir(string pathname, vector<string> &result) = 0;
     /* checks whether file "fname" exists or not */
@@ -34,6 +46,12 @@ public:
     virtual int RemoveFile(const string& pathname) = 0;
     /* remove a dir */
     virtual int RemoveDirectory(const string& dirname) = 0;
+protected:
+    FileSystemHelper() {};
+    virtual ~FileSystemHelper() {};
+protected:
+    static FileSystemHelper* p_instance_;
+    static LoggerPtr logger_;
 };
 
 #endif /* FILE_SYSTEM_HELPER_H */

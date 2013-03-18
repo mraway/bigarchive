@@ -17,10 +17,10 @@ LoggerPtr asimpl_logger(Logger::getLogger( "appendstore.impl"));
 
 PanguAppendStore::PanguAppendStore(const StoreParameter& para, bool iscreate)
     : mRoot(para.mPath), 
-     mAppend(para.mAppend), 
-     mMaxChunkId(0), 
-     mAppendChunkId(0),
-     mCompressionType(para.mCompressionFlag)
+      mAppend(para.mAppend), 
+      mMaxChunkId(0), 
+      mAppendChunkId(0),
+      mCompressionType(para.mCompressionFlag)
 {
     DOMConfigurator::configure("Log4cxxConfig.xml");
 
@@ -126,8 +126,8 @@ bool PanguAppendStore::Read(const std::string& h, std::string* data)
 
     if (mCache->Find(handle, data))
     {
-	cout << endl << "Time @ Store:Read : Cache Hit : " << t.stop() << " ms";
-	LOG4CXX_INFO(asimpl_logger, "Cache Hit in Store for Handle : " << handle.mChunkId << "," << handle.mIndex);
+        cout << endl << "Time @ Store:Read : Cache Hit : " << t.stop() << " ms";
+        LOG4CXX_INFO(asimpl_logger, "Cache Hit in Store for Handle : " << handle.mChunkId << "," << handle.mIndex);
         return true;
     }
     
@@ -162,8 +162,8 @@ void PanguAppendStore::Remove(const std::string& h)
 }
 
 void PanguAppendStore::Close() {
- Timer t;
- t.start();
+    Timer t;
+    t.start();
 
 	if(mAppend) {
 		LOG4CXX_INFO(asimpl_logger, "In APPEND mode : Close last append chunk");
@@ -186,8 +186,7 @@ void PanguAppendStore::Close() {
  	}
 	
 	LOG4CXX_INFO(asimpl_logger, "Store::Closed - All associated Chunks Closed");
-	mFileSystemHelper->DisConnect();
-  cout << endl << "Time Store::Close() : " << t.stop() << " ms";
+    cout << endl << "Time Store::Close() : " << t.stop() << " ms";
 }
 
 void PanguAppendStore::Reload()
@@ -200,8 +199,7 @@ void PanguAppendStore::Reload()
 
 void PanguAppendStore::Init(bool iscreate)
 {
-    mFileSystemHelper = new QFSHelper();
-    mFileSystemHelper->Connect();
+    mFileSystemHelper = FileSystemHelper::GetInstance();
     
     if (iscreate) 
     {
@@ -272,7 +270,7 @@ bool PanguAppendStore::ReadMetaInfo()
     try  
     {
         fexist = mFileSystemHelper->IsFileExists(metaFileName);
-	LOG4CXX_DEBUG(asimpl_logger, "meta file name " << metaFileName << " : " << fexist);
+        LOG4CXX_DEBUG(asimpl_logger, "meta file name " << metaFileName << " : " << fexist);
     }
     catch (ExceptionBase & e)
     {
@@ -284,17 +282,17 @@ bool PanguAppendStore::ReadMetaInfo()
     {
         try
         {
-	    	FileHelper* metaInputFH = new QFSFileHelper((QFSHelper *)mFileSystemHelper, metaFileName, O_RDONLY);
+	    	FileHelper* metaInputFH = mFileSystemHelper->CreateFileHelper(metaFileName, O_RDONLY);
 			char *read_buffer = new char[sizeof(StoreMetaData)]; 
 			metaInputFH->Open();
  		    metaInputFH->Read(read_buffer, sizeof(StoreMetaData));
 		    metaInputFH->Close();
 		    mMeta.fromBuffer(read_buffer);
 		    LOG4CXX_DEBUG(asimpl_logger, "after reading mMeta values : " << mMeta.storeminor << 
-										"," << mMeta.storemajor << 
-										"," << mMeta.maxChunkSize <<
-										"," << mMeta.blockIndexInterval << 
-										"," << mMeta.compressionFlag);
+                          "," << mMeta.storemajor << 
+                          "," << mMeta.maxChunkSize <<
+                          "," << mMeta.blockIndexInterval << 
+                          "," << mMeta.compressionFlag);
             return true;
         }
         catch (ExceptionBase& e)
@@ -311,19 +309,20 @@ void PanguAppendStore::WriteMetaInfo(const std::string& root, const StoreMetaDat
     std::string metaFileName = root + MetaFileName;
     try
     {	
-		FileHelper* metaOutputFH = new QFSFileHelper((QFSHelper *)mFileSystemHelper, metaFileName, O_WRONLY);
+		FileHelper* metaOutputFH = mFileSystemHelper->CreateFileHelper(metaFileName, O_WRONLY);
 		metaOutputFH->Open();
         char *write_buffer = new char[sizeof(StoreMetaData)]; 
 	 	/* Copying into buffer from StoreMetaData */
-		    LOG4CXX_DEBUG(asimpl_logger, "before reading mMeta values : " << mMeta.storeminor << 
-										"," << mMeta.storemajor << 
-										"," << mMeta.maxChunkSize <<
-										"," << mMeta.blockIndexInterval << 
-										"," << mMeta.compressionFlag);
+        LOG4CXX_DEBUG(asimpl_logger, "before reading mMeta values : " << mMeta.storeminor << 
+                      "," << mMeta.storemajor << 
+                      "," << mMeta.maxChunkSize <<
+                      "," << mMeta.blockIndexInterval << 
+                      "," << mMeta.compressionFlag);
 	 
 		meta.toBuffer(write_buffer);
 	 	metaOutputFH->WriteData(write_buffer, sizeof(StoreMetaData));
         metaOutputFH->Close();	
+        mFileSystemHelper->DestroyFileHelper(metaOutputFH);
     }
     catch (ExceptionBase& e) 
     {
@@ -347,17 +346,17 @@ Chunk* PanguAppendStore::LoadAppendChunk()
     {
         if (mCurrentAppendChunk->IsChunkFull() == false)
         {
-	    LOG4CXX_DEBUG(asimpl_logger, "Loaded Current chunk");
+            LOG4CXX_DEBUG(asimpl_logger, "Loaded Current chunk");
     	    //cout << endl << "Time Store::LoadAppendChunk() : " << t.stop() << " ms";
             return mCurrentAppendChunk.get();
         }
         else
         {
-	 	/* Close previous chunk and allocate new chunk */
-	 	Chunk* p_chunk = mCurrentAppendChunk.get();
-	 	p_chunk->Close();
+            /* Close previous chunk and allocate new chunk */
+            Chunk* p_chunk = mCurrentAppendChunk.get();
+            p_chunk->Close();
 	        LOG4CXX_DEBUG(asimpl_logger, "Allocating next chunk, because current chunk is Full");	
-		AllocNextChunk();
+            AllocNextChunk();
         }
     }
     try
@@ -389,14 +388,14 @@ Chunk* PanguAppendStore::LoadRandomChunk(ChunkIDType id)
 
     if(mCurrentRandomChunk.get() != 0) {
     	if(mCurrentRandomChunk.get()->GetID() == id) {
-	     cout << endl << "Time @ Store:LoadRandomChunk : InRandomChunkMap" << t.stop() << " ms";
-	     return mCurrentRandomChunk.get();
-	}
+            cout << endl << "Time @ Store:LoadRandomChunk : InRandomChunkMap" << t.stop() << " ms";
+            return mCurrentRandomChunk.get();
+        }
     }
     ChunkMapType::const_iterator it = mChunkMap.find(id);
     if (it != mChunkMap.end())
     {
-	cout << endl << "Time @ Store:LoadRandomChunk : AlreadyinChunkMap : " << t.stop() << " ms";
+        cout << endl << "Time @ Store:LoadRandomChunk : AlreadyinChunkMap : " << t.stop() << " ms";
         return it->second.get();
     }
 
@@ -510,8 +509,7 @@ void PanguScanner::InitScanner()
 
     GetAllChunkID(mRoot);
 
-    mFileSystemHelper = new QFSHelper();
-    mFileSystemHelper->Connect();//"host", 30000);
+    mFileSystemHelper = FileSystemHelper::GetInstance();
 
     std::string compressAlgo(LzoCodec::mName);
     if (NO_COMPRESSION == mCompressionFlag) 
@@ -527,8 +525,8 @@ void PanguScanner::InitScanner()
         mChunkList.pop_front();
         std::string fileName = Chunk::GetDatFname(mRoot, mChunkId);
         std::string logFileName = Chunk::GetLogFname(mRoot, mChunkId);
-        mScannerFH = new QFSFileHelper((QFSHelper *)mFileSystemHelper, fileName, O_RDONLY); 
-	mScannerFH->Open();
+        mScannerFH = mFileSystemHelper->CreateFileHelper(fileName, O_RDONLY); 
+        mScannerFH->Open();
         ReadDeleteLog(logFileName);
     }
 }
@@ -550,8 +548,8 @@ void PanguScanner::ReadDeleteLog(const std::string& fname)
     
     if (fexist) 
     {
- 	FileHelper* deleteLogFH = new QFSFileHelper((QFSHelper *)mFileSystemHelper, fname, O_RDONLY); 
-	deleteLogFH->Open();
+        FileHelper* deleteLogFH = mFileSystemHelper->CreateFileHelper(fname, O_RDONLY); 
+        deleteLogFH->Open();
         try
         {
             do
@@ -570,7 +568,7 @@ void PanguScanner::ReadDeleteLog(const std::string& fname)
                     break;
                 }
             }
-	    // CHKIT
+            // CHKIT
             while (1);
             deleteLogFH->Close();
         }
@@ -579,6 +577,7 @@ void PanguScanner::ReadDeleteLog(const std::string& fname)
             LOG4CXX_ERROR(asimpl_logger, "Error while reading deletelog : " << fname);
             throw;
         }
+        mFileSystemHelper->DestroyFileHelper(deleteLogFH);
     }
 }
 
@@ -589,12 +588,13 @@ PanguScanner::~PanguScanner()
         try
         {
             mScannerFH->Close();
+            mFileSystemHelper->DestroyFileHelper(mScannerFH);
         }
         catch(ExceptionBase& ex)
         {
             LOG4CXX_ERROR(asimpl_logger, "Failed to close file for scanner : " << ex.ToString());
         }
-        mScannerFH->Seek(0); 
+        //mScannerFH->Seek(0); 
     }
     //UninitPangu();
 }
@@ -619,7 +619,7 @@ void PanguScanner::GetAllChunkID(const std::string& root)
     {
         if (it->find("dat")!=0)
         {
-             continue;
+            continue;
         }
         std::string::size_type pos = it->find_last_of('.');
         if (pos != std::string::npos)
@@ -645,24 +645,24 @@ bool PanguScanner::Next(std::string* handle, std::string* item)
                     LOG4CXX_ERROR(asimpl_logger, "Error geting next : Bad data stream");
                 }
                     
-		// CHKIT
+                // CHKIT
                 uint32_t bufSize = mScannerFH->GetNextLogSize();
                 if (bufSize > 0)
                 {
                     std::string buf;
                     buf.resize(bufSize);
 
-		    // CHKIT - read is verified in file helpers !! 
+                    // CHKIT - read is verified in file helpers !! 
 
-		    mScannerFH->Read(&buf[0], bufSize);
+                    mScannerFH->Read(&buf[0], bufSize);
 
-		    /*
-                    if (rsize != bufSize)
-                    {
-                        LOG4CXX_ERROR(asimpl_logger, "Error file read error in Scanner");
-                        THROW_EXCEPTION(AppendStoreReadException, "file read error in Scanner");
-                    }
-		    */
+                    /*
+                      if (rsize != bufSize)
+                      {
+                      LOG4CXX_ERROR(asimpl_logger, "Error file read error in Scanner");
+                      THROW_EXCEPTION(AppendStoreReadException, "file read error in Scanner");
+                      }
+                    */
 
                     std::stringstream ss(buf);
                     CompressedDataRecord crd;
@@ -687,7 +687,7 @@ bool PanguScanner::Next(std::string* handle, std::string* item)
                 }
                 else if (mChunkList.empty())
                 {
-                     return false;
+                    return false;
                 }
                 else 
                 {
@@ -695,24 +695,25 @@ bool PanguScanner::Next(std::string* handle, std::string* item)
                     std::string fileName = Chunk::GetDatFname(mRoot, mChunkList.front());
                     mChunkList.pop_front();
                     mScannerFH->Close();
-                    mScannerFH = new QFSFileHelper((QFSHelper*)mFileSystemHelper, fileName, O_RDONLY); 
-		    mScannerFH->Open();
+                    mFileSystemHelper->DestroyFileHelper(mScannerFH);
+                    mScannerFH = mFileSystemHelper->CreateFileHelper(fileName, O_RDONLY); 
+                    mScannerFH->Open();
                     std::string logFileName = Chunk::GetLogFname(mRoot, mChunkList.front());
                     ReadDeleteLog(logFileName);
                     continue;
-                 }
-             }
+                }
+            }
 
-             DataRecord r;
-             r.Deserialize(mDataStream);
-             if (mDeleteSet.find(r.mIndex) != mDeleteSet.end())
-             {
-                 continue;
-             }
-             Handle h(mChunkId, r.mIndex);
-             *handle = h.ToString();
-             *item = r.mVal;
-             return true;
+            DataRecord r;
+            r.Deserialize(mDataStream);
+            if (mDeleteSet.find(r.mIndex) != mDeleteSet.end())
+            {
+                continue;
+            }
+            Handle h(mChunkId, r.mIndex);
+            *handle = h.ToString();
+            *item = r.mVal;
+            return true;
         } while(1);
     }
     catch (ExceptionBase& e)

@@ -7,8 +7,8 @@
 
 #include <iostream>
 #include "cds_index.h"
-#include "../fs/qfs_file_helper.h"
-#include "../fs/qfs_file_system_helper.h"
+#include "../include/file_helper.h"
+#include "../include/file_system_helper.h"
 #include "data_source.h"
 #include "trace_types.h"
 #include "snapshot_types.h"
@@ -39,26 +39,24 @@ int main(int argc, char** argv)
     uint64_t offset = 0;
     uint32_t bytes_written = 0;
 
-    QFSHelper fsh;
-    fsh.Connect();
-    if (fsh.IsDirectoryExists(qfs_cds_dir)) {
-        fsh.RemoveDirectory(qfs_cds_dir);
+    if (FileSystemHelper::GetInstance()->IsDirectoryExists(qfs_cds_dir)) {
+        FileSystemHelper::GetInstance()->RemoveDirectory(qfs_cds_dir);
     }
-    fsh.CreateDirectory(qfs_cds_dir);
+    FileSystemHelper::GetInstance()->CreateDirectory(qfs_cds_dir);
 
-    QFSFileHelper fh(&fsh, qfs_cds_file, O_WRONLY);
-    fh.Create();
+    FileHelper* fh = FileSystemHelper::GetInstance()->CreateFileHelper(qfs_cds_file, O_WRONLY);
+    fh->Create();
 
     while (source.GetBlock(bm)) {
         cds.Set(bm.cksum_, offset);        // add to cds index cache
-        bytes_written = fh.WriteData(bm.data_, bm.size_);	// write to qfs
+        bytes_written = fh->WriteData(bm.data_, bm.size_);	// write to qfs
         if (bytes_written != bm.size_)
-            cout << "Error: write only " << bytes_written << ", expect " << bm.size_ << endl;
+            cout << "Error: write " << bytes_written << ", expect " << bm.size_ << endl;
         offset += bm.size_;
     }
 
-    fh.Close();
-    fsh.DisConnect();
+    fh->Close();
+    FileSystemHelper::GetInstance()->DestroyFileHelper(fh);
     exit(0);
 }
 

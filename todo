@@ -1,5 +1,12 @@
-1) Using recordappend interface
-2) static and shared linking !! 
-3) testcases and examples : a) qfs test: file create, r/w/append. delete. b) append store tests
-4) Reading host and port details from file !!! ????
-5) Use stastic casting for all record serialization
+High:
+1) cds_loader: fix the bug of file deletion.
+2) snapshot_read
+3) snapshot_delete
+4) append_store: deletion
+5) append_store: sequential access for metadata
+
+Medium:
+1) Data write: try QFS recordappend interface.
+2) testcases and examples : a) qfs test: file create, r/w/append. delete. b) append store tests
+3) Reading configuration from file.
+
