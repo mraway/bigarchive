@@ -84,7 +84,7 @@ int QFSHelper::ListDir(string pathname, vector<string> &result)
 int QFSHelper::CreateDirectory(const string& pathname) {
     int res = kfsClient->Mkdirs(pathname.c_str());
     if (res < 0 && res != -EEXIST) {
-		LOG4CXX_ERROR(logger_, "Directory Creation failed : " << pathname);
+		LOG4CXX_ERROR(logger_, "Directory Creation failed : " << pathname << " :" << KFS::ErrorCodeToStr(res));
 		THROW_EXCEPTION(FileCreationException, "Failure in directory Creation : " + pathname);
     }	
 	LOG4CXX_INFO(logger_, "Directory Created(" << pathname << ")" );
@@ -95,7 +95,7 @@ int QFSHelper::CreateFile(const string& pathname)
 {
     int fd = kfsClient->Create(pathname.c_str());
     if (fd < 0) { 
-		LOG4CXX_ERROR(logger_, "File Creation failed : " << pathname);
+		LOG4CXX_ERROR(logger_, "File Creation failed : " << pathname << " :" << KFS::ErrorCodeToStr(fd));
 		THROW_EXCEPTION(FileCreationException, "Failed while creating file : " + pathname);
     }
     LOG4CXX_INFO(logger_, "File Created : " << pathname);
@@ -106,7 +106,7 @@ int QFSHelper::RemoveFile(const string& pathname)
 {
     int res = kfsClient->Remove(pathname.c_str());
     if (res < 0) {
-        LOG4CXX_ERROR(logger_, "file deletion failed : " << pathname);
+        LOG4CXX_ERROR(logger_, "file deletion failed : " << pathname << " :" << KFS::ErrorCodeToStr(res));
         THROW_EXCEPTION(FileDeletionException, "Failed while deleting file : " + pathname);
     }
     LOG4CXX_INFO(logger_, "File deleted : " << pathname);
@@ -115,9 +115,9 @@ int QFSHelper::RemoveFile(const string& pathname)
 
 int QFSHelper::RemoveDirectory(const string& dirname)
 {
-    int res = kfsClient->Rmdir(dirname.c_str());
+    int res = kfsClient->Rmdirs(dirname.c_str());
     if (res < 0) {
-        LOG4CXX_ERROR(logger_, "directory deletion failed : " << dirname);
+        LOG4CXX_ERROR(logger_, "directory deletion failed : " << dirname << " :" << KFS::ErrorCodeToStr(res));
         THROW_EXCEPTION(DirectoryDeletionException, "Failed while deleting directory : " + dirname);
     }
     LOG4CXX_INFO(logger_, "Directory deleted : " << dirname);

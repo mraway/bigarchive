@@ -9,11 +9,16 @@
 #include "cds_index.h"
 #include "../include/file_helper.h"
 #include "../include/file_system_helper.h"
+#include "../fs/qfs_file_system_helper.h"
 #include "data_source.h"
 #include "trace_types.h"
 #include "snapshot_types.h"
+#include "../common/timer.h"
 
 using namespace std;
+using namespace log4cxx;
+using namespace log4cxx::xml;
+using namespace log4cxx::helpers;
 
 void usage(char* progname)
 {
@@ -26,7 +31,7 @@ int main(int argc, char** argv)
         usage(argv[0]);
         return -1;
     }
-
+    DOMConfigurator::configure("Log4cxxConfig.xml");
     string cds_name(argv[1]);
     string cds_pathname(argv[2]);
     string sample_pathname(argv[3]);
@@ -39,6 +44,8 @@ int main(int argc, char** argv)
     uint64_t offset = 0;
     uint32_t bytes_written = 0;
 
+    QFSHelper::Connect();
+
     if (FileSystemHelper::GetInstance()->IsDirectoryExists(qfs_cds_dir)) {
         FileSystemHelper::GetInstance()->RemoveDirectory(qfs_cds_dir);
     }
@@ -48,8 +55,8 @@ int main(int argc, char** argv)
     fh->Create();
 
     while (source.GetBlock(bm)) {
-        cds.Set(bm.cksum_, offset);        // add to cds index cache
-        bytes_written = fh->WriteData(bm.data_, bm.size_);	// write to qfs
+        MEASURE(cds.Set(bm.cksum_, offset));        // add to cds index cache
+        MEASURE(bytes_written = fh->WriteData(bm.data_, bm.size_));	// write to qfs
         if (bytes_written != bm.size_)
             cout << "Error: write " << bytes_written << ", expect " << bm.size_ << endl;
         offset += bm.size_;
@@ -57,6 +64,7 @@ int main(int argc, char** argv)
 
     fh->Close();
     FileSystemHelper::GetInstance()->DestroyFileHelper(fh);
+    TIMER_PRINT_ALL();
     exit(0);
 }
 
