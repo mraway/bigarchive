@@ -1,6 +1,6 @@
 # address of the metaserver, host names should not be used
-# 128.111.46.96 is our metaserver
-chunkServer.metaServer.hostname = 128.111.46.96
+# 128.111.46.222 is our metaserver
+chunkServer.metaServer.hostname = 128.111.46.222
 
 # metaserver port for chunk server to use
 chunkServer.metaServer.port = 20100

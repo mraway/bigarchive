@@ -5,7 +5,7 @@ metaServer.clientPort = 20000
 metaServer.chunkServerPort = 20100
 
 # chunk placement groups by IP address or first three octets
-metaServer.rackPrefixes = 128.111.46.96 1 128.111.46.222 2 128.111.46.221 3 128.111.46.132 4
+metaServer.rackPrefixes = 128.111.46.222 1 128.111.46.221 2 128.111.46.132 3
 
 # create new file system if no transaction logs or checkpoints are found
 metaServer.createEmptyFs = 1
