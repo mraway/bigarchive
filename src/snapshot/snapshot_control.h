@@ -46,7 +46,7 @@ public:
      */
     bool LoadSnapshotMeta();
     bool SaveSnapshotMeta();
-
+    void UpdateSnapshotRecipe(const SegmentMeta& sm);
     /*
      * Save or load one segment recipe from append store.
      * In most of the cases we just process the segment one by one,

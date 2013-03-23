@@ -66,7 +66,7 @@ bool SnapshotControl::LoadSnapshotMeta()
 	int read_length = fh->GetNextLogSize();
 	char *data = new char[read_length];
 	fh->Read(data, read_length);
-    LOG4CXX_INFO(logger_, "Read " << read_length << " from file");
+    LOG4CXX_INFO(logger_, "Read " << read_length << " from " << ss_meta_pathname_);
 
     stringstream buffer;
     buffer.write(data, read_length);
@@ -84,8 +84,10 @@ bool SnapshotControl::SaveSnapshotMeta()
 {
     if (!FileSystemHelper::GetInstance()->IsDirectoryExists(vm_path_))
         FileSystemHelper::GetInstance()->CreateDirectory(vm_path_);
-    if (FileSystemHelper::GetInstance()->IsFileExists(ss_meta_pathname_))
+    if (FileSystemHelper::GetInstance()->IsFileExists(ss_meta_pathname_)) {
+        LOG4CXX_WARN(logger_, "Sanpshot metadata exists, will re-create " << ss_meta_pathname_);
         FileSystemHelper::GetInstance()->RemoveFile(ss_meta_pathname_);
+    }
 	FileHelper* fh = FileSystemHelper::GetInstance()->CreateFileHelper(ss_meta_pathname_, O_WRONLY);
 	fh->Create();
 
@@ -98,6 +100,16 @@ bool SnapshotControl::SaveSnapshotMeta()
     fh->Close();
     FileSystemHelper::GetInstance()->DestroyFileHelper(fh);
     return true;
+}
+
+void SnapshotControl::UpdateSnapshotRecipe(const SegmentMeta& sm)
+{
+    SegmentMeta tmp;
+    tmp.size_ = sm.size_;
+    tmp.cksum_ = sm.cksum_;
+    tmp.end_offset_ = sm.end_offset_;
+    tmp.handle_ = sm.handle_;
+    ss_meta_.snapshot_recipe_.push_back(tmp);
 }
 
 bool SnapshotControl::LoadSegmentRecipe(SegmentMeta& sm, uint32_t idx)
