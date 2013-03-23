@@ -6,7 +6,6 @@
 #include "../../append-store/append_store_types.h"
 #include "store.h"
 #include "../../snapshot/data_source.h"
-#include "timer.h"
 #include "../../fs/qfs_file_system_helper.h"
 
 using namespace std;
@@ -26,10 +25,6 @@ int main(int argc, char *argv[]) {
 	string snapshotID;
 	string vmName_p1, vmName_p2, type;
 	string handle;
-	Timer timer = Timer();
-	Timer fullTimer = Timer();
-	Timer blkTimer = Timer();
-	fullTimer.start();
 	int blkCnt = 0;
 
 	if(argc < 3) { 
@@ -60,14 +55,12 @@ int main(int argc, char *argv[]) {
 
     QFSHelper::Connect();
 	/* Init Append Store */
-	timer.start();
 	stream.str("");
 	stream << ROOT_DIRECTORY << "/" << vmName << "/" << "append";
 	storeName = stream.str();
 	sp.mPath = storeName;
 	sp.mAppend = true;
 	pas = new PanguAppendStore(sp, true);
-	cout << endl << "For Append Store creation : " << timer.stop() << " ms";
 	exit(-1);
 	/* DataStore and snapshot types */
 	
@@ -84,19 +77,13 @@ int main(int argc, char *argv[]) {
 	Handle h;
 
 	while(true) {
-		timer.start();
 		bool gs = ds.GetSegment(segmentMeta);
 		if(!gs) break;
 		for(size_t i=0; i < segmentMeta.segment_recipe_.size(); i++) {
-			if(blkCnt == 0) blkTimer.start();
 			string new_string(segmentMeta.segment_recipe_[i].data_, segmentMeta.GetBlockSize(i)); 
 			handle = pas->Append(new_string);
 			segmentMeta.segment_recipe_[i].handle_ = *reinterpret_cast<uint64_t*>(const_cast<char*>(&handle[0]));
 			blkCnt++;
-			if(blkCnt == 10000) { 
-				cout << endl << "Wrote 10000 Blocks " << blkTimer.stop() << " ms";
-				blkCnt = 0;
-			}
 		}
 		// serialize segmentMeta and write
 		sstream.str("");
@@ -106,12 +93,10 @@ int main(int argc, char *argv[]) {
 		segmentMeta.handle_ = *reinterpret_cast<uint64_t*>(const_cast<char*>(&handle[0]));
 		// add segmentmeta to snapshotMeta
 		snapshotMeta.AddSegment(segmentMeta);
-		cout << endl << "segment done " << timer.stop() << " ms";
 	}
 
 	
 	// write snapshotMeta to file !! 
-	timer.start();
 	stream.str("");
 	stream << ROOT_DIRECTORY << "/" << vmName;
 	FileSystemHelper::GetInstance()->CreateDirectory(stream.str());
@@ -124,8 +109,6 @@ int main(int argc, char *argv[]) {
 	fh->Close();
 	pas->Flush();
 	pas->Close();
-	cout << endl << "snapshot meta wrote into file " << timer.stop() << " ms";
-	cout << endl << "overall time taken " << fullTimer.stop() << " ms";
 	return 0;
 }
 

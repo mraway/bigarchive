@@ -4,7 +4,6 @@
 #include "../include/exception.h"
 #include <map>
 #include <string>
-#include <timer.h>
 #include <log4cxx/logger.h>
 #include <log4cxx/xml/domconfigurator.h>
 
@@ -111,7 +110,6 @@ void PanguAppendStore::Flush()
 
 bool PanguAppendStore::Read(const std::string& h, std::string* data) 
 {
-    Timer t; t.start();
     bool bOK = false;
 
     Handle handle(h);
@@ -123,7 +121,6 @@ bool PanguAppendStore::Read(const std::string& h, std::string* data)
 
     if (mCache->Find(handle, data))
     {
-        cout << endl << "Time @ Store:Read : Cache Hit : " << t.stop() << " ms";
         LOG4CXX_INFO(asimpl_logger, "Cache Hit in Store for Handle : " << handle.mChunkId << "," << handle.mIndex);
         return true;
     }
@@ -138,7 +135,6 @@ bool PanguAppendStore::Read(const std::string& h, std::string* data)
     bOK = p_chunk->Read(handle.mIndex, data);
 
     LOG4CXX_INFO(asimpl_logger, "Store::Read : " << mRoot << " & mChunkId : " << handle.mChunkId << " & mIndex : " <<  handle.mIndex);
-    cout << endl << "Time @ Store:Read : Cache Miss : " << t.stop() << " ms";
     return bOK;
 }
 
@@ -159,9 +155,6 @@ void PanguAppendStore::Remove(const std::string& h)
 }
 
 void PanguAppendStore::Close() {
-    Timer t;
-    t.start();
-
 	if(mAppend) {
 		LOG4CXX_INFO(asimpl_logger, "In APPEND mode : Close last append chunk");
 		Chunk* p_chunk = mCurrentAppendChunk.get();//LoadAppendChunk(); 
@@ -183,7 +176,6 @@ void PanguAppendStore::Close() {
  	}
 	
 	LOG4CXX_INFO(asimpl_logger, "Store::Closed - All associated Chunks Closed");
-    cout << endl << "Time Store::Close() : " << t.stop() << " ms";
 }
 
 void PanguAppendStore::Reload()
@@ -373,7 +365,6 @@ Chunk* PanguAppendStore::LoadAppendChunk()
 
 Chunk* PanguAppendStore::LoadRandomChunk(ChunkIDType id) 
 {
-    Timer t; t.start();
     if (ValidChunkID(id) == false)
     {
         return 0;
@@ -381,14 +372,12 @@ Chunk* PanguAppendStore::LoadRandomChunk(ChunkIDType id)
 
     if(mCurrentRandomChunk.get() != 0) {
     	if(mCurrentRandomChunk.get()->GetID() == id) {
-            cout << endl << "Time @ Store:LoadRandomChunk : InRandomChunkMap" << t.stop() << " ms";
             return mCurrentRandomChunk.get();
         }
     }
     ChunkMapType::const_iterator it = mChunkMap.find(id);
     if (it != mChunkMap.end())
     {
-        cout << endl << "Time @ Store:LoadRandomChunk : AlreadyinChunkMap : " << t.stop() << " ms";
         return it->second.get();
     }
 
@@ -396,7 +385,6 @@ Chunk* PanguAppendStore::LoadRandomChunk(ChunkIDType id)
     assert(mCurrentRandomChunk.get());
     mChunkMap.insert(std::make_pair(id, mCurrentRandomChunk));
     LOG4CXX_INFO(asimpl_logger, "Store::LoadedRandomChunk" );
-    cout << endl << "Time @ Store:LoadRandomChunk : LoadedNewChunk : " << t.stop() << " ms";
     return mCurrentRandomChunk.get();
 }
 

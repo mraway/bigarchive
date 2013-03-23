@@ -1,6 +1,5 @@
 #include "append_store_chunk.h"
 #include "../include/exception.h"
-#include "timer.h"
 
 LoggerPtr Chunk::logger_ = Logger::getLogger("Appendstore_chunk");
 
@@ -124,11 +123,8 @@ IndexType Chunk::Append(const std::string& data)
     */
 
     IndexType new_index = ++mMaxIndex; // GenerateIndex();
-
-    // Timer t1; t.start();
     DataRecord r(data, new_index);
     r.Serialize(mBlockStream);
-    // cout << endl <<"DataRecord serializing " << t1.stop() << " ms";
     mFlushCount++;
 
     if (mFlushCount >= mBlockIndexInterval)
@@ -142,9 +138,6 @@ IndexType Chunk::Append(const std::string& data)
 
 void Chunk::AppendIndex()
 {
-    //Timer t;
-    //t.start();
-
     if (mFlushCount == 0)
     {
         return;
@@ -213,7 +206,6 @@ void Chunk::AppendIndex()
 
 bool Chunk::Read(IndexType index, std::string* data) 
 {
-    Timer t; t.start();
     IndexVector::const_index_iterator it;
     bool is_begin = false;
     if (!IsValid(index) || (it=mIndexMap->find(index, is_begin)) == mIndexMap->end())
@@ -235,13 +227,11 @@ bool Chunk::Read(IndexType index, std::string* data)
     bool ret = ReadRaw(startOffset, buf);
     ret = ret && ExtractDataFromBlock(buf, index, data);
     LOG4CXX_INFO(logger_, "Chunk::Read Completed");
-    cout << endl << "Time @ Chunk:Read : " << t.stop();
     return ret;
 }
 
 bool Chunk::ExtractDataFromBlock(const std::string& buf, IndexType index, std::string* data)
 {
-    Timer t; t.start();
     CachePtr cachesharedptr = mCachePtr.lock();
     if (cachesharedptr == NULL)
     {
@@ -277,7 +267,6 @@ bool Chunk::ExtractDataFromBlock(const std::string& buf, IndexType index, std::s
         }
         cachesharedptr->Insert(Handle(mChunkId, r.mIndex), r.mVal);
     } while(true);
-    cout << endl << "Time @ Chunk:ExtractDataFromBlock : " << t.stop() << " ms";
     LOG4CXX_INFO(logger_, "Chunk::ExtractDataFromBlock Completed");
     return ret;
 }
@@ -584,8 +573,6 @@ bool Chunk::ReadRaw(const OffsetType& offset, std::string& data)
 OffsetType Chunk::AppendRaw(const IndexType& index, const uint32_t numentry, const std::string& data)
 {
 	OffsetType result = -1;
-	Timer t;
-	t.start();
     /*
       try
       {

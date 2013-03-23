@@ -6,7 +6,6 @@
 #include "../../append-store/append_store_types.h"
 #include "store.h"
 #include "../../snapshot/data_source.h"
-#include "timer.h"
 #include "../../fs/qfs_file_system_helper.h"
 
 using namespace std;
@@ -25,10 +24,6 @@ int main(int argc, char *argv[]) {
 	string vmID;
 	string snapshotID;
 	string vmName_p1, vmName_p2, type;
-	Timer timer = Timer();
-	Timer fullTimer = Timer();
-	Timer blkTimer = Timer();
-	fullTimer.start();
 	SnapshotMeta snapshotMeta;
 	SegmentMeta segmentMeta;
 	BlockMeta blockMeta;
@@ -101,7 +96,6 @@ int main(int argc, char *argv[]) {
 	cout << endl << "Number of segments " << snapshotMeta.snapshot_recipe_.size();
 	
 	for(size_t i = 0; i < snapshotMeta.snapshot_recipe_.size(); i++) {
-		timer.start();
 		// blkCnt++;
 		segmentMeta = snapshotMeta.snapshot_recipe_[i];
 		//memcpy(&h, &segmentMeta.handle_, sizeof(segmentMeta.handle_));
@@ -122,10 +116,8 @@ int main(int argc, char *argv[]) {
               }
 			*/
 		}
-		cout << endl << "segment completed, " << (i+1) << ":" << timer.stop() << " ms";
 	}
 	
-	cout << endl << "reading data done : Time : " << fullTimer.stop() << " ms";
 	pas->Flush();
 	pas->Close();
 }
