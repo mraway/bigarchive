@@ -109,8 +109,6 @@ void Chunk::Flush()
 
 IndexType Chunk::Append(const std::string& data)
 {
-    //Timer t;
-    //t.start();
     if (IsChunkFull() == true)
     {
         std::stringstream ss;
@@ -138,8 +136,7 @@ IndexType Chunk::Append(const std::string& data)
         AppendIndex();
     }
 
-    LOG4CXX_INFO(logger_, "Chunk::Append Completed");
-    //cout << endl << "Time Chunk::Append() : " << t.stop() << " ms";
+    //LOG4CXX_INFO(logger_, "Chunk::Append Completed");
     return new_index;
 }
 

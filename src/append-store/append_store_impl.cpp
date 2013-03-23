@@ -54,8 +54,6 @@ Scanner* PanguAppendStore::GetScanner()
 
 std::string PanguAppendStore::Append(const std::string& data)
 {
-    //Timer t;
-    //t.start();
     if (!mAppend) {
         THROW_EXCEPTION(AppendStoreWriteException, "Cannot append for read-only store");
     }
@@ -70,8 +68,7 @@ std::string PanguAppendStore::Append(const std::string& data)
 
     h.mChunkId = p_chunk->GetID();
 
-    LOG4CXX_INFO(asimpl_logger, "Store::Append " << mRoot << "mChunkId : " << p_chunk->GetID() << ", mIndex : " << h.mIndex << ", size : " << data.size());
-    //cout << endl << "Time : Store::Append() : " << t.stop() << " ms";
+    //LOG4CXX_INFO(asimpl_logger, "Store::Append " << mRoot << "mChunkId : " << p_chunk->GetID() << ", mIndex : " << h.mIndex << ", size : " << data.size());
     return h.ToString();
 }
 
@@ -339,15 +336,11 @@ void PanguAppendStore::AllocNextChunk()
 
 Chunk* PanguAppendStore::LoadAppendChunk()
 {
-    //Timer t;
-    //t.start();
-  
     if (mCurrentAppendChunk.get() != 0)
     {
         if (mCurrentAppendChunk->IsChunkFull() == false)
         {
-            LOG4CXX_DEBUG(asimpl_logger, "Loaded Current chunk");
-    	    //cout << endl << "Time Store::LoadAppendChunk() : " << t.stop() << " ms";
+            //LOG4CXX_DEBUG(asimpl_logger, "Loaded Current chunk");
             return mCurrentAppendChunk.get();
         }
         else

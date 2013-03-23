@@ -115,6 +115,8 @@ int main(int argc, char *argv[]) {
     }
 
     // 3. for every loaded segment, do
+    uint64_t l1_blocks = 0, l1_size = 0, l2_blocks = 0, l2_size = 0, 
+        l3_size = 0, l3_blocks = 0, new_blocks = 0, new_size = 0, tot_blocks = 0, tot_size = 0;
     SegmentMeta cur_seg, par_seg;
     BlockMeta* bm;
     CdsIndex cds_index;
@@ -127,11 +129,12 @@ int main(int argc, char *argv[]) {
     while (ds.GetSegment(cur_seg)) {
         num_queries = 0;
         current->UpdateBloomFilters(cur_seg);
-
+        tot_blocks += cur_seg.segment_recipe_.size(); tot_size += cur_seg.size_;
         if (has_parent && parent->LoadSegmentRecipe(par_seg, seg_id++)) {
             //  a) first compare parent segment meta by cksum
             if (cur_seg.cksum_ == par_seg.cksum_) {
                 cur_seg.handle_ = par_seg.handle_;
+                l1_blocks += par_seg.segment_recipe_.size(); l1_size += par_seg.size_;
                 continue;
             }
 
@@ -143,6 +146,7 @@ int main(int argc, char *argv[]) {
                 if (bm != NULL) {
                     cur_seg.segment_recipe_[i].handle_ = bm->handle_;
                     cur_seg.segment_recipe_[i].flags_ = bm->flags_ | IN_PARENT;
+                    l2_blocks += 1; l2_size += cur_seg.segment_recipe_[i].size_;
                 }
                 else {
                     // these blocks are not found in parent snapshot's segment, will ask CDS
@@ -165,10 +169,12 @@ int main(int argc, char *argv[]) {
                 // if found in CDS, it should return the data offset in CDS data file
                 blks_to_query[i]->handle_ = offsets[i];
                 blks_to_query[i]->flags_ |= IN_CDS;
+                l3_blocks += 1; l3_size += blks_to_query[i]->size_;
             }
             //  d) write new data to append store
             else {
                 current->SaveBlockData(*blks_to_query[i]);
+                new_blocks += 1; new_size += blks_to_query[i]->size_;
             }
         }
         
@@ -181,6 +187,12 @@ int main(int argc, char *argv[]) {
     current->SaveBloomFilters();
 	pas->Flush();
 	pas->Close();
+
+    LOG4CXX_INFO(ss_write_logger, "total: " << tot_blocks << " " << tot_size);
+    LOG4CXX_INFO(ss_write_logger, "l1: " << l1_blocks << " " << l1_size);
+    LOG4CXX_INFO(ss_write_logger, "l2: " << l2_blocks << " " << l2_size);
+    LOG4CXX_INFO(ss_write_logger, "l3: " << l3_blocks << " " << l3_size);
+    LOG4CXX_INFO(ss_write_logger, "new: " << new_blocks << " " << new_size);
 
     delete pas;
     delete[] cksums;
