@@ -10,9 +10,10 @@
 #include "append_store_index.h"
 #include "CompressionCodec.h"
 #include <stdio.h>
-
+#include <log4cxx/logger.h>
 
 using namespace std;
+using namespace log4cxx;
 
 struct Defaults
 {
@@ -117,6 +118,8 @@ private:
     static std::string GetDatFname(const std::string& root, uint32_t chunk_id);
 
     static std::string GetLogFname(const std::string& root, uint32_t chunk_id);
+
+    static LoggerPtr logger_;
 };
 
 

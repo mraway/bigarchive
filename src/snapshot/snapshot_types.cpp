@@ -8,6 +8,13 @@ BlockMeta::BlockMeta()
     end_offset_ = 0;
     size_ = 0;
     data_ = NULL;
+    is_allocated_ = false;;
+}
+
+BlockMeta::~BlockMeta()
+{
+    if (is_allocated_ && data_ != NULL)
+        delete[] data_;
 }
 
 void BlockMeta::Serialize(ostream& os) const
@@ -24,6 +31,27 @@ void BlockMeta::Deserialize(istream &is)
     marshall::Deserialize(end_offset_, is);
     marshall::Deserialize(handle_, is);
     marshall::Deserialize(flags_, is);
+}
+
+void BlockMeta::SerializeData(ostream& os) const
+{
+    if (data_ != NULL)
+        os.write(data_, size_);
+}
+
+void BlockMeta::DeserializeData(const string& data)
+{
+    if (is_allocated_ && data_ != NULL) {
+        delete[] data_;
+        data_ = NULL;
+        is_allocated_ = false;
+    }
+    if (size_ != data.size())
+        return;
+    data_ = new char[size_];
+    is_allocated_ = true;
+    memcpy(data_, data.c_str(), size_);
+    return;
 }
 
 BlockMeta* BlockMeta::New()

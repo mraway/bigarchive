@@ -13,6 +13,7 @@ using namespace std;
 #define RECORD_SIZE 36			// size of each block in scan log
 #define FIX_SEGMENT_SIZE (2 * 1024 * 1024)	// size of a segment
 #define AVG_BLOCK_SIZE (4 * 1024)
+#define MAX_BLOCK_SIZE (16 * 1024)
 
 //typedef uint8_t Checksum[CKSUM_LEN];	// checksum type
 

@@ -262,6 +262,7 @@ void Serialize(const std::map<KeyType, ValueType>& t, std::ostream& os)
 template<typename KeyType, typename ValueType>
 void Deserialize(std::map<KeyType, ValueType>& t, std::istream& is)
 {
+    t.clear();
     DeserializeMap(t, is);
 }
 
@@ -323,6 +324,7 @@ void Serialize(const std::vector<T>& v, std::ostream& os)
 template<typename T>
 void Deserialize(std::vector<T>& v, std::istream& is)
 {
+    v.clear();
     uint32_t s;
     Deserialize(s, is);
     v.resize(s);

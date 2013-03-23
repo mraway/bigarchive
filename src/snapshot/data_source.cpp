@@ -19,13 +19,13 @@ DataSource::DataSource(const string& trace_file, const string& sample_file)
         ifstream sample_data_stream(sample_file.c_str(), ios_base::binary | ios_base::in);
         sample_data_stream.seekg(0, ios_base::end);
         size_t sample_data_size = sample_data_stream.tellg();
-        if(sample_data_size < (SAMPLE_REGION_SIZE + MAX_BLOCK_SIZE)) {
+        if(sample_data_size < (SAMPLE_REGION_SIZE + RESERVED_REGION_SIZE)) {
             cout << "Error : sample does not have enough data" << endl;
             return;
         }
         sample_data_stream.seekg(0, ios_base::beg);
-        sample_data_ = new char[SAMPLE_REGION_SIZE + MAX_BLOCK_SIZE];
-        sample_data_stream.read(sample_data_, SAMPLE_REGION_SIZE + MAX_BLOCK_SIZE);
+        sample_data_ = new char[SAMPLE_REGION_SIZE + RESERVED_REGION_SIZE];
+        sample_data_stream.read(sample_data_, SAMPLE_REGION_SIZE + RESERVED_REGION_SIZE);
         sample_data_stream.close();
     }
     catch (exception& e) {
@@ -57,7 +57,7 @@ bool DataSource::BlockToBlockMeta(BlockMeta &bm, const Block& blk)
         cout << "Error: encounter zero size block" << endl;
         return false;
     }
-    if (blk.size_ > MAX_BLOCK_SIZE) {
+    if (blk.size_ > RESERVED_REGION_SIZE) {
         cout << "Error : block size is too big: " << blk.size_ << endl;
         return false;
     }

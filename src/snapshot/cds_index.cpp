@@ -1,8 +1,6 @@
 #include <unordered_map>
 #include "cds_index.h"
 
-LoggerPtr cds_index_logger(Logger::getLogger("CdsIndex"));
-
 void CdsIndex::LoadCds(istream &is)
 {
     Block blk;
@@ -10,7 +8,7 @@ void CdsIndex::LoadCds(istream &is)
     while (blk.FromStream(is)) {
         rc = memcached_set(p_memcache_, blk.cksum_.data_, CKSUM_LEN, (char*)&blk.offset_, sizeof(uint64_t), (time_t)0, (uint32_t)0);
         if (rc != MEMCACHED_SUCCESS)
-            LOG4CXX_ERROR(cds_index_logger, "Couldn't set key: " << blk.ToString());
+            LOG4CXX_ERROR(logger_, "Couldn't set key: " << blk.ToString());
     }
 }
 
@@ -19,7 +17,7 @@ bool CdsIndex::Set(Checksum& cksum, uint64_t offset)
     memcached_return_t rc;
     rc = memcached_set(p_memcache_, cksum.data_, CKSUM_LEN, (char*)&offset, sizeof(uint64_t), (time_t)0, (uint32_t)0);
     if (rc != MEMCACHED_SUCCESS) {
-        LOG4CXX_ERROR(cds_index_logger, "Couldn't set key: " << memcached_strerror(p_memcache_, rc));
+        LOG4CXX_ERROR(logger_, "Couldn't set key: " << memcached_strerror(p_memcache_, rc));
         return false;
     }
     return true;
@@ -51,7 +49,7 @@ bool CdsIndex::BatchGet(const Checksum* cksums, size_t num_cksums, bool *results
 
     memcached_return_t rc = memcached_mget(p_memcache_, p_cksums, key_length, num_cksums);
     if (rc != MEMCACHED_SUCCESS) {
-        LOG4CXX_ERROR(cds_index_logger, "Multi get failed");
+        LOG4CXX_ERROR(logger_, "Multi get failed");
         return false;
     }
 

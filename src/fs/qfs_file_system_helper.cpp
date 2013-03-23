@@ -19,7 +19,7 @@ QFSHelper::~QFSHelper()
 
 void QFSHelper::Connect() 
 {	
-    Connect(string("128.111.46.96"), 20000);
+    Connect(string("128.111.46.222"), 20000);
 }
 
 void QFSHelper::Connect(string metaserverhost, int metaserverport) 

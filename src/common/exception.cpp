@@ -160,6 +160,7 @@ std::string ExceptionBase::GetStackTrace() const
       free(strings);
       return result;
     */
+    return "";
 }
 
 

@@ -13,13 +13,13 @@ public:
 	void Create();
 	void Open();
 	void Close();
-	int Read(char *buffer, int length);
-	int Write(char *buffer, int length);
-	int WriteData(char *buffer, int length);
-	int Flush(char *buffer, int length);
-	int FlushData(char *buffer, int length);
-    int Append(char *buffer, int length);
-	void Seek(int offset);
+	int Read(char *buffer, size_t length);
+	int Write(char *buffer, size_t length);
+	int WriteData(char *buffer, size_t length);
+	int Flush(char *buffer, size_t length);
+	int FlushData(char *buffer, size_t length);
+    int Append(char *buffer, size_t length);
+	void Seek(uint64_t offset);
 	uint32_t GetNextLogSize();
 private:
     /*

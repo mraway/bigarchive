@@ -10,7 +10,7 @@
 
 using namespace std;
 
-#define MAX_BLOCK_SIZE (8 * 1024 * 1024)	// the last 8MB in sample data is reserved
+#define RESERVED_REGION_SIZE (8 * 1024 * 1024)	// the last 8MB in sample data is reserved
 #define SAMPLE_REGION_SIZE (128 * 1024 * 1024)	// use the first 128MB of vm image as sample data
 
 class DataSource

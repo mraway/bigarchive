@@ -34,7 +34,7 @@ public:
     SnapshotControl(const string& trace_file);
     SnapshotControl(const string& os_type, const string& disk_type, const string& vm_id, const string& ss_id);
 
-    ~SnapshotControl();
+    ~SnapshotControl() {};
 
     /*
      * Set an initialized append store pointer
@@ -59,7 +59,7 @@ public:
      * Save or load one block data from append store
      */
     bool SaveBlockData(BlockMeta& bm);
-
+    bool LoadBlockData(BlockMeta& bm);
     /*
      * Create two bloom filters, the settings should come from a snapshot config file in QFS,
      * but if such config doesn't exist, it will create one base on current snapshot size

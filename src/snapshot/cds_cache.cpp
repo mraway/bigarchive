@@ -1,16 +1,19 @@
 #include "cds_cache.h"
 #include <libhashkit/hashkit.h>
 
-const char* kMemcacheOptions = "--SERVER=128.111.46.222:11211 "
-    "--SERVER=128.111.46.96:11211 --SERVER=128.111.46.221:11211 "
+const char* kCdsIndexOptions = "--SERVER=128.111.46.222:11211 "
+    "--SERVER=128.111.46.221:11211 "
     "--SERVER=128.111.46.132:11211 --BINARY-PROTOCOL";
+const char* kCdsDataOptions = "--SERVER=128.111.46.222:11985 "
+    "--SERVER=128.111.46.221:11985 "
+    "--SERVER=128.111.46.132:11985 --BINARY-PROTOCOL";
 
 /*
 const char* kMemcacheOptions = "--SERVER=128.111.46.222:11211 "
     "--BINARY-PROTOCOL";
 */
 
-LoggerPtr cds_cache_logger(Logger::getLogger("CdsCache"));
+LoggerPtr CdsCache::logger_ = Logger::getLogger("CDS");
 
 uint32_t first_4_bytes(const char *key, size_t key_length, void *context)
 {
@@ -25,7 +28,7 @@ uint32_t first_4_bytes(const char *key, size_t key_length, void *context)
 
 CdsCache::CdsCache()
 {
-    options_ = kMemcacheOptions;
+    options_ = kCdsIndexOptions;
     Init();
 }
 
@@ -45,7 +48,7 @@ void CdsCache::Init()
         hashkit_set_custom_function(p_newkit, first_4_bytes, NULL);
         rc = memcached_set_hashkit(p_memcache_, p_newkit);
         if (rc != MEMCACHED_SUCCESS) 
-            LOG4CXX_ERROR(cds_cache_logger, "Couldn't set hashkit: %s\n" << memcached_strerror(p_memcache_, rc));
+            LOG4CXX_ERROR(logger_, "Couldn't set hashkit: %s\n" << memcached_strerror(p_memcache_, rc));
     }
 }
 

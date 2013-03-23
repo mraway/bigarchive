@@ -1,5 +1,7 @@
 /*
  * base class for operating cds in memcached
+ * by default it connects to CDS index, if we need to connect CDS data,
+ * we must specify an option in the constructor.
  */
 #ifndef _CDS_CACHE_H_
 #define _CDS_CACHE_H_
@@ -16,7 +18,8 @@ using namespace log4cxx::xml;
 using namespace log4cxx::helpers;
 
 
-extern const char* kMemcacheOptions;
+extern const char* kCdsIndexOptions;
+extern const char* kCdsDataOptions;
 
 uint32_t first_4_bytes(const char *key, size_t key_length, void *context);
 
@@ -30,6 +33,7 @@ protected:
     void Init();
     string options_;
     memcached_st* p_memcache_;
+    static LoggerPtr logger_;
 };
 
 #endif

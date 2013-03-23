@@ -133,6 +133,20 @@ bool SnapshotControl::SaveBlockData(BlockMeta& bm)
     return true;
 }
 
+bool SnapshotControl::LoadBlockData(BlockMeta& bm)
+{
+    if (bm.flags_ & IN_CDS) {
+        LOG4CXX_ERROR(logger_, "This block is not in append store");
+        return 0;
+    }
+
+    string buf;
+    string handle((char*)&bm.handle_, sizeof(bm.handle_));
+    bool res = store_ptr_->Read(handle, &buf);
+    bm.DeserializeData(buf);
+    return res;
+}
+
 bool SnapshotControl::InitBloomFilters(uint64_t snapshot_size)
 {
 	if (!FileSystemHelper::GetInstance()->IsFileExists(vm_meta_pathname_)) {

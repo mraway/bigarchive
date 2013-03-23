@@ -29,9 +29,11 @@ public:
     HandleType handle_;
     uint16_t flags_;
     char* data_;
+    bool is_allocated_;
 
 public:
     BlockMeta();
+    ~BlockMeta();
 	// serialize the metadata of a block
     /* override */ void Serialize(ostream& os) const;
     /* override */ void Deserialize(istream& is);
@@ -42,6 +44,10 @@ public:
     uint32_t GetBlockSize();
     uint64_t SetHandle(const string& handle);
     string GetHandle();
+    // serialize data to/from stream
+    void SerializeData(ostream& os) const;
+    void DeserializeData(istream& is) {};
+    void DeserializeData(const string& data);
 };
 
 class SegmentMeta : public marshall::Serializable
