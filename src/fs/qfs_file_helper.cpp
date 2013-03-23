@@ -92,6 +92,8 @@ int QFSFileHelper::Read(char *buffer, size_t length) {
     if (fd == -1) {
 		Open();
     }
+	LOG4CXX_DEBUG(logger_, "Read " << length << " bytes from file(" << filename << ") at " << qfshelper->kfsClient->Tell(fd));
+
     //Karim: If file already open then read "length" bytes and put them in buffer
     size_t bytes_read = qfshelper->kfsClient->Read(fd, buffer, length);
 
@@ -104,8 +106,6 @@ int QFSFileHelper::Read(char *buffer, size_t length) {
 		    LOG4CXX_ERROR(logger_, "Less number of bytes read from file than specified");
 		}
     }
-
-	LOG4CXX_DEBUG(logger_, "Read " << length << " bytes from file(" << filename << ")");    
 
     return bytes_read;	
 }
