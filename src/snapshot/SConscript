@@ -9,6 +9,9 @@ local_env.Install(local_env['PROJECT_LIB_PATH'], snapshot)
 snapshot_write = local_env.Program(target = 'snapshot_write', source = ['snapshot_write.cpp'], LIBS = env['PROJ_LIBS'] + env['QFS_LIBS'] + env['LOG_LIBS'] + env['CACHE_LIBS'] + env['BASIC_LIBS'])
 local_env.Install(local_env['PROJECT_BIN_PATH'], snapshot_write)
 
+prog = local_env.Program(target = 'snapshot_read', source = ['snapshot_read.cpp'], LIBS = env['PROJ_LIBS'] + env['QFS_LIBS'] + env['LOG_LIBS'] + env['CACHE_LIBS'] + env['BASIC_LIBS'])
+local_env.Install(local_env['PROJECT_BIN_PATH'], prog)
+
 cds_loader = local_env.Program(target = 'cds_loader', source = ['cds_loader.cpp'], LIBS = env['PROJ_LIBS'] + env['QFS_LIBS'] + env['LOG_LIBS'] + env['CACHE_LIBS'] + env['BASIC_LIBS'])
 local_env.Install(local_env['PROJECT_BIN_PATH'], cds_loader)
 
