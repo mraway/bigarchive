@@ -172,7 +172,7 @@ void Chunk::AppendIndex()
         try
         {
             int fos = mIndexOutputFH->Write(buffer, r.Size());
-            LOG4CXX_DEBUG(logger_, "index flushed : data wrote -- " << buffer);
+            //LOG4CXX_DEBUG(logger_, "index flushed : data wrote -- " << buffer);
             LOG4CXX_DEBUG(logger_, "index flushed : data size --- " << r.Size());
             LOG4CXX_DEBUG(logger_, "index flushed : index file size (size + data) -- " << fos);
             LOG4CXX_DEBUG(logger_, "index file size : getSize " << mFileSystemHelper->GetSize(mIndexFileName));
@@ -648,7 +648,7 @@ OffsetType Chunk::AppendRaw(const IndexType& index, const uint32_t numentry, con
             OffsetType fos = 0;            
             // std::cout << "\nactual data " << data.size() << ", data wrote : " << ssref.size();	
             fos = mDataOutputFH->Write((char*)&ssref[0], ssref.size());	
-            LOG4CXX_DEBUG(logger_, "flush -- data wrote ------- " << ssref);
+            //LOG4CXX_DEBUG(logger_, "flush -- data wrote ------- " << ssref);
             LOG4CXX_DEBUG(logger_, "flush -- data size wrote -- " << ssref.size());
             LOG4CXX_DEBUG(logger_, "flush return value is ----- " << fos);
             LOG4CXX_WARN(logger_, "Data Flushed : " << ssref.size());
