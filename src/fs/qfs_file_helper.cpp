@@ -92,7 +92,7 @@ int QFSFileHelper::Read(char *buffer, size_t length) {
     if (fd == -1) {
 		Open();
     }
-	LOG4CXX_DEBUG(logger_, "Read " << length << " bytes from file(" << filename << ") at " << qfshelper->kfsClient->Tell(fd));
+	LOG4CXX_DEBUG(logger_, "Trying to read " << length << " bytes from file(" << filename << ") at " << qfshelper->kfsClient->Tell(fd));
 
     //Karim: If file already open then read "length" bytes and put them in buffer
     size_t bytes_read = qfshelper->kfsClient->Read(fd, buffer, length);

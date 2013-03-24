@@ -1,4 +1,6 @@
 High:
+1) read test, verify
+2) concurrent read and write to append store
 3) snapshot_delete
 4) append_store: scan, deletion
 3) append store: compaction
