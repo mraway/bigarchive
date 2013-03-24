@@ -124,6 +124,7 @@ bool SnapshotControl::LoadSegmentRecipe(SegmentMeta& sm, uint32_t idx)
     
     stringstream ss(data);
     sm.DeserializeRecipe(ss);
+    
     return true;
 }
 

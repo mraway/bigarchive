@@ -155,10 +155,11 @@ void SegmentMeta::DeserializeRecipe(istream& is)
     marshall::Deserialize(segment_recipe_, is);
     if (segment_recipe_.size() == 0)
         return;
-    for (size_t i = 1; i < segment_recipe_.size(); ++i)
+    uint32_t last_ending = 0;
+    for (size_t i = 0; i < segment_recipe_.size(); ++i)
     {
-        segment_recipe_[i].size_ = segment_recipe_[i].end_offset_ 
-            - segment_recipe_[i-1].end_offset_;
+        segment_recipe_[i].size_ = segment_recipe_[i].end_offset_ - last_ending;
+        last_ending = segment_recipe_[i].end_offset_;
     }
 }
 
@@ -257,10 +258,11 @@ void SnapshotMeta::DeserializeRecipe(istream& is)
     marshall::Deserialize(snapshot_recipe_, is);
     if (snapshot_recipe_.size() == 0)
         return;
+    uint64_t last_ending = 0;
     for (size_t i = 1; i < snapshot_recipe_.size(); ++i)
     {
-        snapshot_recipe_[i].size_ = snapshot_recipe_[i].end_offset_ 
-            - snapshot_recipe_[i-1].end_offset_;
+        snapshot_recipe_[i].size_ = snapshot_recipe_[i].end_offset_ - last_ending;
+        last_ending = snapshot_recipe_[i].end_offset_;
     }
 }
 
