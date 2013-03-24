@@ -159,6 +159,8 @@ bool SnapshotControl::LoadBlockData(BlockMeta& bm)
         bm.DeserializeData(buf);
         return true;
     }
+    LOG4CXX_ERROR(logger_, "append store read " << buf.size()
+            << ", block size in meta is " << bm.size_);
     return false;
 }
 
