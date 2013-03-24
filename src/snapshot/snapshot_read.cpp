@@ -44,7 +44,7 @@ PanguAppendStore* init_append_store(string& vm_id)
 int main(int argc, char** argv)
 {
     if (argc != 5 && argc != 6) {
-        cout << "Usage: " << argv[0] << "cds_name sample_data output_file snapshot_trace [current_trace]" << endl;
+        cout << "Usage: " << argv[0] << " cds_name sample_data output_file snapshot_trace [current_trace]" << endl;
         return -1;
     }
 
@@ -112,8 +112,7 @@ int main(int argc, char** argv)
                 }
             }
             else {
-                size_read = ssctrl.LoadBlockData(ss_seg.segment_recipe_[i]);
-                if (size_read != ss_seg.segment_recipe_[i].size_) {
+                if (!ssctrl.LoadBlockData(ss_seg.segment_recipe_[i])) {
                     LOG4CXX_ERROR(logger, "Read append store data fail");
                     return -1;
                 }

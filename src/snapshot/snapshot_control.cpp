@@ -155,8 +155,11 @@ bool SnapshotControl::LoadBlockData(BlockMeta& bm)
     string buf;
     string handle((char*)&bm.handle_, sizeof(bm.handle_));
     bool res = store_ptr_->Read(handle, &buf);
-    bm.DeserializeData(buf);
-    return res;
+    if (res && bm.size_ == buf.size()) {
+        bm.DeserializeData(buf);
+        return true;
+    }
+    return false;
 }
 
 bool SnapshotControl::InitBloomFilters(uint64_t snapshot_size)
