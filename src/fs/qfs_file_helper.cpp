@@ -201,6 +201,7 @@ int QFSFileHelper::FlushData(char *buffer, size_t length) {
 
 
 void QFSFileHelper::Seek(uint64_t offset) {
+    LOG4CXX_DEBUG(logger_, "seek to " << offset);
     qfshelper->kfsClient->Seek(fd, offset);
 }
 
