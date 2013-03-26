@@ -2,10 +2,10 @@
 #include <libhashkit/hashkit.h>
 
 const char* kCdsIndexOptions = "--SERVER=128.111.46.222:11211 "
-    "--SERVER=128.111.46.221:11211 "
+    "--SERVER=128.111.46.96:11211 "
     "--SERVER=128.111.46.132:11211 --BINARY-PROTOCOL";
 const char* kCdsDataOptions = "--SERVER=128.111.46.222:11985 "
-    "--SERVER=128.111.46.221:11985 "
+    "--SERVER=128.111.46.96:11985 "
     "--SERVER=128.111.46.132:11985 --BINARY-PROTOCOL";
 
 /*

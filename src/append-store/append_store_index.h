@@ -8,13 +8,10 @@
 #include <algorithm>
 #include <memory>
 #include <map>
-// #include <qfs_file_helper.h>
-// #include <qfs_file_system_helper.h>
-// #include "apsara/pangu.h"
-// #include "pangu_helper.h"
-// #include "serialize.h"
 #include "append_store_types.h"
+#include <log4cxx/logger.h>
 
+using namespace log4cxx;
 
 class IndexRecord : public marshall::Serializable
 {
@@ -57,8 +54,9 @@ public:
     void fromBuffer(char *buffer);
     void toBuffer(char  *buffer); 
 
-    OffsetType mOffset;
-    IndexType  mIndex;
+public:
+    OffsetType mOffset;	// the starting position in data file
+    IndexType  mIndex;	// the numberic index, store in the last 6 bytes of handle
 };
 
 class IndexVector
@@ -67,11 +65,13 @@ public:
     typedef std::vector<IndexRecord>::const_iterator const_index_iterator;
 
 public:
+    // initialize from a chunk index file
     IndexVector(const std::string& file);
 
     ~IndexVector(){};
 
-    const_index_iterator find(IndexType key, bool &is_begin) const;
+    // search the index vector to locate an entry that covers the given key
+    const_index_iterator find(IndexType key) const;
  
     uint32_t size() const;
 
@@ -87,8 +87,17 @@ public:
 
 private:
     std::vector<IndexRecord> mValues;         // in memory index data
+    LoggerPtr logger_;
 
 private:
+    // Wei: don't understand why Xiaogang did this, he should use STL instead
+    // search the index vector to find an entry, whose range covers the given index value
+    // @param: val_v is the begin position of index vector
+    // @param: start is the start search position
+    // @param: nele is the length of search range
+    // @param: key is the search key (index value)
+    // @param: pos is the position of index vector entry if found
+    // @retrun: success or fail
     static bool bisearch(const IndexRecord* val_v, uint32_t start, uint32_t nele,  IndexType key, uint32_t& pos);
 };
 

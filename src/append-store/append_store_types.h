@@ -52,8 +52,8 @@ public:
 
     void Copy(const Serializable& rec);
 
-    std::string mVal;
-    IndexType   mIndex;
+    std::string mVal;	// append data
+    IndexType   mIndex;	// internal chunk index
 };
 
 

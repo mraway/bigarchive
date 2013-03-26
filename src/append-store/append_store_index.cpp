@@ -40,17 +40,12 @@ void IndexRecord::fromBuffer(char *buffer) {
 }
 
 
-IndexVector::const_index_iterator IndexVector::find(IndexType key, bool &is_begin) const
+IndexVector::const_index_iterator IndexVector::find(IndexType key) const
 {
     uint32_t pos;
     if (bisearch(&mValues[0], 0, mValues.size(), key, pos)) //key exists
     {
-	is_begin = false;
-	if(pos == 0) {
-	 is_begin = true;
-	 return begin();
-	}
-        return begin() + pos - 1;
+        return begin() + pos;
     }
     else
     {
@@ -130,7 +125,7 @@ void IndexVector::LoadFromFile(const std::string& fname)
 }
 
 bool IndexVector::bisearch(const IndexRecord* val_v, uint32_t start, uint32_t nele,
-                        IndexType key, uint32_t& pos)
+                           IndexType key, uint32_t& pos)
 {
     bool found = false;
     int first = start;

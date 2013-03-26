@@ -207,8 +207,7 @@ void Chunk::AppendIndex()
 bool Chunk::Read(IndexType index, std::string* data) 
 {
     IndexVector::const_index_iterator it;
-    bool is_begin = false;
-    if (!IsValid(index) || (it=mIndexMap->find(index, is_begin)) == mIndexMap->end())
+    if (!IsValid(index) || (it=mIndexMap->find(index)) == mIndexMap->end())
     {
         return false;
     }
@@ -219,9 +218,6 @@ bool Chunk::Read(IndexType index, std::string* data)
     
 
     OffsetType startOffset = it->mOffset;
-
-    if(is_begin)
-        startOffset = 0;
 
     std::string buf;
     bool ret = ReadRaw(startOffset, buf);

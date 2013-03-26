@@ -11,3 +11,12 @@ Medium:
 2) testcases and examples : a) qfs test: file create, r/w/append. delete. b) append store tests
 3) Reading configuration from file.
 5) append_store: sequential access for metadata
+
+
+Install:
+build: scons
+compression: lzo-devel
+log4cxx: apr-devel apr-util-devel log4cxx-devel
+memcached: libmemcached-devel
+qfs: gcc-c++ make git cmake boost-devel xfsprogs-devel libuuid-devel openssl-devel python-devel
+
