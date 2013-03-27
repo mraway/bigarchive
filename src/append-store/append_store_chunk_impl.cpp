@@ -1,7 +1,7 @@
 #include "append_store_chunk.h"
 #include "../include/exception.h"
 
-LoggerPtr Chunk::logger_ = Logger::getLogger("Appendstore_chunk");
+LoggerPtr Chunk::logger_ = Logger::getLogger("AppendStoreChunk");
 
 const char* Defaults::IDX_DIR = "index/";
 const char* Defaults::DAT_DIR = "data/";
@@ -124,15 +124,16 @@ IndexType Chunk::Append(const std::string& data)
 
     IndexType new_index = ++mMaxIndex; // GenerateIndex();
     DataRecord r(data, new_index);
-    r.Serialize(mBlockStream);
+    r.Serialize(mBlockStream);	// data keep in stream buffer
     mFlushCount++;
 
+    LOG4CXX_DEBUG(logger_, "append data with index " << new_index << ", buffer size is " << mFlushCount);
     if (mFlushCount >= mBlockIndexInterval)
     {
+        LOG4CXX_DEBUG(logger_, "write buffer full, data need to be written to disk as a compressed data unit")
         AppendIndex();
     }
 
-    //LOG4CXX_INFO(logger_, "Chunk::Append Completed");
     return new_index;
 }
 
@@ -165,11 +166,11 @@ void Chunk::AppendIndex()
         try
         {
             int fos = mIndexOutputFH->Write(buffer, r.Size());
-            //LOG4CXX_DEBUG(logger_, "index flushed : data wrote -- " << buffer);
-            LOG4CXX_DEBUG(logger_, "index flushed : data size --- " << r.Size());
-            LOG4CXX_DEBUG(logger_, "index flushed : index file size (size + data) -- " << fos);
-            LOG4CXX_DEBUG(logger_, "index file size : getSize " << mFileSystemHelper->GetSize(mIndexFileName));
-            LOG4CXX_WARN(logger_, "Index Flushed into " << mIndexFileName << ":" << r.mIndex << ":" << r.mOffset);
+            LOG4CXX_DEBUG(logger_, "write to index: " << mIndexFileName
+                          << ", record index " << r.mIndex 
+                          << ", offset " << r.mOffset
+                          << ", record size is " << r.Size() 
+                          << ", index write position change to " << fos);
             break;
         }
         catch(ExceptionBase& e)
@@ -199,8 +200,6 @@ void Chunk::AppendIndex()
             }
         }
     } while (retryCount <= 1);
-    LOG4CXX_INFO(logger_, "Chunk::AppendIndex Completed");
-    // cout << endl << "Time Chunk::AppendIndex : " << t.stop() << " ms";
 };
        
 
@@ -216,8 +215,12 @@ bool Chunk::Read(IndexType index, std::string* data)
         return false;
     }
     
-
-    OffsetType startOffset = it->mOffset;
+    OffsetType startOffset;
+    if (it == mIndexMap->begin())
+        startOffset = 0;
+    else {
+        startOffset = (it - 1)->mOffset;
+    }
 
     std::string buf;
     bool ret = ReadRaw(startOffset, buf);

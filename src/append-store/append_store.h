@@ -8,19 +8,10 @@
 #include "../include/exception.h"
 #include "append_store_chunk.h"
 #include "CompressionCodec.h"
-
-/*
 #include <log4cxx/logger.h>
-#include <log4cxx/xml/domconfigurator.h>
 
+using namespace std;
 using namespace log4cxx;
-using namespace log4cxx::xml;
-using namespace log4cxx::helpers;
-
-// static logger variable
-// LoggerPtr logger(Logger::getLogger( "appendstore"));
-// typedef unsigned long long int uint64_t
-*/
 
 class PanguScanner : public Scanner 
 {
@@ -49,6 +40,7 @@ private:
     bool                mFileHasMore;
     mutable ChunkIDType mChunkId;
     std::set<IndexType> mDeleteSet;
+    static LoggerPtr logger_;
 };
 
 
@@ -100,7 +92,7 @@ private:
     ChunkMapType mChunkMap;          // for read map of chunk index 
     ChunkMapType mDeleteChunkMap;    // for read map of delete chunk index 
     // CHKIT
-    // static apsara::logging::Logger* sLogger;
+    static LoggerPtr logger_;
 };
 
 

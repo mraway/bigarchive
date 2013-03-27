@@ -1,18 +1,12 @@
 #include <algorithm>
 #include <set>
-#include "append_store.h"
-#include "../include/exception.h"
 #include <map>
 #include <string>
-#include <log4cxx/logger.h>
-#include <log4cxx/xml/domconfigurator.h>
 
-using namespace log4cxx;
-using namespace log4cxx::xml;
-using namespace log4cxx::helpers;
-using namespace std;
+#include "append_store.h"
+#include "../include/exception.h"
 
-LoggerPtr asimpl_logger(Logger::getLogger( "appendstore.impl"));
+LoggerPtr PanguAppendStore::logger_ = Logger::getLogger( "AppendStore");
 
 PanguAppendStore::PanguAppendStore(const StoreParameter& para, bool iscreate)
     : mRoot(para.mPath), 
@@ -21,8 +15,6 @@ PanguAppendStore::PanguAppendStore(const StoreParameter& para, bool iscreate)
       mAppendChunkId(0),
       mCompressionType(para.mCompressionFlag)
 {
-    DOMConfigurator::configure("Log4cxxConfig.xml");
-
     if (mRoot.compare(mRoot.size()-1, 1, "/"))
     {
         mRoot.append("/");
@@ -67,7 +59,7 @@ std::string PanguAppendStore::Append(const std::string& data)
 
     h.mChunkId = p_chunk->GetID();
 
-    //LOG4CXX_INFO(asimpl_logger, "Store::Append " << mRoot << "mChunkId : " << p_chunk->GetID() << ", mIndex : " << h.mIndex << ", size : " << data.size());
+    //LOG4CXX_INFO(logger_, "Store::Append " << mRoot << "mChunkId : " << p_chunk->GetID() << ", mIndex : " << h.mIndex << ", size : " << data.size());
     return h.ToString();
 }
 
@@ -121,7 +113,7 @@ bool PanguAppendStore::Read(const std::string& h, std::string* data)
 
     if (mCache->Find(handle, data))
     {
-        LOG4CXX_INFO(asimpl_logger, "Cache Hit in Store for Handle : " << handle.mChunkId << "," << handle.mIndex);
+        LOG4CXX_INFO(logger_, "Cache Hit in Store for Handle : " << handle.mChunkId << "," << handle.mIndex);
         return true;
     }
     
@@ -134,7 +126,7 @@ bool PanguAppendStore::Read(const std::string& h, std::string* data)
 
     bOK = p_chunk->Read(handle.mIndex, data);
 
-    LOG4CXX_INFO(asimpl_logger, "Store::Read : " << mRoot << " & mChunkId : " << handle.mChunkId << " & mIndex : " <<  handle.mIndex);
+    LOG4CXX_INFO(logger_, "Store::Read : " << mRoot << " & mChunkId : " << handle.mChunkId << " & mIndex : " <<  handle.mIndex);
     return bOK;
 }
 
@@ -151,12 +143,12 @@ void PanguAppendStore::Remove(const std::string& h)
         return ;
     }
     p_chunk->Remove(handle.mIndex);
-    LOG4CXX_INFO(asimpl_logger, "Store::Removed : " << mRoot << " & mChunkId : " << handle.mChunkId << " & mIndex : " <<  handle.mIndex);
+    LOG4CXX_INFO(logger_, "Store::Removed : " << mRoot << " & mChunkId : " << handle.mChunkId << " & mIndex : " <<  handle.mIndex);
 }
 
 void PanguAppendStore::Close() {
 	if(mAppend) {
-		LOG4CXX_INFO(asimpl_logger, "In APPEND mode : Close last append chunk");
+		LOG4CXX_INFO(logger_, "In APPEND mode : Close last append chunk");
 		Chunk* p_chunk = mCurrentAppendChunk.get();//LoadAppendChunk(); 
 		if(p_chunk != 0) {
 			p_chunk->Close();
@@ -166,16 +158,16 @@ void PanguAppendStore::Close() {
 	std::map<ChunkIDType, ChunkPtr>::iterator chunk_iter;
 
 	for (chunk_iter = mChunkMap.begin(); chunk_iter != mChunkMap.end(); chunk_iter++) {
-		LOG4CXX_INFO(asimpl_logger, "Closing chunk " << chunk_iter->first);
+		LOG4CXX_INFO(logger_, "Closing chunk " << chunk_iter->first);
 		chunk_iter->second->Close();
 	}
  
 	for (chunk_iter = mDeleteChunkMap.begin(); chunk_iter != mDeleteChunkMap.end(); chunk_iter++) {
-  		LOG4CXX_INFO(asimpl_logger, "Closing chunk " << chunk_iter->first);
+  		LOG4CXX_INFO(logger_, "Closing chunk " << chunk_iter->first);
   		chunk_iter->second->Close();
  	}
 	
-	LOG4CXX_INFO(asimpl_logger, "Store::Closed - All associated Chunks Closed");
+	LOG4CXX_INFO(logger_, "Store::Closed - All associated Chunks Closed");
 }
 
 void PanguAppendStore::Reload()
@@ -237,7 +229,7 @@ void PanguAppendStore::Init(bool iscreate)
 
     if (mAppend)
     {
-        LOG4CXX_DEBUG(asimpl_logger, "mMaxChunkSize : " << mMeta.maxChunkSize << " & mBlockIndexInterval : " << mMeta.blockIndexInterval);
+        LOG4CXX_DEBUG(logger_, "mMaxChunkSize : " << mMeta.maxChunkSize << " & mBlockIndexInterval : " << mMeta.blockIndexInterval);
         // Currently, append at the last chunk // set mMaxChunkId: chunks are in [0, mMaxChunkId] inclusive
         mAppendChunkId = mMaxChunkId;
         mCodec.reset(CompressionCodec::getCodec(compressAlgo.c_str(), 1024, true));
@@ -259,11 +251,11 @@ bool PanguAppendStore::ReadMetaInfo()
     try  
     {
         fexist = mFileSystemHelper->IsFileExists(metaFileName);
-        LOG4CXX_DEBUG(asimpl_logger, "meta file name " << metaFileName << " : " << fexist);
+        LOG4CXX_DEBUG(logger_, "meta file name " << metaFileName << " : " << fexist);
     }
     catch (ExceptionBase & e)
     {
-        LOG4CXX_ERROR(asimpl_logger, "IsFileExist : " <<  metaFileName);
+        LOG4CXX_ERROR(logger_, "IsFileExist : " <<  metaFileName);
         throw;
     }
 
@@ -277,7 +269,7 @@ bool PanguAppendStore::ReadMetaInfo()
  		    metaInputFH->Read(read_buffer, sizeof(StoreMetaData));
 		    metaInputFH->Close();
 		    mMeta.fromBuffer(read_buffer);
-		    LOG4CXX_DEBUG(asimpl_logger, "after reading mMeta values : " << mMeta.storeminor << 
+		    LOG4CXX_DEBUG(logger_, "after reading mMeta values : " << mMeta.storeminor << 
                           "," << mMeta.storemajor << 
                           "," << mMeta.maxChunkSize <<
                           "," << mMeta.blockIndexInterval << 
@@ -289,7 +281,7 @@ bool PanguAppendStore::ReadMetaInfo()
             THROW_EXCEPTION(AppendStoreWriteException, "Cannot open meta file for append " + e.ToString());
         }
     }
-    LOG4CXX_INFO(asimpl_logger, "Store::ReadMetaDataInfo()" );
+    LOG4CXX_INFO(logger_, "Store::ReadMetaDataInfo()" );
     return false;
 }
 
@@ -302,7 +294,7 @@ void PanguAppendStore::WriteMetaInfo(const std::string& root, const StoreMetaDat
 		metaOutputFH->Open();
         char *write_buffer = new char[sizeof(StoreMetaData)]; 
 	 	/* Copying into buffer from StoreMetaData */
-        LOG4CXX_DEBUG(asimpl_logger, "before reading mMeta values : " << mMeta.storeminor << 
+        LOG4CXX_DEBUG(logger_, "before reading mMeta values : " << mMeta.storeminor << 
                       "," << mMeta.storemajor << 
                       "," << mMeta.maxChunkSize <<
                       "," << mMeta.blockIndexInterval << 
@@ -317,7 +309,7 @@ void PanguAppendStore::WriteMetaInfo(const std::string& root, const StoreMetaDat
     {
         THROW_EXCEPTION(AppendStoreWriteException, e.ToString()+" Cannot generate .meta_ file");
     }
-	LOG4CXX_INFO(asimpl_logger, "Store::WroteMetaDataInfo()" );
+	LOG4CXX_INFO(logger_, "Store::WroteMetaDataInfo()" );
 }
 
 void PanguAppendStore::AllocNextChunk()
@@ -332,7 +324,7 @@ Chunk* PanguAppendStore::LoadAppendChunk()
     {
         if (mCurrentAppendChunk->IsChunkFull() == false)
         {
-            //LOG4CXX_DEBUG(asimpl_logger, "Loaded Current chunk");
+            //LOG4CXX_DEBUG(logger_, "Loaded Current chunk");
             return mCurrentAppendChunk.get();
         }
         else
@@ -340,7 +332,7 @@ Chunk* PanguAppendStore::LoadAppendChunk()
             /* Close previous chunk and allocate new chunk */
             Chunk* p_chunk = mCurrentAppendChunk.get();
             p_chunk->Close();
-	        LOG4CXX_DEBUG(asimpl_logger, "Allocating next chunk, because current chunk is Full");	
+	        LOG4CXX_DEBUG(logger_, "Allocating next chunk, because current chunk is Full");	
             AllocNextChunk();
         }
     }
@@ -350,7 +342,7 @@ Chunk* PanguAppendStore::LoadAppendChunk()
     }
     catch (...)
     {
-        LOG4CXX_ERROR(asimpl_logger, "[AppendStore] chunk is disabled for append, chunk id : " << mAppendChunkId);
+        LOG4CXX_ERROR(logger_, "[AppendStore] chunk is disabled for append, chunk id : " << mAppendChunkId);
         throw;
     }
 
@@ -358,7 +350,7 @@ Chunk* PanguAppendStore::LoadAppendChunk()
     {
         THROW_EXCEPTION(AppendStoreWriteException, "Cannot get valid chunk for append");
     }
-    LOG4CXX_INFO(asimpl_logger, "Store::LoadedAppendChunk" ); 
+    LOG4CXX_INFO(logger_, "Store::LoadedAppendChunk" ); 
     //cout << endl << "Time Store::LoadAppendChunk() : " << t.stop() << " ms";
     return mCurrentAppendChunk.get();
 }
@@ -384,7 +376,7 @@ Chunk* PanguAppendStore::LoadRandomChunk(ChunkIDType id)
     mCurrentRandomChunk.reset(new Chunk(mRoot, id, mMeta.maxChunkSize, false, mCodec, mCache));
     assert(mCurrentRandomChunk.get());
     mChunkMap.insert(std::make_pair(id, mCurrentRandomChunk));
-    LOG4CXX_INFO(asimpl_logger, "Store::LoadedRandomChunk" );
+    LOG4CXX_INFO(logger_, "Store::LoadedRandomChunk" );
     return mCurrentRandomChunk.get();
 }
 
@@ -404,7 +396,7 @@ Chunk* PanguAppendStore::LoadDeleteChunk(ChunkIDType id)
     mCurrentDeleteChunk.reset(new Chunk(mRoot, id));
     assert(mCurrentDeleteChunk.get());
     mDeleteChunkMap.insert(std::make_pair(id, mCurrentDeleteChunk));
-	LOG4CXX_INFO(asimpl_logger, "Store::LoadedDeleteChunk" );
+	LOG4CXX_INFO(logger_, "Store::LoadedDeleteChunk" );
     return mCurrentDeleteChunk.get();
 }
 
@@ -420,7 +412,7 @@ bool PanguAppendStore::CreateDirectory(const std::string& name)
     }
     catch(ExceptionBase& e)
     {
-        LOG4CXX_ERROR(asimpl_logger, "error on CreateDirectory : " << e.ToString());
+        LOG4CXX_ERROR(logger_, "error on CreateDirectory : " << e.ToString());
         throw;
     }
     return true;
@@ -446,31 +438,33 @@ void PanguAppendStore::CreateDirs(const std::string& root)
 
     if (CreateDirectory(root))
     {
-        LOG4CXX_DEBUG(asimpl_logger, "CreateDirectory : " << root);
+        LOG4CXX_DEBUG(logger_, "CreateDirectory : " << root);
     }
 
     std::string index_path = root+ std::string(Defaults::IDX_DIR);
     if (CreateDirectory(index_path.c_str()))
     {
-        LOG4CXX_DEBUG(asimpl_logger, "CreateDirectory : " << index_path);
+        LOG4CXX_DEBUG(logger_, "CreateDirectory : " << index_path);
     }
 
     std::string data_path = root+ std::string(Defaults::DAT_DIR);
     if (CreateDirectory(data_path.c_str()))
     {
-        LOG4CXX_DEBUG(asimpl_logger, "CreateDirectory : " << data_path);
+        LOG4CXX_DEBUG(logger_, "CreateDirectory : " << data_path);
     }
 
     std::string log_path = root + std::string(Defaults::LOG_DIR);
     if (CreateDirectory(log_path.c_str()))
     {
-        LOG4CXX_DEBUG(asimpl_logger, "CreateDirectory : " << log_path);
+        LOG4CXX_DEBUG(logger_, "CreateDirectory : " << log_path);
     }
 
-	LOG4CXX_INFO(asimpl_logger, "Store::Directories Created" );
+	LOG4CXX_INFO(logger_, "Store::Directories Created" );
 	
 }
 
+///////////////////////// Pangu Scanner /////////////////////////////
+LoggerPtr PanguScanner::logger_ = Logger::getLogger( "AppendStoreScanner");
 
 PanguScanner::PanguScanner(const std::string& path, const DataFileCompressionFlag cflag)
     : mRoot(path), mCompressionFlag(cflag)
@@ -523,7 +517,7 @@ void PanguScanner::ReadDeleteLog(const std::string& fname)
     }
     catch (ExceptionBase & e)
     {
-        LOG4CXX_ERROR(asimpl_logger, "IsFileExist : " << fname);
+        LOG4CXX_ERROR(logger_, "IsFileExist : " << fname);
         throw;
     }
     
@@ -555,7 +549,7 @@ void PanguScanner::ReadDeleteLog(const std::string& fname)
         }
         catch (ExceptionBase & e)
         {
-            LOG4CXX_ERROR(asimpl_logger, "Error while reading deletelog : " << fname);
+            LOG4CXX_ERROR(logger_, "Error while reading deletelog : " << fname);
             throw;
         }
         mFileSystemHelper->DestroyFileHelper(deleteLogFH);
@@ -573,7 +567,7 @@ PanguScanner::~PanguScanner()
         }
         catch(ExceptionBase& ex)
         {
-            LOG4CXX_ERROR(asimpl_logger, "Failed to close file for scanner : " << ex.ToString());
+            LOG4CXX_ERROR(logger_, "Failed to close file for scanner : " << ex.ToString());
         }
         //mScannerFH->Seek(0); 
     }
@@ -623,7 +617,7 @@ bool PanguScanner::Next(std::string* handle, std::string* item)
             {
                 if (mDataStream.bad())
                 {
-                    LOG4CXX_ERROR(asimpl_logger, "Error geting next : Bad data stream");
+                    LOG4CXX_ERROR(logger_, "Error geting next : Bad data stream");
                 }
                     
                 // CHKIT
@@ -640,7 +634,7 @@ bool PanguScanner::Next(std::string* handle, std::string* item)
                     /*
                       if (rsize != bufSize)
                       {
-                      LOG4CXX_ERROR(asimpl_logger, "Error file read error in Scanner");
+                      LOG4CXX_ERROR(logger_, "Error file read error in Scanner");
                       THROW_EXCEPTION(AppendStoreReadException, "file read error in Scanner");
                       }
                     */
@@ -654,12 +648,12 @@ bool PanguScanner::Next(std::string* handle, std::string* item)
                     int retc = mScannerCodec->decompress(&(crd.mData[0]), crd.mCompressLength, &buf[0], uncompressedSize);
                     if (uncompressedSize != crd.mOrigLength)
                     {
-                        LOG4CXX_ERROR(asimpl_logger, "Error error when decompressing due to invalid length");
+                        LOG4CXX_ERROR(logger_, "Error error when decompressing due to invalid length");
                         THROW_EXCEPTION(AppendStoreCompressionException, "decompression invalid length");
                     }
                     if (retc < 0)
                     {
-                        LOG4CXX_ERROR(asimpl_logger, "Error decompression codec error when decompressing inside Next()");
+                        LOG4CXX_ERROR(logger_, "Error decompression codec error when decompressing inside Next()");
                         THROW_EXCEPTION(AppendStoreCompressionException, "decompression codec error");
                     }
 
@@ -699,7 +693,7 @@ bool PanguScanner::Next(std::string* handle, std::string* item)
     }
     catch (ExceptionBase& e)
     {
-        LOG4CXX_ERROR(asimpl_logger, "Error while geting next : " <<  mRoot);
+        LOG4CXX_ERROR(logger_, "Error while geting next : " <<  mRoot);
         throw;
     }
 

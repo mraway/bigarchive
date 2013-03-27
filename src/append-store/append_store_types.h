@@ -16,7 +16,7 @@ typedef uint64_t OffsetType;  // Offset of the data item
 
 
 //max number of appends before flush
-const uint32_t DF_MAX_PENDING =  500;
+const uint32_t DF_MAX_PENDING =  1000;
 const uint32_t DF_CHUNK_SZ = (1024 * 1024 * 1024);  //1G
 const uint32_t DF_MAX_BLOCK_SZ = (1024 * 1024 * 10); //8M
 

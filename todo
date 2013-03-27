@@ -1,5 +1,8 @@
+bug:
+
 High:
-1) read test, verify
+done 1) read test, verify
+look append store cache
 2) concurrent read and write to append store
 3) snapshot_delete
 4) append_store: scan, deletion
@@ -17,6 +20,6 @@ Install:
 build: scons
 compression: lzo-devel
 log4cxx: apr-devel apr-util-devel log4cxx-devel
-memcached: libmemcached-devel
+memcached: libmemcached-devel memcached-devel
 qfs: gcc-c++ make git cmake boost-devel xfsprogs-devel libuuid-devel openssl-devel python-devel
 

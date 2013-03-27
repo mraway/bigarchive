@@ -3,20 +3,12 @@
 #include "../include/file_system_helper.h"
 #include "../include/file_helper.h"
 
-#include <log4cxx/logger.h>
-#include <log4cxx/xml/domconfigurator.h>
-
 using namespace log4cxx;
-using namespace log4cxx::xml;
-using namespace log4cxx::helpers;
 
-
-LoggerPtr iv_logger(Logger::getLogger( "appendstore.chunk_impl"));
-
+LoggerPtr IndexVector::logger_ = Logger::getLogger("AppendStoreIndex");
 
 IndexVector::IndexVector(const std::string& fname)
 {
-	DOMConfigurator::configure("Log4cxxConfig.xml");
 	LoadFromFile(fname);
 }
  
@@ -45,6 +37,9 @@ IndexVector::const_index_iterator IndexVector::find(IndexType key) const
     uint32_t pos;
     if (bisearch(&mValues[0], 0, mValues.size(), key, pos)) //key exists
     {
+        LOG4CXX_DEBUG(logger_, "looked for index " << key 
+                      << ", found this record: "
+                      << "index " << mValues[pos].mIndex << ", offset " << mValues[pos].mOffset);
         return begin() + pos;
     }
     else
@@ -78,14 +73,14 @@ void IndexVector::LoadFromFile(const std::string& fname)
     // if (size) 
     //     condition size!=0 is not correct due to latency
   
-    LOG4CXX_DEBUG(iv_logger, "reading index from file : " << fname);
+    LOG4CXX_DEBUG(logger_, "reading index from file : " << fname);
  
     int file_size = FileSystemHelper::GetInstance()->GetSize(fname);
 
-    LOG4CXX_DEBUG(iv_logger, "index file size is : " << file_size);
+    LOG4CXX_DEBUG(logger_, "index file size is : " << file_size);
 
     if(file_size <= 0) {
-		LOG4CXX_INFO(iv_logger, "not reading index file, because size is : " << file_size);
+		LOG4CXX_INFO(logger_, "not reading index file, because size is : " << file_size);
     	return;
     }
 
@@ -96,7 +91,7 @@ void IndexVector::LoadFromFile(const std::string& fname)
         do
         {
             uint32_t indexSize = qfsFH->GetNextLogSize();
-			LOG4CXX_DEBUG(iv_logger, "Index size from getNextLogSize : " << indexSize);
+			LOG4CXX_DEBUG(logger_, "Index size from getNextLogSize : " << indexSize);
             if (indexSize != 0)
             {
                 char *buffer = new char[indexSize]; // indexSize should be equal to IndexRecord Size !!!
@@ -121,7 +116,7 @@ void IndexVector::LoadFromFile(const std::string& fname)
         }
         THROW_EXCEPTION(AppendStoreReadException, "Load index file exception " + e.ToString());
     }
-    LOG4CXX_INFO(iv_logger,"IndexVector::LoadedfromFile " << fname);
+    LOG4CXX_INFO(logger_,"IndexVector::LoadedfromFile " << fname);
 }
 
 bool IndexVector::bisearch(const IndexRecord* val_v, uint32_t start, uint32_t nele,

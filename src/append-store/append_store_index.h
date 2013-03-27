@@ -87,7 +87,7 @@ public:
 
 private:
     std::vector<IndexRecord> mValues;         // in memory index data
-    LoggerPtr logger_;
+    static LoggerPtr logger_;
 
 private:
     // Wei: don't understand why Xiaogang did this, he should use STL instead

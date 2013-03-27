@@ -94,7 +94,7 @@ bool SnapshotControl::SaveSnapshotMeta()
 	stringstream buffer;
 	ss_meta_.Serialize(buffer);
     ss_meta_.SerializeRecipe(buffer);
-	LOG4CXX_INFO(logger_, "Snapshot meta size " << buffer.str().size());
+	LOG4CXX_INFO(logger_, "save snapshot meta, size is" << buffer.str().size());
     fh->Write((char *)buffer.str().c_str(), buffer.str().size());
 
     fh->Close();
@@ -120,11 +120,11 @@ bool SnapshotControl::LoadSegmentRecipe(SegmentMeta& sm, uint32_t idx)
     string data;
     string handle((char*)&sm.handle_, sizeof(sm.handle_));
     store_ptr_->Read(handle, &data);
-    LOG4CXX_INFO(logger_, "Read segment meta : " << data.size());
     
     stringstream ss(data);
     sm.DeserializeRecipe(ss);
-    
+    LOG4CXX_INFO(logger_, "Read segment meta : " << data.size() << " bytes, " 
+                 << sm.segment_recipe_.size() << " items");
     return true;
 }
 
