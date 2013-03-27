@@ -2,11 +2,7 @@ Import('env')
 
 local_env = env.Clone()
 
-env.Install(env['PROJECT_BIN_PATH'], 'sample_data')
 env.Install(env['PROJECT_BIN_PATH'], 'Log4cxxConfig.xml')
-
-# env.Install(env['PROJECT_BIN_PATH'], data_source_test)
-
 
 data_generator_put = env.Program(target = 'data_generator_put', source = ['data_generator_put.cpp'], LIBS = env['PROJ_LIBS'] + env['BASIC_LIBS'])
 env.Install(env['PROJECT_BIN_PATH'], data_generator_put)
@@ -25,3 +21,6 @@ env.Install(env['PROJECT_BIN_PATH'], write_singlevm)
 
 read_singlevm = env.Program(target = 'read_singlevm', source = ['./snapshot/read_singlevm.cpp'], LIBS = env['PROJ_LIBS'] + env['LOG_LIBS'] + env['QFS_LIBS'] + env['BASIC_LIBS'])
 env.Install(env['PROJECT_BIN_PATH'], read_singlevm)
+
+append_store_test = env.Program(target = 'append_store_test', source = ['append_store_test.cpp'], LIBS = env['PROJ_LIBS'] + env['LOG_LIBS'] + env['QFS_LIBS'] + env['BASIC_LIBS'])
+env.Install(env['PROJECT_BIN_PATH'], append_store_test)
