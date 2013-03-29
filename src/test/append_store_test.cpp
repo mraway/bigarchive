@@ -116,7 +116,7 @@ int main(int argc, char* argv[]) {
     }
     pas->Flush();
     pas->Close();
-    LOG4CXX_INFO(as_test_logger, "correctness test result: " << correctness);
+    LOG4CXX_INFO(as_test_logger, "append store correctness: " << correctness);
     sleep(1);
 
     //LOG4CXX_INFO(as_test_logger, "-------------benchmark append store write--------------");

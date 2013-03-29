@@ -53,7 +53,7 @@ public:
 
     bool IsChunkFull() const;
 
-    friend class PanguScanner;
+    friend class AppendStoreScanner;
     
     bool Close();
 

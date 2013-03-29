@@ -1,48 +1,12 @@
 #ifndef _APPEND_STORE_H
 #define _APPEND_STORE_H
 
-#include <deque>
-#include <set>
+#include <log4cxx/logger.h>
 #include "../include/store.h"
-#include "append_store_types.h"
 #include "../include/exception.h"
+#include "append_store_types.h"
 #include "append_store_chunk.h"
 #include "CompressionCodec.h"
-#include <log4cxx/logger.h>
-
-using namespace std;
-using namespace log4cxx;
-
-class PanguScanner : public Scanner 
-{
-public: 
-    virtual ~PanguScanner();
-    virtual bool Next(std::string* handle, std::string* item);
-
-private:
-    PanguScanner(const std::string& path, const DataFileCompressionFlag cflag);
-    void InitScanner();
-    void ReadDeleteLog(const std::string& fname);
-    void GetAllChunkID(const std::string& root);
-    friend class PanguAppendStore;
-
-private:
-    std::string                     mRoot;
-    DataFileCompressionFlag         mCompressionFlag;
-    mutable std::deque<ChunkIDType> mChunkList;
-    mutable std::stringstream       mDataStream;
-    std::auto_ptr<CompressionCodec> mScannerCodec;
-    // CHKIT
-    // mutable apsara::pangu::LogFileInputStreamPtr mScannerFileStream;
-    mutable FileHelper* mScannerFH;
-    // added file system helper !! CHKIT
-    FileSystemHelper*   mFileSystemHelper;
-    bool                mFileHasMore;
-    mutable ChunkIDType mChunkId;
-    std::set<IndexType> mDeleteSet;
-    static LoggerPtr logger_;
-};
-
 
 class PanguAppendStore : public Store
 {

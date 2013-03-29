@@ -48,7 +48,7 @@ Chunk::Chunk(const std::string& root, ChunkIDType chunk_id)
 
 void Chunk::LoadDeleteLog()
 {
-	mDeleteLogFH = FileSystemHelper::GetInstance()->CreateFileHelper(mLogFileName, O_APPEND);
+	mDeleteLogFH = FileSystemHelper::GetInstance()->CreateFileHelper(mLogFileName, O_WRONLY | O_APPEND);
 	if(mFileSystemHelper->IsFileExists(mLogFileName) == false) {
 		mDeleteLogFH->Create();
 	}
@@ -78,11 +78,11 @@ void Chunk::CheckIfNew()
 
     if (!dexist && !iexist)
     {
-    	FileHelper* fh = mFileSystemHelper->CreateFileHelper(mDataFileName, O_WRONLY); 
+    	FileHelper* fh = mFileSystemHelper->CreateFileHelper(mDataFileName, O_CREAT | O_WRONLY); 
 		fh->Create();
         mFileSystemHelper->DestroyFileHelper(fh);
 
-       	fh = mFileSystemHelper->CreateFileHelper(mIndexFileName, O_WRONLY); 
+       	fh = mFileSystemHelper->CreateFileHelper(mIndexFileName, O_CREAT | O_WRONLY); 
         fh->Create();
         mFileSystemHelper->DestroyFileHelper(fh);
     }
@@ -175,6 +175,7 @@ void Chunk::AppendIndex()
         }
         catch(ExceptionBase& e)
         {
+            // on error, close the index file and retry
             LOG4CXX_ERROR(logger_, "IndexOutputStream corrupt << e.ToString()");
             try
             {
@@ -190,7 +191,7 @@ void Chunk::AppendIndex()
                 usleep(3000000);
             }
 
-            mIndexOutputFH = mFileSystemHelper->CreateFileHelper(mIndexFileName, O_APPEND); 
+            mIndexOutputFH = mFileSystemHelper->CreateFileHelper(mIndexFileName, O_WRONLY | O_APPEND); 
             mIndexOutputFH->Open();
 
             if (retryCount > 1)
@@ -304,7 +305,7 @@ bool Chunk::Remove(const IndexType& index)
                 usleep(3000000);
             }
         
-            mDeleteLogFH = mFileSystemHelper->CreateFileHelper(mLogFileName, O_APPEND); // WRITE);
+            mDeleteLogFH = mFileSystemHelper->CreateFileHelper(mLogFileName, O_WRONLY | O_APPEND); // WRITE);
 
             if (retryCount > 1)
             {
@@ -342,9 +343,9 @@ bool Chunk::LoadData(bool flag)
             throw;
         }
 
-        mDataOutputFH = mFileSystemHelper->CreateFileHelper(mDataFileName, O_APPEND); // O_WRONLY);// WRITE);
+        mDataOutputFH = mFileSystemHelper->CreateFileHelper(mDataFileName, O_WRONLY | O_APPEND); // O_WRONLY);// WRITE);
         mDataOutputFH->Open();
-        mIndexOutputFH = mFileSystemHelper->CreateFileHelper(mIndexFileName, O_APPEND); // O_WRONLY); //WRITE);
+        mIndexOutputFH = mFileSystemHelper->CreateFileHelper(mIndexFileName, O_WRONLY | O_APPEND); // O_WRONLY); //WRITE);
         mIndexOutputFH->Open();
     }
     else 
@@ -456,6 +457,7 @@ bool Chunk::Close()
         try
         {
             mDataInputFH->Close();
+            FileSystemHelper::GetInstance()->DestroyFileHelper(mDataInputFH);
             mDataInputFH = NULL;
         }
         catch(ExceptionBase& ex)
@@ -469,6 +471,7 @@ bool Chunk::Close()
         try
         {
             mDataOutputFH->Close();
+            FileSystemHelper::GetInstance()->DestroyFileHelper(mDataOutputFH);
             mDataOutputFH = NULL;
         }
         catch(ExceptionBase& ex)
@@ -483,6 +486,7 @@ bool Chunk::Close()
         try
         {
             mIndexOutputFH->Close();
+            FileSystemHelper::GetInstance()->DestroyFileHelper(mIndexOutputFH);
             mIndexOutputFH = NULL;
         }
         catch(ExceptionBase& ex)
@@ -497,6 +501,7 @@ bool Chunk::Close()
         try
         {
             mDeleteLogFH->Close();
+            FileSystemHelper::GetInstance()->DestroyFileHelper(mDeleteLogFH);
             mDeleteLogFH = NULL;
         }
         catch(ExceptionBase& ex)
@@ -662,7 +667,7 @@ OffsetType Chunk::AppendRaw(const IndexType& index, const uint32_t numentry, con
                 usleep(3000000);
             }
 
-            mDataOutputFH = mFileSystemHelper->CreateFileHelper(mDataFileName, O_APPEND); //WRONLY
+            mDataOutputFH = mFileSystemHelper->CreateFileHelper(mDataFileName, O_WRONLY | O_APPEND); //WRONLY
             mDataOutputFH->Open();
             
             if (retryCount > 1)

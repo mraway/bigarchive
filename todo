@@ -1,8 +1,9 @@
 bug:
+1) append store need to switch between read and write mode
+2) snapshot write need to accumulate meta data write requests
 
 High:
-done 1) read test, verify
-look append store cache
+1) look append store cache
 2) concurrent read and write to append store
 3) snapshot_delete
 4) append_store: scan, deletion
