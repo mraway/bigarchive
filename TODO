@@ -1,0 +1,23 @@
+High:
+1) local file system interface
+2) append store scanner
+3) append store: compaction
+3) snapshot_delete: use snapshot bloom filter to delete data
+4) append_store_delete: scan append store to delete data
+
+Medium:
+1) look append store cache
+
+Low:
+3) Reading configuration from file.
+
+Done:
+* testcases and examples : a) qfs test: file create, r/w/append. delete. b) append store tests
+* append_store: sequential access for metadata
+* snapshot write need to accumulate meta data write requests
+* bug to fix: qfs doesn't allow r/w happen on the same chunk
+  1) append store need to switch between read and write mode
+  a) on read, check if the read chunk is the same as write chunk, if yes, need to let writer abdicate file ownership (call Close)
+  b) on append, check if opened, if not, close reader if there is one, then open.
+
+
