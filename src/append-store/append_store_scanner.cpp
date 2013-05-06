@@ -18,9 +18,9 @@ void AppendStoreScanner::InitScanner()
     // CHKIT
     // InitPangu();
 
+    mFileSystemHelper = FileSystemHelper::GetInstance();
     GetAllChunkID(mRoot);
 
-    mFileSystemHelper = FileSystemHelper::GetInstance();
 
     std::string compressAlgo(LzoCodec::mName);
     if (NO_COMPRESSION == mCompressionFlag) 
