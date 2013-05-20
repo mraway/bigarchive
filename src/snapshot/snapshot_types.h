@@ -79,6 +79,7 @@ public:
     string GetHandle();
     void BuildIndex();
     BlockMeta* SearchBlock(const Checksum& cksum);
+
 private:
     map<Checksum, BlockMeta*> blkmap_;
 };

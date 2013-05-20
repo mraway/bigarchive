@@ -52,6 +52,7 @@ std::string PanguAppendStore::Append(const std::string& data)
 
     Chunk* p_chunk = LoadAppendChunk();
     Handle h;
+    TurnOnWrite(p_chunk);
     h.mIndex = p_chunk->Append(data);
 
     if (h.mIndex==0) {
@@ -97,6 +98,7 @@ void PanguAppendStore::Flush()
 {
     if (mCurrentAppendChunk.get() != 0)
     {
+        TurnOnWrite(mCurrentAppendChunk.get());
         mCurrentAppendChunk->Flush();
     }
 }
@@ -124,7 +126,8 @@ bool PanguAppendStore::Read(const std::string& h, std::string* data)
     {
         return false;
     }
-
+    
+    TurnOnRead(p_chunk);
     bOK = p_chunk->Read(handle.mIndex, data);
 
     LOG4CXX_INFO(logger_, "Store::Read : " << mRoot << " & mChunkId : " << handle.mChunkId << " & mIndex : " <<  handle.mIndex);
@@ -149,9 +152,10 @@ void PanguAppendStore::Remove(const std::string& h)
 
 void PanguAppendStore::Close() {
 	if(mAppend) {
-		LOG4CXX_INFO(logger_, "In APPEND mode : Close last append chunk");
 		Chunk* p_chunk = mCurrentAppendChunk.get();//LoadAppendChunk(); 
 		if(p_chunk != 0) {
+            LOG4CXX_INFO(logger_, "Close write chunk: " << p_chunk->GetID());
+            TurnOnWrite(p_chunk);
 			p_chunk->Close();
 		}
  	}
@@ -159,16 +163,14 @@ void PanguAppendStore::Close() {
 	std::map<ChunkIDType, ChunkPtr>::iterator chunk_iter;
 
 	for (chunk_iter = mChunkMap.begin(); chunk_iter != mChunkMap.end(); chunk_iter++) {
-		LOG4CXX_INFO(logger_, "Closing chunk " << chunk_iter->first);
+		LOG4CXX_INFO(logger_, "Closing read chunk: " << chunk_iter->first);
 		chunk_iter->second->Close();
 	}
  
 	for (chunk_iter = mDeleteChunkMap.begin(); chunk_iter != mDeleteChunkMap.end(); chunk_iter++) {
-  		LOG4CXX_INFO(logger_, "Closing chunk " << chunk_iter->first);
+  		LOG4CXX_INFO(logger_, "Closing delete chunk: " << chunk_iter->first);
   		chunk_iter->second->Close();
  	}
-	
-	LOG4CXX_INFO(logger_, "Store::Closed - All associated Chunks Closed");
 }
 
 void PanguAppendStore::Reload()
@@ -333,6 +335,7 @@ Chunk* PanguAppendStore::LoadAppendChunk()
         {
             /* Close previous chunk and allocate new chunk */
             Chunk* p_chunk = mCurrentAppendChunk.get();
+            TurnOnWrite(p_chunk);
             p_chunk->Close();
 	        LOG4CXX_DEBUG(logger_, "Allocating next chunk, because current chunk is Full");	
             AllocNextChunk();
@@ -353,7 +356,6 @@ Chunk* PanguAppendStore::LoadAppendChunk()
         THROW_EXCEPTION(AppendStoreWriteException, "Cannot get valid chunk for append");
     }
     LOG4CXX_INFO(logger_, "Store::LoadedAppendChunk" ); 
-    //cout << endl << "Time Store::LoadAppendChunk() : " << t.stop() << " ms";
     return mCurrentAppendChunk.get();
 }
 
@@ -468,4 +470,69 @@ void PanguAppendStore::CreateDirs(const std::string& root)
 	LOG4CXX_INFO(logger_, "Store::Directories Created" );
 	
 }
+
+void PanguAppendStore::TurnOnRead(Chunk *reader)
+{
+    LOG4CXX_DEBUG(logger_, "checking read permission for Chunk ID " << reader->GetID());
+    LOG4CXX_DEBUG(logger_, "reader rw: " << reader->CheckReadPermission() 
+                  << " " << reader->CheckWritePermission());
+
+    if (mCurrentAppendChunk.get() != 0) {
+        LOG4CXX_DEBUG(logger_, "writer rw: " << mCurrentAppendChunk.get()->CheckReadPermission() 
+                  << " " << mCurrentAppendChunk.get()->CheckWritePermission());
+        if (reader->GetID() == mCurrentAppendChunk.get()->GetID()
+            && mCurrentAppendChunk.get()->CheckWritePermission()) {
+            LOG4CXX_DEBUG(logger_, "now turn off writer, chunk ID is " << mCurrentAppendChunk.get()->GetID());
+            mCurrentAppendChunk.get()->DisableWrite();
+        }
+    }
+
+    if (!reader->CheckReadPermission()) {
+        LOG4CXX_DEBUG(logger_, "now turn on reader, chunk ID is " << reader->GetID());
+        reader->EnableRead();
+    }
+}
+
+void PanguAppendStore::TurnOnWrite(Chunk *writer)
+{
+    LOG4CXX_DEBUG(logger_, "Checking write permission for chunk ID " << writer->GetID());
+    LOG4CXX_DEBUG(logger_, "writer rw: " << writer->CheckReadPermission() 
+                  << " " << writer->CheckWritePermission());
+
+    // if writer has the permission, then either reader is not open, or read is not turned on
+    // this is safe because we don't re-use chunk at this time
+    if (writer->CheckWritePermission())
+        return;
+
+    // search the opened chunks
+    ChunkMapType::const_iterator it = mChunkMap.find(writer->GetID());
+    if (it != mChunkMap.end())
+    {
+        Chunk* p_reader = it->second.get();
+        LOG4CXX_DEBUG(logger_, "reader rw: " << p_reader->CheckReadPermission() 
+                      << " " << p_reader->CheckWritePermission());
+        if (p_reader->CheckReadPermission()) {
+            LOG4CXX_DEBUG(logger_, "now turn off reader, chunk ID is " << p_reader->GetID());
+            p_reader->DisableRead();
+        }
+    }
+    LOG4CXX_DEBUG(logger_, "now turn on writer, chunk ID is " << writer->GetID());
+    writer->EnableWrite();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

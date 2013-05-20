@@ -107,12 +107,14 @@ void IndexVector::LoadFromFile(const std::string& fname)
 
         } while(true);
         qfsFH->Close();
+        FileSystemHelper::GetInstance()->DestroyFileHelper(qfsFH);
     }
     catch (ExceptionBase& e)
     {
         if (qfsFH)
         {
             qfsFH->Close();
+            FileSystemHelper::GetInstance()->DestroyFileHelper(qfsFH);
         }
         THROW_EXCEPTION(AppendStoreReadException, "Load index file exception " + e.ToString());
     }

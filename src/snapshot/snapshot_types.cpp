@@ -155,6 +155,8 @@ void SegmentMeta::DeserializeRecipe(istream& is)
     marshall::Deserialize(segment_recipe_, is);
     if (segment_recipe_.size() == 0)
         return;
+    // on disk segment recipe only contains block offset information
+    // we need to calculate the block size here
     uint32_t last_ending = 0;
     for (size_t i = 0; i < segment_recipe_.size(); ++i)
     {
@@ -259,7 +261,7 @@ void SnapshotMeta::DeserializeRecipe(istream& is)
     if (snapshot_recipe_.size() == 0)
         return;
     uint64_t last_ending = 0;
-    for (size_t i = 1; i < snapshot_recipe_.size(); ++i)
+    for (size_t i = 0; i < snapshot_recipe_.size(); ++i)
     {
         snapshot_recipe_[i].size_ = snapshot_recipe_[i].end_offset_ - last_ending;
         last_ending = snapshot_recipe_[i].end_offset_;

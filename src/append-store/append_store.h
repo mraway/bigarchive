@@ -37,6 +37,12 @@ private:
     /* AppendStore:: */ Chunk* LoadRandomChunk(ChunkIDType id);
     /* AppendStore:: */ Chunk* LoadDeleteChunk(ChunkIDType id);
     bool CreateDirectory(const std::string&);
+    // QFS doesn't allow concurrent read/write to the same QFS chunk,
+    // so we have to turn on/off reader and writer permission when needed,
+    // read happens when we call Chunk.Read(), write happens when we call Chunk.Append() or Chunk.Flush(),
+    // turn on read will disable write to the same chunk, and vice versa.
+    void TurnOnWrite(Chunk* writer);
+    void TurnOnRead(Chunk* reader);
 
 private:
     typedef std::tr1::shared_ptr<Chunk>     ChunkPtr;

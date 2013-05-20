@@ -30,7 +30,7 @@ Chunk::Chunk(const std::string& root, ChunkIDType chunk_id,
     mDataOutputFH = NULL;
     mIndexOutputFH = NULL;
     mDeleteLogFH = NULL;
-    
+
     CheckIfNew();
     LoadIndex();
     LoadData(append_flag);
@@ -42,18 +42,18 @@ Chunk::Chunk(const std::string& root, ChunkIDType chunk_id)
       mLogFileName(GetIdxLogFname(root, chunk_id)), 
       mDirty(false)
 {
-	mFileSystemHelper = FileSystemHelper::GetInstance();
-	LoadDeleteLog();
+    mFileSystemHelper = FileSystemHelper::GetInstance();
+    LoadDeleteLog();
 }
 
 void Chunk::LoadDeleteLog()
 {
-	mDeleteLogFH = FileSystemHelper::GetInstance()->CreateFileHelper(mLogFileName, O_WRONLY | O_APPEND);
-	if(mFileSystemHelper->IsFileExists(mLogFileName) == false) {
-		mDeleteLogFH->Create();
-	}
-	mDeleteLogFH->Open();
-	LOG4CXX_INFO(logger_, "Chunk::LoadDeleteLog() Completed");
+    mDeleteLogFH = FileSystemHelper::GetInstance()->CreateFileHelper(mLogFileName, O_WRONLY | O_APPEND);
+    if(mFileSystemHelper->IsFileExists(mLogFileName) == false) {
+        mDeleteLogFH->Create();
+    }
+    mDeleteLogFH->Open();
+    LOG4CXX_INFO(logger_, "Chunk::LoadDeleteLog() Completed");
 }
 
 void Chunk::CheckIfNew()
@@ -70,6 +70,7 @@ void Chunk::CheckIfNew()
         LOG4CXX_ERROR(logger_, "Error in CheckIfNew: " << e.ToString());
         throw;
     }
+
     if (! ((dexist && iexist) || (!dexist && !iexist)) )
     {
         LOG4CXX_ERROR(logger_, "mDataFileName and mIndexFileName not co-exist");
@@ -78,17 +79,18 @@ void Chunk::CheckIfNew()
 
     if (!dexist && !iexist)
     {
-    	FileHelper* fh = mFileSystemHelper->CreateFileHelper(mDataFileName, O_CREAT | O_WRONLY); 
-		fh->Create();
-        mFileSystemHelper->DestroyFileHelper(fh);
-
-       	fh = mFileSystemHelper->CreateFileHelper(mIndexFileName, O_CREAT | O_WRONLY); 
+        FileHelper* fh = mFileSystemHelper->CreateFileHelper(mDataFileName, O_CREAT | O_WRONLY); 
         fh->Create();
         mFileSystemHelper->DestroyFileHelper(fh);
+
+        fh = mFileSystemHelper->CreateFileHelper(mIndexFileName, O_CREAT | O_WRONLY); 
+        fh->Create();
+        mFileSystemHelper->DestroyFileHelper(fh);
+        LOG4CXX_INFO(logger_, "data and index files are created: " 
+                     << mDataFileName << ", " << mIndexFileName);
     }
-	LOG4CXX_INFO(logger_, "Chunk::CheckIfNew() Completed");
 }
-   
+
 Chunk::~Chunk()
 {
     Flush();
@@ -130,7 +132,7 @@ IndexType Chunk::Append(const std::string& data)
     LOG4CXX_DEBUG(logger_, "append data with index " << new_index << ", buffer size is " << mFlushCount);
     if (mFlushCount >= mBlockIndexInterval)
     {
-        LOG4CXX_DEBUG(logger_, "write buffer full, data need to be written to disk as a compressed data unit")
+        LOG4CXX_DEBUG(logger_, "write buffer full, data need to be written to disk as a compressed data unit");
         AppendIndex();
     }
 
@@ -202,7 +204,7 @@ void Chunk::AppendIndex()
         }
     } while (retryCount <= 1);
 };
-       
+
 
 bool Chunk::Read(IndexType index, std::string* data) 
 {
@@ -215,7 +217,7 @@ bool Chunk::Read(IndexType index, std::string* data)
     {
         return false;
     }
-    
+
     OffsetType startOffset;
     if (it == mIndexMap->begin())
         startOffset = 0;
@@ -282,7 +284,7 @@ bool Chunk::Remove(const IndexType& index)
     {
         try
         {
-        	mDeleteLogFH->Flush(&tmp[0], tmp.size());
+            mDeleteLogFH->Flush(&tmp[0], tmp.size());
             break;
         }
         // CHKIT - this exceptions is not throwed from our write method !!! 
@@ -292,7 +294,7 @@ bool Chunk::Remove(const IndexType& index)
             LOG4CXX_ERROR(logger_, "DeleteLogStream corrupt " << e.ToString());
             try
             {
-            	mDeleteLogFH->Close();
+                mDeleteLogFH->Close();
             }
             catch(ExceptionBase& e)
             {
@@ -304,7 +306,7 @@ bool Chunk::Remove(const IndexType& index)
             {
                 usleep(3000000);
             }
-        
+
             mDeleteLogFH = mFileSystemHelper->CreateFileHelper(mLogFileName, O_WRONLY | O_APPEND); // WRITE);
 
             if (retryCount > 1)
@@ -329,29 +331,15 @@ bool Chunk::LoadIndex()
     return true;
 }
 
-bool Chunk::LoadData(bool flag)
+bool Chunk::LoadData(bool wrflag)
 {
-    if (flag)
+    if (wrflag)
     {
-        try
-        {
-            mLastData = mFileSystemHelper->GetSize(mDataFileName);
-        }
-        catch(ExceptionBase& e)
-        {
-            LOG4CXX_ERROR(logger_, "error on get data file size" << e.ToString());
-            throw;
-        }
-
-        mDataOutputFH = mFileSystemHelper->CreateFileHelper(mDataFileName, O_WRONLY | O_APPEND); // O_WRONLY);// WRITE);
-        mDataOutputFH->Open();
-        mIndexOutputFH = mFileSystemHelper->CreateFileHelper(mIndexFileName, O_WRONLY | O_APPEND); // O_WRONLY); //WRITE);
-        mIndexOutputFH->Open();
+        EnableWrite();
     }
     else 
     {
-    	mDataInputFH = mFileSystemHelper->CreateFileHelper(mDataFileName, O_RDONLY); // READ);
-    	mDataInputFH->Open();
+        EnableRead();
     }
     return true;
 }
@@ -368,7 +356,7 @@ uint16_t Chunk::GetMaxChunkID(const std::string& root)
     std::vector<std::string> data_files; 
     try
     {
-    	// CHECK IT
+        // CHECK IT
         FileSystemHelper::GetInstance()->ListDir(data_root, data_files);
     }
     catch(ExceptionBase& e)
@@ -452,6 +440,8 @@ std::string Chunk::GetLogFname(const std::string& root, uint32_t chunk_id)
 
 bool Chunk::Close()
 {
+    // save remaining data before close
+    Flush();
 
     if (mDataInputFH != NULL) {
         try
@@ -576,7 +566,7 @@ bool Chunk::ReadRaw(const OffsetType& offset, std::string& data)
 
 OffsetType Chunk::AppendRaw(const IndexType& index, const uint32_t numentry, const std::string& data)
 {
-	OffsetType result = -1;
+    OffsetType result = -1;
     /*
       try
       {
@@ -650,7 +640,7 @@ OffsetType Chunk::AppendRaw(const IndexType& index, const uint32_t numentry, con
         //catch(StreamCorruptedException& e)
         catch(ExceptionBase& e)
         {
-               
+
             LOG4CXX_ERROR(logger_, "DataOutputStream FlushLog fail : " << e.ToString());
             try
             {
@@ -669,7 +659,7 @@ OffsetType Chunk::AppendRaw(const IndexType& index, const uint32_t numentry, con
 
             mDataOutputFH = mFileSystemHelper->CreateFileHelper(mDataFileName, O_WRONLY | O_APPEND); //WRONLY
             mDataOutputFH->Open();
-            
+
             if (retryCount > 1)
             {
                 LOG4CXX_ERROR(logger_, "DataOutputStream FlushLog fail after retry : " << e.ToString());
@@ -681,4 +671,79 @@ OffsetType Chunk::AppendRaw(const IndexType& index, const uint32_t numentry, con
     //cout << endl << "Time Chunk::AppendRaw() Compressed : " << t.stop() << " ms";
     return result;
 }
+
+bool Chunk::CheckReadPermission()
+{
+    return (mDataInputFH != NULL);
+}
+
+bool Chunk::CheckWritePermission()
+{
+    return (mDataOutputFH != NULL && mIndexOutputFH != NULL);
+}
+
+void Chunk::EnableWrite()
+{
+    try
+    {
+        mLastData = mFileSystemHelper->GetSize(mDataFileName);
+    }
+    catch(ExceptionBase& e)
+    {
+        LOG4CXX_ERROR(logger_, "error on get data file size" << e.ToString());
+        throw;
+    }
+    if (mDataOutputFH == NULL) {
+        mDataOutputFH = mFileSystemHelper->CreateFileHelper(mDataFileName, O_WRONLY | O_APPEND); // O_WRONLY);// WRITE);
+        mDataOutputFH->Open();
+    }
+    if (mIndexOutputFH == NULL) {
+        mIndexOutputFH = mFileSystemHelper->CreateFileHelper(mIndexFileName, O_WRONLY | O_APPEND); // O_WRONLY); //WRITE);
+        mIndexOutputFH->Open();
+    }
+}
+
+void Chunk::EnableRead()
+{
+    if (mDataInputFH == NULL) {
+        mDataInputFH = mFileSystemHelper->CreateFileHelper(mDataFileName, O_RDONLY); // READ);
+        mDataInputFH->Open();
+    }
+}
+
+void Chunk::DisableWrite()
+{
+    if (mDataOutputFH != NULL) {
+        mDataOutputFH->Close();
+        FileSystemHelper::GetInstance()->DestroyFileHelper(mDataOutputFH);
+        mDataOutputFH = NULL;
+    }
+    if (mIndexOutputFH != NULL) {
+        mIndexOutputFH->Close();
+        FileSystemHelper::GetInstance()->DestroyFileHelper(mIndexOutputFH);
+        mIndexOutputFH = NULL;
+    }
+}
+
+void Chunk::DisableRead()
+{
+    if (mDataInputFH != NULL) {
+        mDataInputFH->Close();
+        FileSystemHelper::GetInstance()->DestroyFileHelper(mDataInputFH);
+        mDataInputFH = NULL;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
