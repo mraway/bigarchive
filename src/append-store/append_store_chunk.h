@@ -53,9 +53,18 @@ public:
 
     bool IsChunkFull() const;
 
-    friend class PanguScanner;
+    friend class AppendStoreScanner;
     
     bool Close();
+
+    // QFS doesn't allow concurrent read/write access to the same QFS chunk,
+    // so we have to arrange the reader and writer's permission explictly.
+    void DisableWrite();
+    void EnableWrite();
+    bool CheckWritePermission();
+    void DisableRead();
+    void EnableRead();
+    bool CheckReadPermission();
 
 private:
     std::string mRoot;		///< root path of the chunk
@@ -87,8 +96,10 @@ private:
 
     static const uint32_t FLAG_MASK = (1<<31);
 
+    bool mCanWrite;
+    bool mCanRead;
 private:	
-
+    // check if index and data files exist, create them if necesary
     void CheckIfNew();
 
     IndexType GenerateIndex();
@@ -97,9 +108,12 @@ private:
 
     void LoadDeleteLog();
 
+    // load the index into index map, find out the biggest index ID
     bool LoadIndex();
     
-    bool LoadData(bool flag);
+    // for write(append) mode, open data and index with write permission
+    // for read mode, open the data file with read permission, index should have been loaded
+    bool LoadData(bool write_flag);
     
    // bool Close();
 

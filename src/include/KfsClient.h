@@ -100,6 +100,8 @@ public:
     ///
     string GetCwd();
 
+    int SetCwd(const char* pathname);
+
     ///
     /// Make a directory hierarcy in KFS.  If the parent dirs are not
     /// present, they are also made.
@@ -164,7 +166,8 @@ public:
     /// file is computed and the value is returned in result.st_size
     /// @retval 0 if stat was successful; -errno otherwise
     ///
-    int Stat(const char *pathname, KfsFileAttr &result, bool computeFilesize = true);
+    int Stat(const char* pathname, KfsFileAttr& result, bool computeFilesize = true);
+    int Stat(int fd, KfsFileAttr& result);
 
     ///
     /// Given a file, return the # of chunks in the file
@@ -526,6 +529,9 @@ public:
     /// @retval -1 on failure; on success, the # of replicas that will be made.
     ///
     int16_t SetReplicationFactor(const char *pathname, int16_t numReplicas);
+    // Recursive version.
+    int16_t SetReplicationFactorR(const char *pathname, int16_t numReplicas,
+        ErrorHandler* errHandler = 0);
 
     ServerLocation GetMetaserverLocation() const;
 
@@ -630,6 +636,11 @@ public:
         kfsGid_t* groups, int groupsCnt);
     int GetUserAndGroupNames(kfsUid_t user, kfsGid_t group,
         string& uname, string& gname);
+    int GetUserAndGroupIds(const char* user, const char* group,
+        kfsUid_t& uid, kfsGid_t& gid);
+    kfsUid_t GetUserId();
+    int GetReplication(const char* pathname,
+        KfsFileAttr& attr, int& minChunkReplication, int& maxChunkReplication);
 private:
     KfsClientImpl* const mImpl;
 };

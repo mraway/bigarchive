@@ -1,0 +1,7 @@
+Install libraries:
+build: scons
+compression: lzo-devel
+log4cxx: apr-devel apr-util-devel log4cxx-devel
+memcached: libmemcached-devel memcached-devel
+qfs: gcc-c++ make git cmake boost-devel xfsprogs-devel libuuid-devel openssl-devel python-devel
+

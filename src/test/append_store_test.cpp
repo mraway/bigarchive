@@ -1,146 +1,139 @@
-#include "store.h"
-#include "append_store.h"
-#include <iostream>
-#include <cstdlib>
-#include <time.h>
-#include "append_store_types.h"
-#include "store.h"
-#include "timer.h"
-/*
-#include <boost/chrono.hpp>
-#include <boost/thread.hpp>
+// test append store read and write capability
+#include <unistd.h>
 
+#include <log4cxx/logger.h>
+#include <log4cxx/xml/domconfigurator.h>
 
-int main()
-{
-  boost::chrono::high_resolution_clock::time_point start = boost::chrono::high_resolution_clock::now();
-  boost::this_thread::sleep(boost::posix_time::millisec(2000));
-  boost::chrono::milliseconds ms = boost::chrono::duration_cast<boost::chrono::milliseconds> (boost::chrono::high_resolution_clock::now() - start);
-  std::cout << "2000ms sleep took " << ms.count() << "ms " << "\n";
-  return 0;
-}
-*/
+#include "../append-store/append_store.h"
+#include "../fs/qfs_file_system_helper.h"
 
 using namespace std;
+using namespace log4cxx;
+using namespace log4cxx::xml;
+using namespace log4cxx::helpers;
+
+LoggerPtr as_test_logger(Logger::getLogger("AppendStoreTest"));
 
 
+// string random_data(int num_bytes) {
+//     srand ( time(NULL) );
+//     char result[num_bytes];
+//     for(int i=0; i < num_bytes; i++)        {
+//         result[i] = '!' + (rand() % 90); //(char) (rand() % 256); // all printable characters from 33 to 122
+//     }       
+//     return string(result);  
 
-string random_data(int num_bytes) {
-	srand ( time(NULL) );
-	char result[num_bytes];
-	for(int i=0; i < num_bytes; i++)	{
-		result[i] = '!' + (rand() % 90); //(char) (rand() % 256); // all printable characters from 33 to 122
-	}	
-	return string(result);	
+// }
 
+PanguAppendStore* init_as_write(string& path)
+{
+    try {
+        PanguAppendStore *pas = NULL;
+        StoreParameter sp = StoreParameter(); ;
+        sp.mPath = path;
+        sp.mAppend = true;
+        pas = new PanguAppendStore(sp, true);
+        return pas;
+    }
+    catch (ExceptionBase& e) {
+        LOG4CXX_ERROR(as_test_logger, "Couldn't init append store for write" << e.ToString());
+    }
+    catch (...) {
+        LOG4CXX_ERROR(as_test_logger, "Couldn't init append store for write");
+    }
+    return NULL;
 }
 
-/*
-const clock_t begin_time = clock();
-// do something
-std::cout << float( clock () - begin_time ) /  CLOCKS_PER_SEC;
-*/
+PanguAppendStore* init_as_read(string& path)
+{
+    try {
+        PanguAppendStore *pas = NULL;
+        StoreParameter sp = StoreParameter(); ;
+        sp.mPath = path;
+        sp.mAppend = false;	// read only
+        pas = new PanguAppendStore(sp, false);	// do not create
+        return pas;
+    }
+    catch (ExceptionBase& e) {
+        LOG4CXX_ERROR(as_test_logger, "Couldn't init append store for read" << e.ToString());
+    }
+    catch (...) {
+        LOG4CXX_ERROR(as_test_logger, "Couldn't init append store for read");
+    }
+    return NULL;
+}
+
+
 
 int main(int argc, char* argv[]) {
-	cout << endl << "main entry point"; 
-	clock_t start,end;
-	time_t st, et;
-	double total_time_1 = 0;
-	double dif;
-	int i, t;
-	double total_time = 0;
-	int MB = 0;
-	long TOTAL_SIZE = 1024  * 1024;// * 1024 * MB;
-	long CHUNK_SIZE = 4096; // 2048
-	long NUM_CHUNKS = 0;
-	long TRIES = 1;
-	Timer timer = Timer();
-	st = time(NULL);
-	// cout << endl << argv[0];
-	// cout << endl << argv[1];
-	MB = atoi(argv[1]);
+    DOMConfigurator::configure("Log4cxxConfig.xml");
+    QFSHelper::Connect();
+    string test_path("/astest");
+    unsigned char data_char;
+    char buf[256];
+    vector<string> handles;
+    uint64_t num_handle;
 
-	TOTAL_SIZE *= MB;
-	NUM_CHUNKS = TOTAL_SIZE / CHUNK_SIZE;
+    LOG4CXX_INFO(as_test_logger, "-------------testing append store write--------------");
+    PanguAppendStore* pas = init_as_write(test_path);
+    for (unsigned char i = 1; i < 250; ++i)
+    {
+        data_char = i;
+        memset(buf, data_char, i);
+        string data(buf, i);
+        string handle = pas->Append(data);
+        handles.push_back(handle);
+        memcpy((char*)&num_handle, handle.c_str(), sizeof(uint64_t));
+        LOG4CXX_INFO(as_test_logger, "write return handle :" << num_handle);
+    }
+    pas->Flush();
+    pas->Close();
+    sleep(1);
 
-	string chunk_data = random_data(CHUNK_SIZE);
-	cout << endl << "---------------------------------------------------------";
-	cout << endl << chunk_data;
-	cout << endl << "---------------------------------------------------------";
-	for(t = 0; t < TRIES; t++) {
-		timer.start();
-		StoreParameter sp = StoreParameter(); 
-		std::stringstream sstm;
-		sstm << "//TESTREAD//SIZE_" << MB << "//TRY_" << t;
-		string store_name = sstm.str();
-		sp.mPath = store_name;
-		sp.mAppend = true;
-		DataFileCompressionFlag dfcf = COMPRESSOR_LZO;
-		sp.mCompressionFlag = dfcf;//COMPRESSOR_LZO;
-		st = time(NULL);		
-		start = clock();
-		PanguAppendStore *pas = new PanguAppendStore(sp, true);
-		for(i = 0; i < NUM_CHUNKS; i++) {
-			// chunk_data[0] = 'a' + (i % 26);
-			string h1_str = pas->Append(chunk_data);
-			if(i == (NUM_CHUNKS - 1)) {
-				Handle h1(h1_str);
-				cout << "(" << h1.mChunkId << ":" << h1.mIndex << ")";
-			}
-		}
-		
-		pas->Flush();
-		pas->Close();
-		//et = time(NULL);		
-		//end = clock();		
-		//dif = ((double(end - start) * 1000) / CLOCKS_PER_SEC);
-		//total_time += dif;
-		//cout << endl << "Time taken for (" << store_name << ") : " << dif << " milli seconds ";
-		//cout << endl << "Time taken " << (et - st) << " seconds";
-		total_time_1 += (et - st);
-		double d = timer.stop();
-		cout << endl << d << " milli seconds";
-	}
-	//cout << endl << "total size is " << (TOTAL_SIZE / (1024 * 1024)) << " MB";
-	//cout << endl <<	"chunk size is " << CHUNK_SIZE;
-	//cout << endl << "num chunks is " << NUM_CHUNKS;
+    LOG4CXX_INFO(as_test_logger, "-------------testing append store read--------------");
+    pas = init_as_read(test_path);
+    bool correctness = true;
+    for (unsigned char i = 1; i < 250; ++i)
+    {
+        memcpy((char*)&num_handle, handles[i-1].c_str(), sizeof(uint64_t));
+        LOG4CXX_INFO(as_test_logger, "try to read handle :" << num_handle);
+        string data;
+        bool res = pas->Read(handles[i-1], &data);
+        LOG4CXX_INFO(as_test_logger, "read result: " << res << ", data length: " << data.length());
+        bool data_correct = true;
+        if (data.length() != i)
+            data_correct = false;
+        else {
+            for (unsigned char j = 0; j < i; j++)
+            {
+                if (data[j] != (char)i)
+                    data_correct = false;
+            }
+        }
+        if (!data_correct)
+            correctness = false;
+        LOG4CXX_INFO(as_test_logger, "data verify result: " << data_correct);
+    }
+    pas->Flush();
+    pas->Close();
+    LOG4CXX_INFO(as_test_logger, "append store correctness: " << correctness);
+    sleep(1);
 
-	//cout << endl << "total time taken " << total_time;
-	//cout << endl << "average time to insert " << MB << "MB - " << (total_time / TRIES) << " milli seconds";
-	//cout << endl << "total time taken " << total_time_1;
-	//cout << endl << "average time to insert " << MB << "MB - " << (total_time_1 / TRIES) << " seconds";
-	//cout << endl;
-    /*
-	StoreParameter sp = StoreParameter(); 
-	sp.mPath = "/root/store06";
-	sp.mAppend = true;
-	PanguAppendStore *pas = new PanguAppendStore(sp, true);
-	string data("my name is billa"); 
-	string handle = pas->Append(data);
-	cout << endl << "data wrote : " << data;
-	cout << endl << "handle is : " << handle;
-	pas->Flush();
-	pas->Close();	 
-	cout << endl << "file closed ";
-	 sp.mAppend = false;
-	 PanguAppendStore *pas_read = new PanguAppendStore(sp, false);
-	 cout << endl << "read store opened ";
-	 string data_read;
-	 for(int i = 0 ; i < 5; i++) {
-	  Handle h;
-	  h.mChunkId = 0;
-	  h.mIndex = i;
-	  pas_read->Read(h.ToString(), &data_read);
-	  cout << endl << "data_read : " << data_read;
-	 }
-	 pas_read->Flush();
-	 pas_read->Close();
-	
-	 cout << endl << "end of main";
-	 
-	 cout << endl;
-	*/
+    //LOG4CXX_INFO(as_test_logger, "-------------benchmark append store write--------------");
+    //pas = init_as_write(test_path);
+    
+    return 0;
 }
+
+
+
+
+
+
+
+
+
+
 
 
 

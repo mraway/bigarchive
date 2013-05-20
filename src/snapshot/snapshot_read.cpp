@@ -91,36 +91,36 @@ int main(int argc, char** argv)
 
     SegmentMeta cur_seg, ss_seg;
     uint32_t size_read;
-    for (size_t i = 0; i < ssctrl.ss_meta_.snapshot_recipe_.size(); i++) {
+    for (size_t segid = 0; segid < ssctrl.ss_meta_.snapshot_recipe_.size(); segid++) {
         // 1. compare with the current segment on disk
         if (has_current && pds->GetSegment(cur_seg)) {
-            if (ssctrl.ss_meta_.snapshot_recipe_[i].cksum_ == cur_seg.cksum_) {
+            if (ssctrl.ss_meta_.snapshot_recipe_[segid].cksum_ == cur_seg.cksum_) {
                 // write cur_seg data to disk
-                for (size_t j = 0; j < cur_seg.segment_recipe_.size(); j++)
-                    cur_seg.segment_recipe_[i].SerializeData(output);
+                for (size_t blkid = 0; blkid < cur_seg.segment_recipe_.size(); blkid++)
+                    cur_seg.segment_recipe_[blkid].SerializeData(output);
                 continue;
             }
         }
         // 2. load block data from append store and CDS
-        ssctrl.LoadSegmentRecipe(ss_seg, i);
-        for (size_t j = 0; j < ss_seg.segment_recipe_.size(); j++) {
-            if (ss_seg.segment_recipe_[i].flags_ & IN_CDS) {
-                size_read = cds_data.Read(ss_seg.segment_recipe_[i]);
-                if (size_read != ss_seg.segment_recipe_[i].size_) {
+        ssctrl.LoadSegmentRecipe(ss_seg, segid);
+        for (size_t blkid = 0; blkid < ss_seg.segment_recipe_.size(); blkid++) {
+            if (ss_seg.segment_recipe_[blkid].flags_ & IN_CDS) {
+                size_read = cds_data.Read(ss_seg.segment_recipe_[blkid]);
+                if (size_read != ss_seg.segment_recipe_[blkid].size_) {
                     LOG4CXX_ERROR(logger, "Read CDS data fail");
                     return -1;
                 }
             }
             else {
-                if (!ssctrl.LoadBlockData(ss_seg.segment_recipe_[i])) {
+                if (!ssctrl.LoadBlockData(ss_seg.segment_recipe_[blkid])) {
                     LOG4CXX_ERROR(logger, "Read append store data fail");
                     return -1;
                 }
             }
         }
         // 3. save data to disk
-        for (size_t j = 0; j < ss_seg.segment_recipe_.size(); j++)
-            ss_seg.segment_recipe_[i].SerializeData(output);
+        for (size_t blkid = 0; blkid < ss_seg.segment_recipe_.size(); blkid++)
+            ss_seg.segment_recipe_[blkid].SerializeData(output);
     }
 
     output.close();

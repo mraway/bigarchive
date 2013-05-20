@@ -41,9 +41,7 @@ void crash_handler(int sig) {
     exit(1);
 }
 
-// we should have only a single instance of append store,
-// which should be implemented as a singleton, but right now we just use this.
-PanguAppendStore* init_append_store(string& vm_id)
+PanguAppendStore* init_as_write(string& vm_id)
 {
     try {
         PanguAppendStore *pas = NULL;
@@ -55,13 +53,34 @@ PanguAppendStore* init_append_store(string& vm_id)
         return pas;
     }
     catch (ExceptionBase& e) {
-        LOG4CXX_ERROR(ss_write_logger, "Couldn't init append store" << e.ToString());
+        LOG4CXX_ERROR(ss_write_logger, "Couldn't init append store for write" << e.ToString());
     }
     catch (...) {
-        LOG4CXX_ERROR(ss_write_logger, "Couldn't init append store");
+        LOG4CXX_ERROR(ss_write_logger, "Couldn't init append store for write");
     }
     return NULL;
 }
+
+PanguAppendStore* init_as_read(string& vm_id)
+{
+    try {
+        PanguAppendStore *pas = NULL;
+        StoreParameter sp = StoreParameter(); ;
+        string store_name = "/" + kBasePath + "/" + vm_id + "/" + "append";
+        sp.mPath = store_name;
+        sp.mAppend = false;
+        pas = new PanguAppendStore(sp, false);
+        return pas;
+    }
+    catch (ExceptionBase& e) {
+        LOG4CXX_ERROR(ss_write_logger, "Couldn't init append store for read" << e.ToString());
+    }
+    catch (...) {
+        LOG4CXX_ERROR(ss_write_logger, "Couldn't init append store for read");
+    }
+    return NULL;
+}
+
 
 int main(int argc, char *argv[]) {
     signal(SIGSEGV, crash_handler);
@@ -101,7 +120,7 @@ int main(int argc, char *argv[]) {
 
     // 1. init append store
     // TODO: change appendstore factory to singleton
-    PanguAppendStore* pas = init_append_store(current->ss_meta_.vm_id_);
+    PanguAppendStore* pas = init_as_write(current->ss_meta_.vm_id_);
     if (pas == NULL) {
         LOG4CXX_ERROR(ss_write_logger, "Unable to init append store");
         return -1;
@@ -110,6 +129,7 @@ int main(int argc, char *argv[]) {
 
     // 2. load parent snapshot meta from qfs, init current snapshot meta
     if (has_parent) {
+        //pas = init_as_read(current->ss_meta_.vm_id_);
         parent->SetAppendStore(pas);
         parent->LoadSnapshotMeta();
     }
@@ -119,6 +139,7 @@ int main(int argc, char *argv[]) {
         l3_size = 0, l3_blocks = 0, new_blocks = 0, new_size = 0, tot_blocks = 0, tot_size = 0;
     uint64_t last_pos = 0;
     SegmentMeta cur_seg, par_seg;
+    vector<SegmentMeta> seg_meta_buf;
     BlockMeta* bm;
     CdsIndex cds_index;
     int num_queries = 0;	// number of CDS queries
@@ -134,13 +155,17 @@ int main(int argc, char *argv[]) {
 
         num_queries = 0;
         current->UpdateBloomFilters(cur_seg);
-        tot_blocks += cur_seg.segment_recipe_.size(); tot_size += cur_seg.size_;	// stat
+        tot_blocks += cur_seg.segment_recipe_.size(); tot_size += cur_seg.size_;	// stat total
         if (has_parent && parent->LoadSegmentRecipe(par_seg, seg_id++)) {
             //  a) first compare parent segment meta by cksum
             if (cur_seg.cksum_ == par_seg.cksum_) {
                 cur_seg.handle_ = par_seg.handle_;
                 current->UpdateSnapshotRecipe(cur_seg);
-                l1_blocks += par_seg.segment_recipe_.size(); l1_size += par_seg.size_;	// stat
+                //l1_blocks += par_seg.segment_recipe_.size(); l1_size += par_seg.size_;	// stat l1
+                l1_blocks += cur_seg.segment_recipe_.size(); l1_size += cur_seg.size_;	// stat l1
+                LOG4CXX_INFO(ss_write_logger, "parent segment size: " << par_seg.size_
+                             << " current segment size: " << cur_seg.size_);
+                assert(par_seg.size_ == cur_seg.size_);
                 continue;
             }
 
@@ -152,7 +177,7 @@ int main(int argc, char *argv[]) {
                 if (bm != NULL) {
                     cur_seg.segment_recipe_[i].handle_ = bm->handle_;
                     cur_seg.segment_recipe_[i].flags_ = bm->flags_ | IN_PARENT;
-                    l2_blocks += 1; l2_size += cur_seg.segment_recipe_[i].size_;	// stat
+                    l2_blocks += 1; l2_size += cur_seg.segment_recipe_[i].size_;	// stat l2
                 }
                 else {
                     // these blocks are not found in parent snapshot's segment, will ask CDS
@@ -175,16 +200,26 @@ int main(int argc, char *argv[]) {
                 // if found in CDS, it should return the data offset in CDS data file
                 blks_to_query[i]->handle_ = offsets[i];
                 blks_to_query[i]->flags_ |= IN_CDS;
-                l3_blocks += 1; l3_size += blks_to_query[i]->size_;	// stat
+                l3_blocks += 1; l3_size += blks_to_query[i]->size_;	// stat l3
             }
             //  d) write new data to append store
             else {
                 current->SaveBlockData(*blks_to_query[i]);
-                new_blocks += 1; new_size += blks_to_query[i]->size_;	// stat
+                new_blocks += 1; new_size += blks_to_query[i]->size_;	// stat final write
             }
         }
         
         //  e) write segment recipe
+        // to make segment meta data placed sequencially on disk, we buffer it and write in batch mode
+        /*
+        seg_meta_buf.push_back(cur_seg);
+        if (seg_meta_buf.size() >= DF_MAX_PENDING) {
+            for (size_t i = 0; i < seg_meta_buf.size(); i++) {
+                current->SaveSegmentRecipe(seg_meta_buf[i]);
+                current->UpdateSnapshotRecipe(seg_meta_buf[i]);
+            }
+            seg_meta_buf.clear();
+            }*/
         current->SaveSegmentRecipe(cur_seg);
         current->UpdateSnapshotRecipe(cur_seg);
     }

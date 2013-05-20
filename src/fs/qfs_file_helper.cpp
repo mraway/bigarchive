@@ -28,61 +28,65 @@ QFSFileHelper::QFSFileHelper(QFSHelper *qfshelper, string fname, int mode) {
 */
 void QFSFileHelper::Create()
 {
-    fd = qfshelper->kfsClient->Create(filename.c_str());//Karim: I think this is just a wrapper for QFS that creates the file and returns the file descriptor.
+    fd = qfshelper->kfsClient->Create(filename.c_str());
 
     if (fd < 0) { 
-		LOG4CXX_ERROR(logger_, "File Creation failed : " << filename);
-		THROW_EXCEPTION(FileCreationException, "Failed while creating file : " + filename);
+        LOG4CXX_ERROR(logger_, "File Creation failed : " << filename);
+        THROW_EXCEPTION(FileCreationException, "Failed while creating file : " + filename);
     }
     LOG4CXX_INFO(logger_, "File Created : " << filename);
 }
 
 /**
-   Opens file on specified mode
+   Opens file on specified mode, due to the limitation of QFS,
+   only two modes are expected: O_RDONLY, O_WRONLY,
+   if application specify O_APPEND, we turn it into O_WRONLY, and seek the end
 */
-void QFSFileHelper::Open() {
-
+void QFSFileHelper::Open() 
+{
     if( ! qfshelper->IsFileExists(filename)) {
-		Create();  // Karim: If file does not exist then create it.
-	}
+        Create();  // Karim: If file does not exist then create it.
+    }
 
     bool append = false;
 
-    if(mode == O_APPEND) {
-		/* for append mode open the file in Write mode and seek to last */
-		/* found some issue with O_APPEND mode opening ! */
-		append = true;
-		mode = O_WRONLY;
+    if((mode & O_APPEND) != 0) {
+        // for append write mode, open the file in write mode and seek to last.
+        // because we found some issues with O_APPEND mode opening, 
+        // QFS append mode doesn't report correct file size
+        append = true;
+        mode = O_WRONLY;
     }
 
     fd = qfshelper->kfsClient->Open(filename.c_str(), mode);
 
     if(fd < 0) { 
-		LOG4CXX_ERROR(logger_, "Failed while opening file : " << filename << ", ERROR :" << KFS::ErrorCodeToStr(fd));
-		THROW_EXCEPTION(FileOpenException, "Failed while opening file : " + filename + " ERROR : " + KFS::ErrorCodeToStr(fd));
+        LOG4CXX_ERROR(logger_, "Failed while opening file : " << filename << ", ERROR :" << KFS::ErrorCodeToStr(fd));
+        THROW_EXCEPTION(FileOpenException, "Failed while opening file : " + filename + " ERROR : " + KFS::ErrorCodeToStr(fd));
     }
 
-	/* Seeking to the last */
+    /* Seeking to the last */
     if(append) {
-		mode = O_APPEND;
-		LOG4CXX_INFO(logger_, "Opening in Write mode and seeking to end of file : " << filename);
-		Seek(qfshelper->GetSize(filename));
+        LOG4CXX_INFO(logger_, "open under append mode: " << filename);
+        Seek(qfshelper->GetSize(filename));
     }
 
-	LOG4CXX_INFO(logger_, "File Opened : filename(" << filename << "), mode(" << get_mode() << ")");
+    LOG4CXX_INFO(logger_, "File Opened: " << filename << 
+                 ", mode is " << get_mode() << 
+                 ", position at " << qfshelper->kfsClient->Tell(fd));
 }
 
-void QFSFileHelper::Close() {
-
+void QFSFileHelper::Close() 
+{
     if(fd < 0) {
-    	LOG4CXX_INFO(logger_, "File Close : file descriptor, fd < 0 for file : " << filename); 
+        LOG4CXX_WARN(logger_, "file is not opened: " << filename); 
     }
     else {
-        if(mode != O_RDONLY) {
-	    	qfshelper->kfsClient->Sync(fd);
+        if((mode & O_WRONLY) != 0) {
+            qfshelper->kfsClient->Sync(fd);
         }
-    	qfshelper->kfsClient->Close(fd);
-    	LOG4CXX_INFO(logger_, "File Synced and Closed : " << filename); 
+        qfshelper->kfsClient->Close(fd);
+        LOG4CXX_INFO(logger_, "File Synced and Closed: " << filename); 
     }
 }
 
@@ -90,21 +94,21 @@ void QFSFileHelper::Close() {
 int QFSFileHelper::Read(char *buffer, size_t length) {
     /* check whether its opened of not */
     if (fd == -1) {
-		Open();
+        Open();
     }
-	LOG4CXX_DEBUG(logger_, "Trying to read " << length << " bytes from file(" << filename << ") at " << qfshelper->kfsClient->Tell(fd));
+    LOG4CXX_DEBUG(logger_, "Trying to read " << length << " bytes from file(" << filename << ") at " << qfshelper->kfsClient->Tell(fd));
 
     //Karim: If file already open then read "length" bytes and put them in buffer
     size_t bytes_read = qfshelper->kfsClient->Read(fd, buffer, length);
 
     if (bytes_read != length) {
-		if (bytes_read < 0) {
-		    LOG4CXX_ERROR(logger_, "Failed while reading from file(" << filename << ") - ERROR : " << KFS::ErrorCodeToStr(bytes_read));
-		    THROW_EXCEPTION(AppendStoreReadException, "Failed while reading file(" + filename + ") - ERROR : " + KFS::ErrorCodeToStr(bytes_read));
-		}
-		else {
-		    LOG4CXX_ERROR(logger_, "Less number of bytes read from file than specified");
-		}
+        if (bytes_read < 0) {
+            LOG4CXX_ERROR(logger_, "Failed while reading from file(" << filename << ") - ERROR : " << KFS::ErrorCodeToStr(bytes_read));
+            THROW_EXCEPTION(AppendStoreReadException, "Failed while reading file(" + filename + ") - ERROR : " + KFS::ErrorCodeToStr(bytes_read));
+        }
+        else {
+            LOG4CXX_ERROR(logger_, "Less number of bytes read from file than specified");
+        }
     }
 
     return bytes_read;	
@@ -123,7 +127,7 @@ int QFSFileHelper::Write(char *buffer, size_t length) {
 
     Header header(length);
     int dataLength = length + sizeof(Header);    
-	string data(dataLength, 0);
+    string data(dataLength, 0);
 
     memcpy(&data[0], &header, sizeof(Header));
     memcpy(&data[sizeof(Header)], buffer, length);
@@ -131,10 +135,10 @@ int QFSFileHelper::Write(char *buffer, size_t length) {
     int bytes_wrote = qfshelper->kfsClient->Write(fd, data.c_str(), dataLength);
 
     if( bytes_wrote != dataLength) {
-		string bytes_wrote_str = "" + bytes_wrote;
-		string length_str = "" + dataLength;
-		LOG4CXX_ERROR(logger_, "Was able to write only " << bytes_wrote << " bytes , instead of " << length);
-		THROW_EXCEPTION(AppendStoreWriteException,  "Was able to write only " + bytes_wrote_str + ", instead of " + length_str);
+        string bytes_wrote_str = "" + bytes_wrote;
+        string length_str = "" + dataLength;
+        LOG4CXX_ERROR(logger_, "Was able to write only " << bytes_wrote << " bytes , instead of " << length);
+        THROW_EXCEPTION(AppendStoreWriteException,  "Was able to write only " + bytes_wrote_str + ", instead of " + length_str);
     }
 
     LOG4CXX_DEBUG(logger_, "Wrote " << length << " bytes into file(" << filename << ")");    
@@ -161,7 +165,7 @@ int QFSFileHelper::Append(char *buffer, size_t length) {
         THROW_EXCEPTION(AppendStoreWriteException,  "Was able to append only " + bytes_wrote_str + ", instead of " + length_str);
     }
 
-	LOG4CXX_DEBUG(logger_, "Append " << length << " bytes into file(" << filename << ")");    
+    LOG4CXX_DEBUG(logger_, "Append " << length << " bytes into file(" << filename << ")");    
 
     return bytes_wrote;
 }
@@ -181,7 +185,7 @@ int QFSFileHelper::WriteData(char *buffer, size_t length) {
     }
 
     LOG4CXX_DEBUG(logger_, "WriteDATA " << length << " bytes into file(" << filename << ")");    
-    
+
     return bytes_wrote;
 }
 
@@ -209,21 +213,21 @@ void QFSFileHelper::Seek(uint64_t offset) {
 //Karim: I think this function reads the header part from a file and return the real data length
 uint32_t QFSFileHelper::GetNextLogSize() {
     char *buffer = new char[sizeof(Header)];
-	/* setting the buffer to zero, to avoid garbage data */
+    /* setting the buffer to zero, to avoid garbage data */
     memset(buffer, 0, sizeof(Header));
     Header *header = new Header(-1);// Karim: I think the new here is unnecessary because the pointer will later be reassigned??
     Read(buffer, sizeof(Header));
     header = (Header *)buffer;
-	LOG4CXX_DEBUG(logger_, "GetNextLogSize - " << filename << " - " << header->data_length);    
+    LOG4CXX_DEBUG(logger_, "GetNextLogSize - " << filename << " - " << header->data_length);    
     return header->data_length;
 }
 
 
 string QFSFileHelper::get_mode() {
-	switch(mode) {
+    switch(mode) {
     case O_RDONLY : return "READ_ONLY";
     case O_WRONLY : return "WRITE_ONLY";
     case O_APPEND : return "APPEND";
     default : return "DEFAULT";
-	}
+    }
 }

@@ -49,7 +49,7 @@ bool CdsIndex::BatchGet(const Checksum* cksums, size_t num_cksums, bool *results
 
     memcached_return_t rc = memcached_mget(p_memcache_, p_cksums, key_length, num_cksums);
     if (rc != MEMCACHED_SUCCESS) {
-        LOG4CXX_ERROR(logger_, "Multi get failed");
+        LOG4CXX_ERROR(logger_, "Multi get fail:" << memcached_strerror(p_memcache_, rc));
         return false;
     }
 
@@ -60,6 +60,9 @@ bool CdsIndex::BatchGet(const Checksum* cksums, size_t num_cksums, bool *results
         if (rc == MEMCACHED_SUCCESS) {
             memcpy(&offset, memcached_result_value(p_result), memcached_result_length(p_result));
             result_map[string(memcached_result_key_value(p_result), memcached_result_key_length(p_result))] = offset;
+        }
+        else {
+            LOG4CXX_ERROR(logger_, "mget return: " << memcached_strerror(p_memcache_, rc));
         }
         memcached_result_free(p_result);
     }
