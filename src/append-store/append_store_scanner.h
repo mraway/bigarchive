@@ -17,9 +17,10 @@ class AppendStoreScanner : public Scanner
 public: 
     virtual ~AppendStoreScanner();
     virtual bool Next(std::string* handle, std::string* item);
+    //perhaps this should be private (as it was) and all constructor which takes StoreParameter
+    AppendStoreScanner(const std::string& path, const DataFileCompressionFlag cflag);
 
 private:
-    AppendStoreScanner(const std::string& path, const DataFileCompressionFlag cflag);
     void InitScanner();
     void ReadDeleteLog(const std::string& fname);
     void GetAllChunkID(const std::string& root);
