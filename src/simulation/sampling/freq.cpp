@@ -6,6 +6,7 @@
 #include <fstream>
 #include <string>
 #include <map>
+#include <set>
 #include <exception>
 #include "dedup_types.hpp"
 #include "lru_cache.hpp"
@@ -13,7 +14,11 @@
 using namespace std;
 
 class Hash {
+    private:
     Checksum cksum_;
+    public:
+    Hash() {
+    }
     Hash(Block& blk) {
         memcpy(cksum_, blk.cksum_, CKSUM_LEN * sizeof(uint8_t));
     }
@@ -21,7 +26,7 @@ class Hash {
     {
         memcpy(cksum_, h.cksum_, CKSUM_LEN * sizeof(uint8_t));
     }
-    setHash(Block& blk) {
+    void setHash(Block& blk) {
         memcpy(cksum_, blk.cksum_, CKSUM_LEN * sizeof(uint8_t));
     }
     bool operator==(const Hash& other) const {
@@ -35,7 +40,7 @@ class Hash {
     bool operator<(const Hash& other) const {
         return memcmp(this->cksum_, other.cksum_, CKSUM_LEN) < 0;
     }
-}
+};
 void usage(char *progname)
 {
 	pr_msg("This program read a snapshot recipe, dedup and dedups it.\n"
@@ -134,102 +139,88 @@ void theoretical(std::vector<Segment>& indexBlocks, ifstream& trace, double blk_
     printf("theoretical dedup ratio = %d/%d (%3.3f%%)\n",hits,blocks,(double)(100*hits)/(double)blocks);
 }
 
-void block_zipf(map<Hash, int>& block_freq, ifstream& trace, double blk_threshold, unsigned int seed) {
+void do_block_freq(map<Hash, int>& block_freq, ifstream& trace, double blk_threshold, unsigned int seed) {
     //trace.clear();
     //trace.seekg(0,std::ios::beg);
     if (blk_threshold > 0)
         srand(seed);
-    map<Hash, int>::iterator index_it;
+    map<Hash, int>::iterator iter;
     Segment current_seg;
     Hash current_hash;
-    set<Hash> current_seg_blocks;
-    int segments = 0;
+    set<Hash> seg_blocks;
+    int i;
     int blocks = 0;
-    int hits = 0;
-    int misses = 0;
-    int i,j;
+    int newBlocks = 0;
     //printf("segments: %d\nblocks: %d\n",segments,blocks);
     while(load_rand_segment(current_seg, trace, blk_threshold)) {
-        for (i = 0; i < current_seg.blocklist_.size(); i++)
-        {
+        for (i = 0; i < current_seg.blocklist_.size(); i++) {
             current_hash.setHash(current_seg.blocklist_[i]);
-            index_it = containerMap.find(current_seg.blocklist_[i]);
-            if (index_it != index.end())
-            {
-                j = index_it->second; //index of the container
-                current_seg_blocks.add(j);
+            if (seg_blocks.find(current_hash) == seg_blocks.end()) {
+                seg_blocks.insert(current_hash);
+                block_freq[current_hash]++;
+                newBlocks++;
             }
-            else
-            {
-                containers.add(current_container);
-                if (container_length >= 16384)
-                {
-                    container_length = 0;
-                    current_container++;
-                }
-                containerMap[
-            }
-                hits++;
-            else misses;
+            blocks++;
         }
         //printf("chunk finished (hits=%d;misses=%d)\n",hits,misses);
     }
 
-    //pr_msg("theoretical dedup finish");
-    printf("theoretical dedup ratio = %d/%d (%3.3f%%)\n",hits,blocks,(double)(100*hits)/(double)blocks);
+    //pr_msg("trace block frequency scan finished");
+    printf("blocks read: %d\nunique blocks read: %d\n",blocks, newBlocks);
+    int max = 0;
+    int maxCount = 0;
+    int sum = 0;
+    int entries = 0;
+    for(iter = block_freq.begin(); iter != block_freq.end(); ++iter)
+    {
+        int count = iter->second;
+        if (count > max) {
+            max = count;
+            maxCount = 0;
+        } else if (count == max) {
+            maxCount++;
+        }
+        sum += count;
+        entries++;
+        //printf("%d\n",count);
+    }
+    printf("Max: %d\nMax Entries: %d\nAvg: %g\n", max, maxCount, (double)sum / (double)entries);
+    printf("index size: %d\n", block_freq.size());
 }
 
-void container_zipf(map<Hash, int>& containerMap, map<int, int>& containerCounts, int& current_container, int& container_length, ifstream& trace, double blk_threshold, unsigned int seed) {
+void container_freq(map<Hash, int>& container_freq, map<int, int>& containerCounts, int& current_container, int& container_length, ifstream& trace, double blk_threshold, unsigned int seed) {
     //trace.clear();
     //trace.seekg(0,std::ios::beg);
     if (blk_threshold > 0)
         srand(seed);
-    map<Hash, int>::iterator index_it;
+    map<Hash, int>::iterator iter;
     Segment current_seg;
     Hash current_hash;
-    set<int> containers;
-    int segments = 0;
+    set<Hash> seg_blocks;
+    int i;
     int blocks = 0;
-    int hits = 0;
-    int misses = 0;
-    int i,j;
-    for(i = 0; i < indexBlocks.size(); i++)
-    {
-        for(j = 0; j < indexBlocks[i].blocklist_.size(); j++)
-            index[indexBlocks[i].blocklist_[j]] = segments & (~7); //group blocks by segment
-        segments++;
-        blocks += indexBlocks[i].blocklist_.size();
-    }
+    int newBlocks = 0;
     //printf("segments: %d\nblocks: %d\n",segments,blocks);
     while(load_rand_segment(current_seg, trace, blk_threshold)) {
-        for (i = 0; i < current_seg.blocklist_.size(); i++)
-        {
+        for (i = 0; i < current_seg.blocklist_.size(); i++) {
             current_hash.setHash(current_seg.blocklist_[i]);
-            index_it = containerMap.find(current_seg.blocklist_[i]);
-            if (index_it != index.end())
-            {
-                j = index_it->second; //index of the container
-                containers.add(j);
+            if (seg_blocks.find(current_hash) == seg_blocks.end()) {
+                seg_blocks.insert(current_hash);
+                container_freq[current_hash]++;
+                newBlocks++;
             }
-            else
-            {
-                containers.add(current_container);
-                container_length++;
-                if (container_length >= 16384)
-                {
-                    container_length = 0;
-                    current_container++;
-                }
-                containerMap[
-            }
-                hits++;
-            else misses;
+            blocks++;
         }
         //printf("chunk finished (hits=%d;misses=%d)\n",hits,misses);
     }
 
-    //pr_msg("theoretical dedup finish");
-    printf("theoretical dedup ratio = %d/%d (%3.3f%%)\n",hits,blocks,(double)(100*hits)/(double)blocks);
+    pr_msg("block frequency scan finished");
+    for(iter = container_freq.begin(); iter != container_freq.end(); ++iter)
+    {
+        int count = iter->second;
+        printf("%s\n",count);
+    }
+    printf("frequency list finished %d, %d\n", blocks, newBlocks);
 }
 
 void sampled(std::vector<Segment>& indexBlocks, ifstream& trace, int cache_size, double blk_threshold, unsigned int seed, bool do_dirty, bool do_parent)
@@ -340,9 +331,9 @@ int main(int argc, char** argv)
     //int misses = 0;
 
     //std::vector<Block> cds;
-    std::vector<Segment> indexBlocks;
+    //std::vector<Segment> indexBlocks;
     //std::vector<Block>::iterator it;
-    Segment current_seg;
+    //Segment current_seg;
     ifstream current_input, index_input, cds_input;
     //ofstream output;
     uint32_t i, j, k;
@@ -351,6 +342,7 @@ int main(int argc, char** argv)
     int blockIndex;
     map<Block, int> index;
     map<Block, int>::iterator index_it;
+    map<Hash, int> block_freq;
     //uint64_t new_size = 0;
 
     //if (argc < 4 || argc > 5) {
@@ -390,66 +382,28 @@ int main(int argc, char** argv)
         }
     }
 
-    if ( (!do_rand && argindex +2 >= argc) || argindex +1 >= argc)
+    if (argindex >= argc)
     {
         usage(argv[0]);
         return 0;
     }
 
-    int cache_size = atoi(argv[argindex++]);
-    char *cur_trace_path = argv[argindex++];
-    char *index_trace_path;
-    if (!do_rand)
-        index_trace_path = argv[argindex++];
-    else
-        index_trace_path = cur_trace_path;
+    while(argindex < argc) {
+        char *cur_trace_path = argv[argindex++];
 
-    current_input.open(cur_trace_path, std::ios_base::in | std::ios_base::binary);
-    if (!current_input.is_open()) {
-        pr_msg("unable to open %s", cur_trace_path);
-        exit(1);
+        current_input.open(cur_trace_path, std::ios_base::in | std::ios_base::binary);
+        if (!current_input.is_open()) {
+            pr_msg("unable to open %s", cur_trace_path);
+            exit(1);
+        }
+        printf("file: %s\n",cur_trace_path);
+        //theoretical(indexBlocks, current_input, blk_threshold, seed);
+        //sampled(indexBlocks, current_input, cache_size, blk_threshold, seed, do_dirty, do_parent);
+        do_block_freq(block_freq, current_input, blk_threshold, seed);
+
+        //output.close();
+        //parent_input.close();
+        current_input.close();
     }
-    //cds_input.open(argv[2], std::ios_base::in | std::ios_base::binary);
-    //if (!cds_input.is_open()) {
-        //pr_msg("unable to open %s", argv[2]);
-        //exit(1);
-    //}
-
-
-    index_input.open(index_trace_path, std::ios_base::in | std::ios_base::binary);
-    if (!index_input.is_open()) {
-        pr_msg("unable to open %s", index_trace_path);
-        exit(1);
-    }
-
-    //string outputname = argv[3];
-    //outputname += ".simlru";
-    //outputname += argv[2];
-    //output.open(outputname.c_str(), std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
-
-    // prepare CDS, assume it was sorted
-    //while (blk.Load(cds_input)) {
-        //cds.push_back(blk);
-        ////sort(cds.begin(), cds.end());
-    //}
-    //cds_input.close();
-
-    //first load the index with the entire index snapshot
-    //we will only perform sampled checks against it, but we need all of it
-    int segments = 0;
-    int blocks = 0;
-    indexBlocks.reserve(3000000);
-    while(load_segment(current_seg, index_input)) {
-        indexBlocks.push_back(current_seg);
-        segments++;
-        blocks += current_seg.blocklist_.size();
-    }
-
-    theoretical(indexBlocks, current_input, blk_threshold, seed);
-    sampled(indexBlocks, current_input, cache_size, blk_threshold, seed, do_dirty, do_parent);
-
-    //output.close();
-    //parent_input.close();
-    current_input.close();
     return 0;
 }

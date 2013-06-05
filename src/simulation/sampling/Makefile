@@ -1,7 +1,10 @@
 .PHONY : all
-all: sampling
+all: sampling freq
 
 sampling: sampling.o lru_cache.o
+	g++ -o $@ $^
+
+freq: freq.o lru_cache.o
 	g++ -o $@ $^
 
 %.o: %.cpp %.hpp
@@ -12,4 +15,4 @@ sampling: sampling.o lru_cache.o
 
 .PHONY : clean
 clean:
-	rm -f sampling *.o *~
+	rm -f sampling freq *.o *~
