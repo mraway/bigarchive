@@ -1,0 +1,4 @@
+zipf.cpp is currently incomplete
+
+sampling.cpp describes a simulator for the sampled index model of dedup.
+sampling also does the theoretical dedup to compute dedup efficency
