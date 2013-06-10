@@ -1,15 +1,16 @@
 High:
-1) local file system interface
-2) append store scanner
-3) append store: compaction
-3) snapshot_delete: use snapshot bloom filter to delete data
-4) append_store_delete: scan append store to delete data
+* append store scanner
+* append store: compaction
+* snapshot_delete: use snapshot bloom filter to delete data
+* append_store_delete: scan append store to delete data
+* log config
 
 Medium:
-1) look append store cache
+* look append store cache
+* local file system interface
 
 Low:
-3) Reading configuration from file.
+* Reading configuration from file.
 
 Done:
 * testcases and examples : a) qfs test: file create, r/w/append. delete. b) append store tests

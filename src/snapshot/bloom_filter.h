@@ -152,10 +152,40 @@ public:
         return true;
     }
 
+    // merge with an existing bloom filter, it must have the same size of current filter
+    inline bool Merge(istream& is)
+    {
+        if (mBitsSpace == NULL) {
+            return false;
+        }
+
+        uint64_t total_bits;
+        is.read(reinterpret_cast<char*>(&total_bits), sizeof(uint64_t));
+        if (is.gcount() != sizeof(uint64_t)) {
+            return false;
+        }
+        if (mTotalBits != total_bits) {
+            return false;
+        }
+
+        char* p_old_data;
+        char new_data;
+        uint64_t lenTemp = static_cast<uint64_t>((mTotalBits + 7) / 8);
+        for (p_old_data = mBitsSpace; p_old_data < (mBitsSpace + lenTemp); p_old_data += 1) {
+            is.read(&new_data, sizeof(char));
+            if (static_cast<uint64_t>(is.gcount()) != sizeof(char)) {
+                return false;
+            }
+            *p_old_data = (*p_old_data) & new_data;
+        }
+        return true;
+    }
+
     uint64_t GetCurrentTotalBits()
     {
         return mTotalBits;
     }
+
 private:
     char* mBitsSpace;
     uint64_t mTotalBits;
@@ -309,6 +339,14 @@ public:
 
     bool Deserialize(istream& is) {
         if (mBitsSpace->Deserialize(is)) {
+            mTotalBits = mBitsSpace->GetCurrentTotalBits();
+            return true;
+        }
+        return false;
+    }
+
+    bool Merge(istream& is) {
+        if (mBitsSpace->Merge(is)) {
             mTotalBits = mBitsSpace->GetCurrentTotalBits();
             return true;
         }

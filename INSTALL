@@ -1,3 +1,16 @@
+CentOS repositories:
+elrepo:
+sudo rpm --import http://elrepo.org/RPM-GPG-KEY-elrepo.org
+sudo rpm -Uvh http://elrepo.org/elrepo-release-6-5.el6.elrepo.noarch.rpm
+epel:
+sudo rpm --import https://fedoraproject.org/static/0608B895.txt
+sudo rpm -Uvh http://mirrors.cat.pdx.edu/epel/6/i386/epel-release-6-8.noarch.rpm
+rpmforge:
+sudo rpm --import http://apt.sw.be/RPM-GPG-KEY.dag.txt
+sudo rpm -Uvh http://packages.sw.be/rpmforge-release/rpmforge-release-0.5.2-2.el6.rf.x86_64.rpm
+remi:
+sudo rpm -Uvh http://rpms.famillecollet.com/enterprise/remi-release-6.rpm
+
 Install libraries:
 build: scons
 compression: lzo-devel
@@ -5,3 +18,4 @@ log4cxx: apr-devel apr-util-devel log4cxx-devel
 memcached: libmemcached-devel memcached-devel
 qfs: gcc-c++ make git cmake boost-devel xfsprogs-devel libuuid-devel openssl-devel python-devel
 
+sudo yum install scons lzo-devel apr-devel apr-util-devel log4cxx-devel libmemcached-devel memcached-devel gcc-c++ make git cmake boost-devel xfsprogs-devel libuuid-devel openssl-devel python-devel
