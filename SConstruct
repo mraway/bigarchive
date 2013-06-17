@@ -13,8 +13,9 @@ if ARGUMENTS.get('mode', 'debug') == 'release':
     env['CCFLAGS'] = ['-O3', '-DNDEBUG']
 else:
     print "*** Debug build ***"
-    env['CCFLAGS'] = ['-g', '-Wall', '-DDEBUG', '-pg']
-    env['LINKFLAGS'] = ['-pg']
+    env['CCFLAGS'] = ['-g', '-Wall', '-DDEBUG']
+#    env['CCFLAGS'] = ['-g', '-Wall', '-DDEBUG', '-pg']
+#    env['LINKFLAGS'] = ['-pg']
 
 # parallel build
 num_cpu = int(os.environ.get('NUM_CPU', 4))
