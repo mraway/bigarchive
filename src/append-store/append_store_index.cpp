@@ -3,7 +3,7 @@
 #include "../include/file_system_helper.h"
 #include "../include/file_helper.h"
 
-LoggerPtr IndexVector::logger_ = Logger::getLogger("AppendStoreIndex");
+LoggerPtr IndexVector::logger_ = Logger::getLogger("BigArchive.AppendStore.Index");
 
 IndexVector::IndexVector(const std::string& fname)
 {

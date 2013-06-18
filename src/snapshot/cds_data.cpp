@@ -1,7 +1,7 @@
 #include "cds_data.h"
 #include "cds_index.h"
 
-LoggerPtr cds_data_logger(Logger::getLogger("CdsData"));
+LoggerPtr cds_data_logger(Logger::getLogger("BigArchive.CDS.Data"));
 
 CdsData::CdsData(const string& cds_name, const string& mc_options) : CdsCache(mc_options)
 {

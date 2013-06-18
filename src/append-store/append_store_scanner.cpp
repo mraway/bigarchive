@@ -1,6 +1,6 @@
 #include "append_store_scanner.h"
 
-LoggerPtr AppendStoreScanner::logger_ = Logger::getLogger( "AppendStoreScanner");
+LoggerPtr AppendStoreScanner::logger_ = Logger::getLogger("BigArchive.AppendStore.Scanner");
 
 AppendStoreScanner::AppendStoreScanner(const std::string& path, const DataFileCompressionFlag cflag)
     : mRoot(path), mCompressionFlag(cflag)

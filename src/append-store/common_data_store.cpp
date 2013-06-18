@@ -11,7 +11,7 @@ using namespace log4cxx::xml;
 using namespace log4cxx::helpers;
 
 // static logger variable
-LoggerPtr cdslogger(Logger::getLogger( "appendstore.cds"));
+LoggerPtr cdslogger(Logger::getLogger("BigArchive.AppendStore.CDS"));
 
 
 using namespace std;

@@ -19,7 +19,7 @@ using namespace log4cxx;
 using namespace log4cxx::xml;
 using namespace log4cxx::helpers;
 
-LoggerPtr logger(Logger::getLogger("Snapshot_read"));
+LoggerPtr logger(Logger::getLogger("BigArchive.Snapshot.Read"));
 
 PanguAppendStore* init_append_store(string& vm_id)
 {

@@ -27,7 +27,7 @@
 
   <!-- Specify the level for some specific categories -->
   <category name="BigArchive" additivity="false">
-        <priority value ="all" />
+        <priority value ="INFO" />
         <appender-ref ref="appxNormalAppender"/>
         <appender-ref ref="appxConsoleAppender"/>
   </category>

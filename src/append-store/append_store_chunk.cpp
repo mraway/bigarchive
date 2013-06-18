@@ -1,7 +1,7 @@
 #include "append_store_chunk.h"
 #include "../include/exception.h"
 
-LoggerPtr Chunk::logger_ = Logger::getLogger("AppendStoreChunk");
+LoggerPtr Chunk::logger_ = Logger::getLogger("BigArchive.AppendStore.Chunk");
 
 const char* Defaults::IDX_DIR = "index/";
 const char* Defaults::DAT_DIR = "data/";

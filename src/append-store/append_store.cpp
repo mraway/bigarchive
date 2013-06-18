@@ -7,7 +7,7 @@
 #include "../include/exception.h"
 #include "append_store_scanner.h"
 
-LoggerPtr PanguAppendStore::logger_ = Logger::getLogger( "AppendStore");
+LoggerPtr PanguAppendStore::logger_ = Logger::getLogger("BigArchive.AppendStore");
 
 PanguAppendStore::PanguAppendStore(const StoreParameter& para, bool iscreate)
     : mRoot(para.mPath), 

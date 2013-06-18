@@ -15,12 +15,12 @@ using namespace log4cxx::helpers;
    Consturctor for File Helper, performs file related opereations
 */
 QFSFileHelper::QFSFileHelper(QFSHelper *qfshelper, string fname, int mode) {
-    DOMConfigurator::configure("Log4cxxConfig.xml");
+    //DOMConfigurator::configure("Log4cxxConfig.xml");
     this->qfshelper = qfshelper;
     this->filename = fname;
     this->mode = mode;
     this->fd = -1;
-    LOG4CXX_INFO(logger_, "File helper created : " << fname );
+    LOG4CXX_DEBUG(logger_, "File helper created : " << fname );
 }
 
 /**

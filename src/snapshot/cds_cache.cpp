@@ -1,19 +1,29 @@
 #include "cds_cache.h"
 #include <libhashkit/hashkit.h>
 
-const char* kCdsIndexOptions = "--SERVER=128.111.46.222:11211 "
+const char* kCdsIndexOptions = 
+    "--SERVER=128.111.46.222:11211 "
     "--SERVER=128.111.46.96:11211 "
-    "--SERVER=128.111.46.132:11211 --BINARY-PROTOCOL";
-const char* kCdsDataOptions = "--SERVER=128.111.46.222:11985 "
+    "--SERVER=128.111.46.132:11211 "
+    "--SERVER=128.111.46.216:11211 "
+    "--SERVER=128.111.46.85:11211 "
+    "--SERVER=128.111.46.94:11211 "
+    "--BINARY-PROTOCOL";
+const char* kCdsDataOptions = 
+    "--SERVER=128.111.46.222:11985 "
     "--SERVER=128.111.46.96:11985 "
-    "--SERVER=128.111.46.132:11985 --BINARY-PROTOCOL";
+    "--SERVER=128.111.46.132:11985 "
+    "--SERVER=128.111.46.216:11985 "
+    "--SERVER=128.111.46.85:11985 "
+    "--SERVER=128.111.46.94:11985 "
+    "--BINARY-PROTOCOL";
 
 /*
 const char* kMemcacheOptions = "--SERVER=128.111.46.222:11211 "
     "--BINARY-PROTOCOL";
 */
 
-LoggerPtr CdsCache::logger_ = Logger::getLogger("CDS");
+LoggerPtr CdsCache::logger_ = Logger::getLogger("BigArchive.CDS");
 
 uint32_t first_4_bytes(const char *key, size_t key_length, void *context)
 {

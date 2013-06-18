@@ -2,7 +2,7 @@
 
 FileSystemHelper* FileSystemHelper::p_instance_ = NULL;
 
-LoggerPtr FileSystemHelper::logger_ = Logger::getLogger("FileSystemHelper");
+LoggerPtr FileSystemHelper::logger_ = Logger::getLogger("BigArchive.FileSystemHelper");
 
 FileSystemHelper* FileSystemHelper::GetInstance()
 {

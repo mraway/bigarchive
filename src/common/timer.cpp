@@ -43,7 +43,7 @@ double Timer::GetDuration()
     return duration_;
 }
 
-LoggerPtr TimerPool::logger_ = Logger::getLogger("TimerPool");
+LoggerPtr TimerPool::logger_ = Logger::getLogger("BigArchive.Timer");
 
 map<string, Timer> TimerPool::timer_map_;
 

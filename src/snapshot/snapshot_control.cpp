@@ -2,7 +2,7 @@
 
 const string kBasePath = "root";
 
-LoggerPtr SnapshotControl::logger_ = Logger::getLogger("SnapshotControl");
+LoggerPtr SnapshotControl::logger_ = Logger::getLogger("BigArchive.Snapshot.Control");
 
 SnapshotControl::SnapshotControl(const string& trace_file)
 {

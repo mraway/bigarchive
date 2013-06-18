@@ -26,7 +26,7 @@ using namespace log4cxx::helpers;
 
 #define BATCH_QUERY_BUFFER_SIZE 2048
 
-LoggerPtr ss_write_logger(Logger::getLogger("Snapshot_write"));
+LoggerPtr ss_write_logger(Logger::getLogger("BigArchive.Snapshot.Write"));
 
 void crash_handler(int sig) {
     void *array[10];
