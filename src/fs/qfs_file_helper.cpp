@@ -67,11 +67,11 @@ void QFSFileHelper::Open()
 
     /* Seeking to the last */
     if(append) {
-        LOG4CXX_INFO(logger_, "open under append mode: " << filename);
+        LOG4CXX_DEBUG(logger_, "open under append mode: " << filename);
         Seek(qfshelper->GetSize(filename));
     }
 
-    LOG4CXX_INFO(logger_, "File Opened: " << filename << 
+    LOG4CXX_DEBUG(logger_, "File Opened: " << filename << 
                  ", mode is " << get_mode() << 
                  ", position at " << qfshelper->kfsClient->Tell(fd));
 }
