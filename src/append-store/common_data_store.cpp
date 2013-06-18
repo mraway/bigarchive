@@ -299,7 +299,7 @@ void CDSUtility::AppendIndex()
 
 void CDSUtility::Flush()
 {
-    LOG4CXX_INFO(cdslogger, ("Flush", mFlushCount));
+    LOG4CXX_TRACE(cdslogger, ("Flush", mFlushCount));
     if (mFlushCount > 0)
     {
         AppendIndex();
@@ -542,7 +542,7 @@ bool CdsIndexReader::Next(std::vector<CdsIndexRecord>& outvec)
         } while (1);
     }
 	// cdslogger reader
-	LOG4CXX_INFO(cdslogger, "in Next() : " << outvec.size());
+	LOG4CXX_DEBUG(cdslogger, "in Next() : " << outvec.size());
     if (dirty) 
     {
         return true;

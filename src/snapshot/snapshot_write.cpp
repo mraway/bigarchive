@@ -163,7 +163,7 @@ int main(int argc, char *argv[]) {
                 current->UpdateSnapshotRecipe(cur_seg);
                 //l1_blocks += par_seg.segment_recipe_.size(); l1_size += par_seg.size_;	// stat l1
                 l1_blocks += cur_seg.segment_recipe_.size(); l1_size += cur_seg.size_;	// stat l1
-                LOG4CXX_INFO(ss_write_logger, "parent segment size: " << par_seg.size_
+                LOG4CXX_DEBUG(ss_write_logger, "parent segment size: " << par_seg.size_
                              << " current segment size: " << cur_seg.size_);
                 assert(par_seg.size_ == cur_seg.size_);
                 continue;

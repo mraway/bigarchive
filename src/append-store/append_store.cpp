@@ -116,7 +116,7 @@ bool PanguAppendStore::Read(const std::string& h, std::string* data)
 
     if (mCache->Find(handle, data))
     {
-        LOG4CXX_INFO(logger_, "Cache Hit in Store for Handle : " << handle.mChunkId << "," << handle.mIndex);
+        LOG4CXX_DEBUG(logger_, "Cache Hit in Store for Handle : " << handle.mChunkId << "," << handle.mIndex);
         return true;
     }
     
@@ -130,7 +130,7 @@ bool PanguAppendStore::Read(const std::string& h, std::string* data)
     TurnOnRead(p_chunk);
     bOK = p_chunk->Read(handle.mIndex, data);
 
-    LOG4CXX_INFO(logger_, "Store::Read : " << mRoot << " & mChunkId : " << handle.mChunkId << " & mIndex : " <<  handle.mIndex);
+    LOG4CXX_DEBUG(logger_, "Store::Read : " << mRoot << " & mChunkId : " << handle.mChunkId << " & mIndex : " <<  handle.mIndex);
     return bOK;
 }
 
@@ -147,14 +147,14 @@ void PanguAppendStore::Remove(const std::string& h)
         return ;
     }
     p_chunk->Remove(handle.mIndex);
-    LOG4CXX_INFO(logger_, "Store::Removed : " << mRoot << " & mChunkId : " << handle.mChunkId << " & mIndex : " <<  handle.mIndex);
+    LOG4CXX_DEBUG(logger_, "Store::Removed : " << mRoot << " & mChunkId : " << handle.mChunkId << " & mIndex : " <<  handle.mIndex);
 }
 
 void PanguAppendStore::Close() {
 	if(mAppend) {
 		Chunk* p_chunk = mCurrentAppendChunk.get();//LoadAppendChunk(); 
 		if(p_chunk != 0) {
-            LOG4CXX_INFO(logger_, "Close write chunk: " << p_chunk->GetID());
+            LOG4CXX_DEBUG(logger_, "Close write chunk: " << p_chunk->GetID());
             TurnOnWrite(p_chunk);
 			p_chunk->Close();
 		}
@@ -163,12 +163,12 @@ void PanguAppendStore::Close() {
 	std::map<ChunkIDType, ChunkPtr>::iterator chunk_iter;
 
 	for (chunk_iter = mChunkMap.begin(); chunk_iter != mChunkMap.end(); chunk_iter++) {
-		LOG4CXX_INFO(logger_, "Closing read chunk: " << chunk_iter->first);
+		LOG4CXX_DEBUG(logger_, "Closing read chunk: " << chunk_iter->first);
 		chunk_iter->second->Close();
 	}
  
 	for (chunk_iter = mDeleteChunkMap.begin(); chunk_iter != mDeleteChunkMap.end(); chunk_iter++) {
-  		LOG4CXX_INFO(logger_, "Closing delete chunk: " << chunk_iter->first);
+  		LOG4CXX_DEBUG(logger_, "Closing delete chunk: " << chunk_iter->first);
   		chunk_iter->second->Close();
  	}
 }
@@ -285,7 +285,7 @@ bool PanguAppendStore::ReadMetaInfo()
             THROW_EXCEPTION(AppendStoreWriteException, "Cannot open meta file for append " + e.ToString());
         }
     }
-    LOG4CXX_INFO(logger_, "Store::ReadMetaDataInfo()" );
+    LOG4CXX_TRACE(logger_, "Store::ReadMetaDataInfo()" );
     return false;
 }
 
@@ -313,7 +313,7 @@ void PanguAppendStore::WriteMetaInfo(const std::string& root, const StoreMetaDat
     {
         THROW_EXCEPTION(AppendStoreWriteException, e.ToString()+" Cannot generate .meta_ file");
     }
-	LOG4CXX_INFO(logger_, "Store::WroteMetaDataInfo()" );
+	LOG4CXX_TRACE(logger_, "Store::WroteMetaDataInfo()" );
 }
 
 void PanguAppendStore::AllocNextChunk()
@@ -355,7 +355,7 @@ Chunk* PanguAppendStore::LoadAppendChunk()
     {
         THROW_EXCEPTION(AppendStoreWriteException, "Cannot get valid chunk for append");
     }
-    LOG4CXX_INFO(logger_, "Store::LoadedAppendChunk" ); 
+    LOG4CXX_TRACE(logger_, "Store::LoadedAppendChunk" ); 
     return mCurrentAppendChunk.get();
 }
 
@@ -384,7 +384,7 @@ Chunk* PanguAppendStore::LoadRandomChunk(ChunkIDType id)
     mCurrentRandomChunk.reset(new Chunk(mRoot, id, mMeta.maxChunkSize, false, mCodec, mCache));
     assert(mCurrentRandomChunk.get());
     mChunkMap.insert(std::make_pair(id, mCurrentRandomChunk));
-    LOG4CXX_INFO(logger_, "Store::LoadedRandomChunk" );
+    LOG4CXX_TRACE(logger_, "Store::LoadedRandomChunk" );
     return mCurrentRandomChunk.get();
 }
 
@@ -404,7 +404,7 @@ Chunk* PanguAppendStore::LoadDeleteChunk(ChunkIDType id)
     mCurrentDeleteChunk.reset(new Chunk(mRoot, id));
     assert(mCurrentDeleteChunk.get());
     mDeleteChunkMap.insert(std::make_pair(id, mCurrentDeleteChunk));
-	LOG4CXX_INFO(logger_, "Store::LoadedDeleteChunk" );
+	LOG4CXX_TRACE(logger_, "Store::LoadedDeleteChunk" );
     return mCurrentDeleteChunk.get();
 }
 
@@ -467,7 +467,7 @@ void PanguAppendStore::CreateDirs(const std::string& root)
         LOG4CXX_DEBUG(logger_, "CreateDirectory : " << log_path);
     }
 
-	LOG4CXX_INFO(logger_, "Store::Directories Created" );
+	LOG4CXX_TRACE(logger_, "Store::Directories Created" );
 	
 }
 

@@ -77,7 +77,7 @@ void IndexVector::LoadFromFile(const std::string& fname)
   
     long file_size = FileSystemHelper::GetInstance()->GetSize(fname);
     if(file_size <= 0) {
-		LOG4CXX_INFO(logger_, "not reading index file, because size is : " << file_size);
+		LOG4CXX_WARN(logger_, "not reading index file, because size is : " << file_size);
     	return;
     }
     LOG4CXX_DEBUG(logger_, "reading index file: " << fname << ", size is : " << file_size);

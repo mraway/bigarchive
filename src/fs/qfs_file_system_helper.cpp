@@ -57,14 +57,14 @@ void QFSHelper::DestroyFileHelper(FileHelper* p_fh)
 bool QFSHelper::IsFileExists(string fname)
 {
 	bool value = kfsClient->Exists(fname.c_str());
-	LOG4CXX_INFO(logger_, "IsFileExists(" << fname << ") - " << value);
+	LOG4CXX_DEBUG(logger_, "IsFileExists(" << fname << ") - " << value);
     return value;
 }
 
 bool QFSHelper::IsDirectoryExists(string dirname)
 {
 	bool value = kfsClient->Exists(dirname.c_str());
-	LOG4CXX_INFO(logger_, "IsDirectoryExists(" << dirname << ") - " << value);
+	LOG4CXX_DEBUG(logger_, "IsDirectoryExists(" << dirname << ") - " << value);
     return value;
 }
 
@@ -72,7 +72,7 @@ long QFSHelper::GetSize(string fname)
 {
     KFS::KfsFileAttr kfsattr; 
     kfsClient->Stat(fname.c_str(), kfsattr); 
-    LOG4CXX_INFO(logger_, "getSize(" << fname << ") - " << kfsattr.fileSize);
+    LOG4CXX_DEBUG(logger_, "getSize(" << fname << ") - " << kfsattr.fileSize);
     return kfsattr.fileSize;
 }
 

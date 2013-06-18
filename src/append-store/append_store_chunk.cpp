@@ -53,7 +53,7 @@ void Chunk::LoadDeleteLog()
         mDeleteLogFH->Create();
     }
     mDeleteLogFH->Open();
-    LOG4CXX_INFO(logger_, "Chunk::LoadDeleteLog() Completed");
+    LOG4CXX_DEBUG(logger_, "Chunk::LoadDeleteLog() Completed");
 }
 
 void Chunk::CheckIfNew()
@@ -228,7 +228,7 @@ bool Chunk::Read(IndexType index, std::string* data)
     std::string buf;
     bool ret = ReadRaw(startOffset, buf);
     ret = ret && ExtractDataFromBlock(buf, index, data);
-    LOG4CXX_INFO(logger_, "Chunk::Read Completed");
+    LOG4CXX_DEBUG(logger_, "Chunk::Read Completed");
     return ret;
 }
 
@@ -269,7 +269,7 @@ bool Chunk::ExtractDataFromBlock(const std::string& buf, IndexType index, std::s
         }
         cachesharedptr->Insert(Handle(mChunkId, r.mIndex), r.mVal);
     } while(true);
-    LOG4CXX_INFO(logger_, "Chunk::ExtractDataFromBlock Completed");
+    LOG4CXX_DEBUG(logger_, "Chunk::ExtractDataFromBlock Completed");
     return ret;
 }
 
@@ -501,7 +501,7 @@ bool Chunk::Close()
         // mDeleteLogFH->Seek(0); // .reset();
     }
 
-    LOG4CXX_INFO(logger_, "Closed Current Chunk and its file helpers");
+    LOG4CXX_DEBUG(logger_, "Closed Current Chunk and its file helpers");
     return true;
 }
 

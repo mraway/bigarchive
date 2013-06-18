@@ -192,7 +192,7 @@ int QFSFileHelper::WriteData(char *buffer, size_t length) {
 int QFSFileHelper::Flush(char *buffer, size_t length) {
     int pos = Write(buffer, length);
     qfshelper->kfsClient->Sync(fd);
-    LOG4CXX_INFO(logger_, " calling tell instead of size in Flush : " << pos);
+    LOG4CXX_DEBUG(logger_, " calling tell instead of size in Flush : " << pos);
     return pos; 
 }
 

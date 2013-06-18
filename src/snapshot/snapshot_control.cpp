@@ -66,7 +66,7 @@ bool SnapshotControl::LoadSnapshotMeta()
 	int read_length = fh->GetNextLogSize();
 	char *data = new char[read_length];
 	fh->Read(data, read_length);
-    LOG4CXX_INFO(logger_, "Read " << read_length << " from " << ss_meta_pathname_);
+    LOG4CXX_DEBUG(logger_, "Read " << read_length << " from " << ss_meta_pathname_);
 
     stringstream buffer;
     buffer.write(data, read_length);
@@ -94,7 +94,7 @@ bool SnapshotControl::SaveSnapshotMeta()
 	stringstream buffer;
 	ss_meta_.Serialize(buffer);
     ss_meta_.SerializeRecipe(buffer);
-	LOG4CXX_INFO(logger_, "save snapshot meta, size is" << buffer.str().size());
+	LOG4CXX_DEBUG(logger_, "save snapshot meta, size is" << buffer.str().size());
     fh->Write((char *)buffer.str().c_str(), buffer.str().size());
 
     fh->Close();
@@ -123,7 +123,7 @@ bool SnapshotControl::LoadSegmentRecipe(SegmentMeta& sm, uint32_t idx)
     
     stringstream ss(data);
     sm.DeserializeRecipe(ss);
-    LOG4CXX_INFO(logger_, "Read segment meta : " << data.size() << " bytes, " 
+    LOG4CXX_DEBUG(logger_, "Read segment meta : " << data.size() << " bytes, " 
                  << sm.segment_recipe_.size() << " items");
     return true;
 }
@@ -180,7 +180,7 @@ bool SnapshotControl::InitBloomFilters(uint64_t snapshot_size)
         fh->Create();
         stringstream buffer;
         vm_meta_.Serialize(buffer);
-        LOG4CXX_INFO(logger_, "VM meta size " << buffer.str().size());
+        LOG4CXX_DEBUG(logger_, "VM meta size " << buffer.str().size());
         fh->WriteData((char *)buffer.str().c_str(), buffer.str().size());
         fh->Close();
         FileSystemHelper::GetInstance()->DestroyFileHelper(fh);
@@ -192,12 +192,12 @@ bool SnapshotControl::InitBloomFilters(uint64_t snapshot_size)
         long read_length = FileSystemHelper::GetInstance()->GetSize(vm_meta_pathname_);
         char *data = new char[read_length];
         fh->Read(data, read_length);
-        LOG4CXX_INFO(logger_, "Read " << read_length << " from file");
+        LOG4CXX_DEBUG(logger_, "Read " << read_length << " from file");
 
         stringstream buffer;
         buffer.write(data, read_length);
         vm_meta_.Deserialize(buffer);
-        LOG4CXX_INFO(logger_, "VM meta loaded: " 
+        LOG4CXX_DEBUG(logger_, "VM meta loaded: " 
                      << vm_meta_.filter_num_items_ << " " 
                      << vm_meta_.filter_num_funcs_ << ""
                      << vm_meta_.filter_fp_rate_);
@@ -246,7 +246,7 @@ bool SnapshotControl::SaveBloomFilter(BloomFilter<Checksum>* pbf, const string& 
 
 	stringstream buffer;
 	pbf->Serialize(buffer);
-	LOG4CXX_INFO(logger_, "Bloom filter primary size " << buffer.str().size());
+	LOG4CXX_DEBUG(logger_, "Bloom filter primary size " << buffer.str().size());
     fh->Write((char *)buffer.str().c_str(), buffer.str().size());
 
     fh->Close();
@@ -278,12 +278,12 @@ bool SnapshotControl::LoadBloomFilter(BloomFilter<Checksum>* pbf, const string& 
 	int read_length = fh->GetNextLogSize();
 	char *data = new char[read_length];
 	fh->Read(data, read_length);
-    LOG4CXX_INFO(logger_, "Read " << read_length << " from file " << bf_name);
+    LOG4CXX_DEBUG(logger_, "Read " << read_length << " from file " << bf_name);
 
     stringstream buffer;
     buffer.write(data, read_length);
     pbf->Deserialize(buffer);
-    LOG4CXX_INFO(logger_, "Bloom filter loaded: " << bf_name);
+    LOG4CXX_DEBUG(logger_, "Bloom filter loaded: " << bf_name);
 
 	fh->Close();
 	FileSystemHelper::GetInstance()->DestroyFileHelper(fh);
