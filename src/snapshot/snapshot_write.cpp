@@ -16,6 +16,7 @@
 #include "snapshot_control.h"
 #include "snapshot_types.h"
 #include "cds_index.h"
+#include "../common/timer.h"
 #include <execinfo.h>
 #include <signal.h>
 
@@ -134,7 +135,6 @@ int main(int argc, char *argv[]) {
         parent->LoadSnapshotMeta();
     }
 
-    // 3. for every loaded segment, do
     uint64_t l1_blocks = 0, l1_size = 0, l2_blocks = 0, l2_size = 0, 
         l3_size = 0, l3_blocks = 0, new_blocks = 0, new_size = 0, tot_blocks = 0, tot_size = 0;
     uint64_t last_pos = 0;
@@ -148,17 +148,22 @@ int main(int argc, char *argv[]) {
     bool* results = new bool[BATCH_QUERY_BUFFER_SIZE];
     BlockMeta** blks_to_query = new BlockMeta* [BATCH_QUERY_BUFFER_SIZE];
     uint64_t* offsets = new uint64_t[BATCH_QUERY_BUFFER_SIZE];
+    // 3. for every loaded segment, do
+    TimerPool::Start("SnapshotWrite");
     while (ds.GetSegment(cur_seg)) {
         // data generator does not calculate the offset of segment
         last_pos += cur_seg.size_;
         cur_seg.end_offset_ = last_pos;
 
         num_queries = 0;
+        TimerPool::Start("UpdateFilter");
         current->UpdateBloomFilters(cur_seg);
+        TimerPool::Stop("UpdateFilter");
         tot_blocks += cur_seg.segment_recipe_.size(); tot_size += cur_seg.size_;	// stat total
         if (has_parent && parent->LoadSegmentRecipe(par_seg, seg_id++)) {
             //  a) first compare parent segment meta by cksum
             if (cur_seg.cksum_ == par_seg.cksum_) {
+                TimerPool::Start("L1");
                 cur_seg.handle_ = par_seg.handle_;
                 current->UpdateSnapshotRecipe(cur_seg);
                 //l1_blocks += par_seg.segment_recipe_.size(); l1_size += par_seg.size_;	// stat l1
@@ -166,10 +171,12 @@ int main(int argc, char *argv[]) {
                 LOG4CXX_DEBUG(ss_write_logger, "parent segment size: " << par_seg.size_
                              << " current segment size: " << cur_seg.size_);
                 assert(par_seg.size_ == cur_seg.size_);
+                TimerPool::Stop("L1");
                 continue;
             }
 
             //  b) then compare block by hash
+            TimerPool::Start("L2");
             par_seg.BuildIndex();
             for (size_t i = 0; i < cur_seg.segment_recipe_.size(); ++i)
             {
@@ -185,33 +192,39 @@ int main(int argc, char *argv[]) {
                     blks_to_query[num_queries++] = &cur_seg.segment_recipe_[i];
                 }
             }
+            TimerPool::Stop("L2");
         }
         else {
             // if there's no parent, then we can only ask CDS
+            TimerPool::Start("L2");
             for (size_t i = 0; i < cur_seg.segment_recipe_.size(); ++i) {
                 cksums[num_queries]= cur_seg.segment_recipe_[i].cksum_;
                 blks_to_query[num_queries++] = &cur_seg.segment_recipe_[i];
             }
+            TimerPool::Stop("L2");
         }
         //  c) check with cds
+        TimerPool::Start("L3AndWrite");
         cds_index.BatchGet(cksums, num_queries, results, offsets);
         for (int i = 0; i < num_queries; i++) {
             if (results[i] == true) {
                 // if found in CDS, it should return the data offset in CDS data file
                 blks_to_query[i]->handle_ = offsets[i];
                 blks_to_query[i]->flags_ |= IN_CDS;
-                l3_blocks += 1; l3_size += blks_to_query[i]->size_;	// stat l3
+                l3_blocks += 1; l3_size += blks_to_query[i]->size_;	// stat of l3
             }
             //  d) write new data to append store
             else {
+                TimerPool::Start("WriteData");
                 current->SaveBlockData(*blks_to_query[i]);
+                TimerPool::Stop("WriteData");
                 new_blocks += 1; new_size += blks_to_query[i]->size_;	// stat final write
             }
         }
-        
+        TimerPool::Stop("L3AndWrite");
         //  e) write segment recipe
         // to make segment meta data placed sequencially on disk, we buffer it and write in batch mode
-        /*
+        TimerPool::Start("WriteSegMeta");
         seg_meta_buf.push_back(cur_seg);
         if (seg_meta_buf.size() >= DF_MAX_PENDING) {
             for (size_t i = 0; i < seg_meta_buf.size(); i++) {
@@ -219,22 +232,31 @@ int main(int argc, char *argv[]) {
                 current->UpdateSnapshotRecipe(seg_meta_buf[i]);
             }
             seg_meta_buf.clear();
-            }*/
-        current->SaveSegmentRecipe(cur_seg);
-        current->UpdateSnapshotRecipe(cur_seg);
+        }
+        // current->SaveSegmentRecipe(cur_seg);
+        // current->UpdateSnapshotRecipe(cur_seg);
+        TimerPool::Stop("WriteSegMeta");
     }
 
     // 4. write snapshot meta to qfs
+    TimerPool::Start("WriteSSMeta");
     current->SaveSnapshotMeta();
+    TimerPool::Stop("WriteSSMeta");
+    TimerPool::Start("WriteFilters");
     current->SaveBloomFilters();
+    TimerPool::Stop("WriteFilters");
 	pas->Flush();
 	pas->Close();
+
+    TimerPool::Stop("SnapshotWrite");
 
     LOG4CXX_INFO(ss_write_logger, "total: " << tot_blocks << " " << tot_size);
     LOG4CXX_INFO(ss_write_logger, "l1: " << l1_blocks << " " << l1_size);
     LOG4CXX_INFO(ss_write_logger, "l2: " << l2_blocks << " " << l2_size);
     LOG4CXX_INFO(ss_write_logger, "l3: " << l3_blocks << " " << l3_size);
     LOG4CXX_INFO(ss_write_logger, "new: " << new_blocks << " " << new_size);
+
+    TimerPool::PrintAll();
 
     delete pas;
     delete[] cksums;
