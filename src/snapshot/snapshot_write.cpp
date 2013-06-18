@@ -196,15 +196,15 @@ int main(int argc, char *argv[]) {
         }
         else {
             // if there's no parent, then we can only ask CDS
-            TimerPool::Start("L2");
+            TimerPool::Start("L3AndWriteData");
             for (size_t i = 0; i < cur_seg.segment_recipe_.size(); ++i) {
                 cksums[num_queries]= cur_seg.segment_recipe_[i].cksum_;
                 blks_to_query[num_queries++] = &cur_seg.segment_recipe_[i];
             }
-            TimerPool::Stop("L2");
+            TimerPool::Stop("L3AndWriteData");
         }
         //  c) check with cds
-        TimerPool::Start("L3AndWrite");
+        TimerPool::Start("L3AndWriteData");
         cds_index.BatchGet(cksums, num_queries, results, offsets);
         for (int i = 0; i < num_queries; i++) {
             if (results[i] == true) {
@@ -221,7 +221,7 @@ int main(int argc, char *argv[]) {
                 new_blocks += 1; new_size += blks_to_query[i]->size_;	// stat final write
             }
         }
-        TimerPool::Stop("L3AndWrite");
+        TimerPool::Stop("L3AndWriteData");
         //  e) write segment recipe
         // to make segment meta data placed sequencially on disk, we buffer it and write in batch mode
         TimerPool::Start("WriteSegMeta");
