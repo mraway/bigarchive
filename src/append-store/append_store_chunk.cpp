@@ -632,7 +632,7 @@ OffsetType Chunk::AppendRaw(const IndexType& index, const uint32_t numentry, con
             //LOG4CXX_DEBUG(logger_, "flush -- data wrote ------- " << ssref);
             LOG4CXX_DEBUG(logger_, "flush -- data size wrote -- " << ssref.size());
             LOG4CXX_DEBUG(logger_, "flush return value is ----- " << fos);
-            LOG4CXX_WARN(logger_, "Data Flushed : " << ssref.size());
+            LOG4CXX_DEBUG(logger_, "Data Flushed : " << ssref.size());
             // cout << endl << "Compression and Flush took " << t.stop() << " ms";
             result = fos;
             break;
