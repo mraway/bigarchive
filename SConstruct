@@ -11,9 +11,11 @@ env.SConsignFile()
 if ARGUMENTS.get('mode', 'debug') == 'release':
     print "*** Release build ***"
     env['CCFLAGS'] = ['-O3', '-DNDEBUG']
+    env['PROJ_MODE'] = 'release'
 else:
     print "*** Debug build ***"
     env['CCFLAGS'] = ['-g', '-Wall', '-DDEBUG']
+    env['PROJ_MODE'] = 'debug'
 #    env['CCFLAGS'] = ['-g', '-Wall', '-DDEBUG', '-pg']
 #    env['LINKFLAGS'] = ['-pg']
 
@@ -33,3 +35,4 @@ env.Append(LIBPATH = env['PROJECT_LIB_PATH'])
 Export('env')
 
 SConscript('build/SConscript')
+SConscript('config/SConscript')
