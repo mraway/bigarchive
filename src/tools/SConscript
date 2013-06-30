@@ -11,7 +11,7 @@ local_env.Install(local_env['PROJECT_BIN_PATH'], prog)
 prog = local_env.Program(target = 'cds_distiller', source = ['cds_distiller.cpp'], LIBS = env['PROJ_LIBS'] + env['BASIC_LIBS'])
 local_env.Install(local_env['PROJECT_BIN_PATH'], prog)
 
-prog = local_env.Program(target = 'cds_distiller_nolocal', source = ['cds_distiller_nolocal.cpp'], LIBS = env['PROJ_LIBS'] + env['BASIC_LIBS'])
+prog = local_env.Program(target = 'cds_sim', source = ['cds_sim.cpp'], LIBS = env['PROJ_LIBS'] + env['BASIC_LIBS'])
 local_env.Install(local_env['PROJECT_BIN_PATH'], prog)
 
 prog = local_env.Program(target = 'hash_hit_length', source = ['hash_hit_length.cpp'], LIBS = env['PROJ_LIBS'] + env['BASIC_LIBS'] + env['LOG_LIBS'])
