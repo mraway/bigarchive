@@ -66,7 +66,7 @@ int main(int argc, char **argv)
 			cout << bl.ToString();
 
 		if (bl.size_ == 0 || bl.size_ > 16384) {
-			cout << "corrupted block info: " << bl.ToString();
+			cout << "corrupted block info: " << bl.ToString() << endl;
 		}
 	}
 	cout << argv[1] << ": " <<

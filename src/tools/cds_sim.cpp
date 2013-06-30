@@ -54,8 +54,11 @@ int main(int argc, char** argv)
     while (blk.FromStream(cds_ifs)) {
         cds.push_back(blk);
     }
-    sort(cds.begin(), cds.end());
     cds_ifs.close();
+    sort(cds.begin(), cds.end());
+    cout << "CDS file " << cds_name 
+         << " is loaded and sorted, it has " 
+         << cds.size() << " objects" << endl;
 
     while (vm_ifs.good()) {
         // open vm's snapshot list
@@ -85,33 +88,41 @@ int main(int argc, char** argv)
         while (!finished) {
             for (int j = 0; j < num_ss; j++) {
                 segs[j].LoadFixSize(*trace_inputs[j]);
-                sort(segs[j].blocklist_.begin(), segs[j].blocklist_.end());
                 raw_blocks += segs[j].blocklist_.size();
                 raw_size += segs[j].size_;
                 // level 1
                 if (j > 0 && segs[j] == segs[j-1]) {
-                    continue;
+                    // detected at level 1
                 }
-                // level 2
-                after_l1_blocks += segs[j].blocklist_.size();
-                after_l1_size += segs[j].size_;;
-                for (vector<Block>::iterator it = segs[j].blocklist_.begin(); 
-                     it != segs[j].blocklist_.end(); ++it) {
-                    if (j != 0 
-                        && binary_search(segs[j-1].blocklist_.begin(), 
-                                         segs[j-1].blocklist_.end(), 
-                                         *it)) {
-                        // detected at level 2
-                        continue;
+                else {
+                    // level 2
+                    after_l1_blocks += segs[j].blocklist_.size();
+                    after_l1_size += segs[j].size_;;
+                    // sort previous segment
+                    if (j != 0) {
+                        sort(segs[j-1].blocklist_.begin(), segs[j-1].blocklist_.end());
                     }
-                    // level 3
-                    after_l2_blocks += 1;
-                    after_l2_size += it->size_;
-                    if (binary_search(cds.begin(), cds.end(), *it)) {
-                        continue;
+                    for (vector<Block>::iterator it = segs[j].blocklist_.begin(); 
+                         it != segs[j].blocklist_.end(); ++it) {
+                        if (j != 0 
+                            && binary_search(segs[j-1].blocklist_.begin(), 
+                                             segs[j-1].blocklist_.end(), 
+                                             *it)) {
+                            // detected at level 2
+                        }
+                        else {
+                            // level 3
+                            after_l2_blocks += 1;
+                            after_l2_size += it->size_;
+                            if (binary_search(cds.begin(), cds.end(), *it)) {
+                                // detected at level 3
+                            }
+                            else {
+                                after_l3_blocks += 1;
+                                after_l3_size += it->size_;
+                            }
+                        }
                     }
-                    after_l3_blocks += 1;
-                    after_l3_size += it->size_;
                 }
             }
             finished = true;
@@ -123,15 +134,15 @@ int main(int argc, char** argv)
         }
         // clean up
         delete[] segs;
-        for (int j = 0; j < trace_inputs.size(); ++j) {
+        for (size_t j = 0; j < trace_inputs.size(); ++j) {
             trace_inputs[j]->close();
             delete trace_inputs[j];
         }
 
         cout << "raw: " << " blocks: " << raw_blocks << " size: " << raw_size << endl;
         cout << "after l1 dedup: " << " blocks: " << after_l1_blocks << " size: " << after_l1_size << endl;
-        cout << "after l2 dedup: " << " blocks: " << after_l2_blocks << " size: " << after_l3_size << endl;
-        cout << "after l3 dedup: " << " blocks: " << after_l2_blocks << " size: " << after_l3_size << endl;
+        cout << "after l2 dedup: " << " blocks: " << after_l2_blocks << " size: " << after_l2_size << endl;
+        cout << "after l3 dedup: " << " blocks: " << after_l3_blocks << " size: " << after_l3_size << endl;
     }
     vm_ifs.close();
     return 0;
