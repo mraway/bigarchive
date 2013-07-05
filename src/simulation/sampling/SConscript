@@ -1,0 +1,14 @@
+Import('env')
+
+local_env = env.Clone()
+
+local_env['SIM_BIN_PATH'] = local_env['PROJECT_BIN_PATH'] + '/simulation'
+
+sampling = local_env.Program(target = 'sampling', source = ['lru_cache.cpp', 'sampling.cpp'])
+local_env.Install(local_env['SIM_BIN_PATH'], sampling)
+
+freq = local_env.Program(target = 'freq', source = ['lru_cache.cpp', 'freq.cpp'])
+local_env.Install(local_env['SIM_BIN_PATH'], freq)
+
+theory = local_env.Program(target = 'theory', source = ['theory.cpp'])
+local_env.Install(local_env['SIM_BIN_PATH'], theory)

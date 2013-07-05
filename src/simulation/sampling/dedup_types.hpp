@@ -30,8 +30,6 @@ using namespace std;
 
 typedef uint8_t Checksum[CKSUM_LEN];	// checksum type
 
-enum FileSystemType {LOCAL = 0, PANGU = 1, KVFILE = 2};	// file system type
-
 static void pr_msg(const char *fmt, ...)
 {
 	va_list ap;
