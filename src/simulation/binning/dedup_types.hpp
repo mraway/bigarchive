@@ -141,24 +141,53 @@ public:
 
 };
 
+class Hash {
+    private:
+    Checksum cksum_;
+    public:
+    Hash() {
+    }
+    Hash(Block& blk) {
+        memcpy(cksum_, blk.cksum_, CKSUM_LEN * sizeof(uint8_t));
+    }
+    Hash(const Hash& h)
+    {
+        memcpy(cksum_, h.cksum_, CKSUM_LEN * sizeof(uint8_t));
+    }
+    void setHash(Block& blk) {
+        memcpy(cksum_, blk.cksum_, CKSUM_LEN * sizeof(uint8_t));
+    }
+    bool operator==(const Hash& other) const {
+        return memcmp(this->cksum_, other.cksum_, CKSUM_LEN) == 0;
+    }
+
+    bool operator!=(const Hash& other) const {
+        return memcmp(this->cksum_, other.cksum_, CKSUM_LEN) != 0;
+    }
+
+    bool operator<(const Hash& other) const {
+        return memcmp(this->cksum_, other.cksum_, CKSUM_LEN) < 0;
+    }
+};
+
 class Segment {
 public:
 	std::vector<Block> blocklist_;
-	//uint32_t min_idx_;	// location of min-hash block in blocklist_
+	uint32_t min_idx_;	// location of min-hash block in blocklist_
 	uint32_t size_;		// overall number of bytes
-	//Checksum cksum_;	// segment checksum is the SHA-1 of all block hash values
+	Checksum cksum_;	// segment checksum is the SHA-1 of all block hash values
 
 private:
 	//SHA_CTX *ctx_;
 
 public:
 	Segment() {
-		//min_idx_ = 0;
+		min_idx_ = 0;
 		size_ = 0;
 	}
 
 	void Init() {
-		//min_idx_ = 0;
+		min_idx_ = 0;
 		size_ = 0;
 		//ctx_ = new SHA_CTX;
 		//SHA1_Init(ctx_);
@@ -170,22 +199,22 @@ public:
 		blocklist_.push_back(blk);
 		size_ += blk.size_;
 		//SHA1_Update(ctx_, blk.cksum_, CKSUM_LEN);
-		//if (blk.cksum_ < blocklist_[min_idx_].cksum_)
-			//min_idx_ = blocklist_.size() - 1;
+		if (blk.cksum_ < blocklist_[min_idx_].cksum_)
+			min_idx_ = blocklist_.size() - 1;
 	}
 
     void Clear() 
     {
-        //min_idx_ = 0;
+        min_idx_ = 0;
         size_ = 0;
         blocklist_.clear();
     }
 
-	//void Final() 
-    //{
+	void Final() 
+    {
 		//SHA1_Final(cksum_, ctx_);
 		//delete ctx_;
-	//}
+	}
 
 	uint64_t GetOffset() 
     {
@@ -200,19 +229,19 @@ public:
     }
 
 	// minhash value can be used this way
-	//uint8_t* GetMinHash() 
-    //{
-		//return blocklist_[min_idx_].cksum_;
-	//}
+	uint8_t* GetMinHash() 
+    {
+		return blocklist_[min_idx_].cksum_;
+	}
 
     // put minhash into a string so other stl containers can use it
-    //string GetMinHashString() const
-    //{
-        //string s;
-        //s.resize(CKSUM_LEN);
-        //s.assign((char *)blocklist_[min_idx_].cksum_, CKSUM_LEN);
-        //return s;
-    //}
+    string GetMinHashString() const
+    {
+        string s;
+        s.resize(CKSUM_LEN);
+        s.assign((char *)blocklist_[min_idx_].cksum_, CKSUM_LEN);
+        return s;
+    }
 
     void SortByHash()
     {
@@ -248,77 +277,79 @@ public:
                 return false;
         }
 
-        //Final();
+        Final();
         return true;
     }
 
-	//bool operator==(const Segment& other) const {
-		//return memcmp(this->cksum_, other.cksum_, CKSUM_LEN) == 0;
-	//}
-        bool operator==(const Segment& other) const {
-            if (blocklist_.size() != other.blocklist_.size())
-                return false;
-            for(int i = 0; i < blocklist_.size();i++)
-            {
-                if (blocklist_[i] != other.blocklist_[i])
-                    return false;
-            }
-            return true;
-        }
+	bool operator==(const Segment& other) const {
+		return memcmp(this->cksum_, other.cksum_, CKSUM_LEN) == 0;
+	}
 };
 
-//class Bin {
-//private:
-    //std::vector<Block> blocklist_;
-    //uint32_t num_segments_;
-    //string min_hash_;
-    //uint32_t num_blocks_;
-    //uint32_t num_dedup_blocks_;
-    //uint32_t size_;
-    //uint32_t dedup_size_;
-//
-//public:
-    //Bin()
-    //{
-        //num_segments_ = 0;
-        //num_blocks_ = 0;
-        //num_dedup_blocks_ = 0;
-        //size_ = 0;
-        //dedup_size_ = 0;
-        //blocklist_.reserve(200);
-    //}
-//
-    //void AddSegment(const Segment& seg)
-    //{
-        //blocklist_.insert(blocklist_.end(), seg.blocklist_.begin(), seg.blocklist_.end());
-        //num_segments_ ++;
-        //min_hash_ = seg.GetMinHashString();
-    //}
-//
-    //void Deduplication()
-    //{
-        //sort(blocklist_.begin(), blocklist_.end());
-        //for (uint32_t i = 0; i < blocklist_.size(); i++) {
-            //num_blocks_ ++;
-            //size_ += blocklist_[i].size_;
-            //dedup_size_ += blocklist_[i].size_;
-            //num_dedup_blocks_ ++;
-            //while ((i < blocklist_.size() - 1) && (blocklist_[i + 1] == blocklist_[i])) {
-                //i ++;
-                //num_blocks_ ++;
-                //size_ += blocklist_[i].size_;
-            //}
-        //}
-    //}
-//
-    //string ToString()
-    //{
-        //stringstream ss;
-        //ss << "raw: " << num_segments_ << " segments, " << num_blocks_ << " blocks, "
-           //<< size_ << " bytes. " << "dedup: " << num_dedup_blocks_ << " blocks, "
-           //<< dedup_size_ << " bytes.";
-        //return ss.str();
-    //}
-//};
+class Bin {
+private:
+    uint64_t num_segments_;
+    string min_hash_;
+    uint64_t num_blocks_;
+    uint64_t size_;
+    uint64_t dedup_size_;
+    std::map<Hash,int> block_counts_;
+
+public:
+    Bin()
+    {
+        num_segments_ = 0;
+        num_blocks_ = 0;
+        size_ = 0;
+        dedup_size_ = 0;
+    }
+
+    void AddSegment(Segment& seg)
+    {
+        std::vector<Block>::iterator iter;
+        Hash h;
+        for(iter = seg.blocklist_.begin();iter != seg.blocklist_.end(); ++iter) {
+            num_blocks_++;
+            uint64_t segsize = (uint64_t)((*iter).size_);
+            size_ += segsize;
+            h.setHash(*iter);
+            block_counts_[h]++;
+            if (block_counts_[h] == 1) {
+                dedup_size_ += segsize;
+            }
+        }
+        num_segments_++;
+        min_hash_ = seg.GetMinHashString();
+    }
+
+    uint64_t getTotalBlocks() {
+        return num_blocks_;
+    }
+
+    uint64_t getDedupBlocks() {
+        return block_counts_.size();
+    }
+
+    uint64_t getTotalSize() {
+        return size_;
+    }
+
+    uint64_t getDedupSize() {
+        return dedup_size_;
+    }
+
+    uint64_t getTotalSegments() {
+        return num_segments_;
+    }
+
+    string ToString()
+    {
+        stringstream ss;
+        ss << "raw: " << num_segments_ << " segments, " << num_blocks_ << " blocks, "
+           << size_ << " bytes. " << "dedup: " << block_counts_.size() << " blocks, "
+           << dedup_size_ << " bytes.";
+        return ss.str();
+    }
+};
 
 #endif /* _DEDUP_TYPES_H_ */

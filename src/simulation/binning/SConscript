@@ -1,0 +1,8 @@
+Import('env')
+
+local_env = env.Clone()
+
+local_env['BIN_BIN_PATH'] = local_env['PROJECT_BIN_PATH'] + '/binning'
+
+binning = local_env.Program(target = 'binning', source = ['binning.cpp'])
+local_env.Install(local_env['BIN_BIN_PATH'], binning)
