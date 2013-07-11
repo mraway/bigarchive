@@ -10,19 +10,19 @@
 
 using namespace std;
 
+    uint64_t raw_blocks = 0;
+    uint64_t raw_size = 0;
+    uint64_t total_blocks = 0;
+    uint64_t total_size = 0;
+    uint64_t dedup_size = 0;
+    uint64_t dedup_blocks = 0;
+
 struct CdsCount {
     uint64_t total_size;
     uint64_t num_blocks;
 
     CdsCount() {total_size = 0; num_blocks = 0;}
 };
-
-uint64_t raw_blocks = 0;
-uint64_t raw_size = 0;
-uint64_t total_blocks = 0;
-uint64_t total_size = 0;
-uint64_t dedup_size = 0;
-uint64_t dedup_blocks = 0;
 
 void usage(char* progname)
 {
@@ -45,8 +45,8 @@ void analysis_cds(map<Block, uint32_t>& global_index, const string& cds_name, bo
     }
 
     // calculate the dedup size
-    dedup_size = 0;
-    dedup_blocks = 0;
+    //dedup_size = 0;
+    //dedup_blocks = 0;
     for (rit = cds_counter.rbegin(); rit != cds_counter.rend(); rit++) {
         dedup_blocks += rit->second.num_blocks;
         dedup_size += rit->second.total_size;
@@ -95,7 +95,7 @@ void analysis_cds(map<Block, uint32_t>& global_index, const string& cds_name, bo
         for (int i = 0; i < 5; i++) {
             stringstream ss;
             ss << cds_name << "." << setfill('0') << setw(3) << (i+1);
-            cds_output[i].open(ss.str().c_str(), ios::out | ios::binary | ios::trunc);
+            cds_output[i].open(ss.str().c_str(), ios::out | ios::binary | ios::app);
         }
 
         for (it = global_index.begin(); it != global_index.end(); ++ it) {
@@ -137,81 +137,125 @@ int main(int argc, char** argv)
     }
     bool localized_dedup = true;
 
-    // build the global index with counter
-    map<Block, uint32_t> global_index;
-    map<Block, uint32_t>::iterator it;
-    string vm_fname;
-    ifstream vm_ifs;
-    vm_ifs.open(list_fname.c_str(), ios::in);
-    while (vm_ifs.good()) {
-        // open vm's snapshot list
-        std::getline(vm_ifs, vm_fname);
-        if (vm_fname.length() == 0) {
-            continue;
-        }
-        ifstream ss_ifs(vm_fname.c_str(), ios::in);
+    //clear the cds files
+    for (int i = 0; i < 5; i++) {
+        stringstream ss;
+        ss << cds_name << "." << setfill('0') << setw(3) << (i+1);
+        ofstream cds_output;
+        cds_output.open(ss.str().c_str(), ios::out | ios::binary | ios::trunc);
+        cds_output.close();
+    }
+    unsigned int partition_count = 16;
+    unsigned int partition_index;
 
-        // open all the snapshots for that VM
-        string ss_fname;
-        vector<ifstream*> trace_inputs;
-        while (ss_ifs.good()) {
-            std::getline(ss_ifs, ss_fname);
-            if (ss_fname.length() == 0) {
+    //loop through each partition
+    for(partition_index = 0; partition_index < partition_count; partition_index++) {
+        cout << "Starting Partition " << (partition_index+1) << "/" << partition_count << endl;
+
+        // build the global index with counter
+        map<Block, uint32_t> global_index;
+        map<Block, uint32_t>::iterator it;
+        string vm_fname;
+        ifstream vm_ifs;
+        vm_ifs.open(list_fname.c_str(), ios::in);
+        while (vm_ifs.good()) {
+            // open vm's snapshot list
+            std::getline(vm_ifs, vm_fname);
+            if (vm_fname.length() == 0) {
                 continue;
             }
-            string trace_fname = fprefix + ss_fname + fsuffix;
-            trace_inputs.push_back(new ifstream(trace_fname.c_str(), ios::in | ios::binary));
-        }
-        
-        // dedup each snapshot with its parent, put new blocks into gloabl index
-        int num_ss = trace_inputs.size();
-        Segment* segs = new Segment[num_ss];
-        cout << "processing " << num_ss << " snapshots in " << vm_fname << endl;
-        bool finished = false;
-        while (!finished) {
-            for (int j = 0; j < num_ss; j++) {
-                segs[j].LoadFixSize(*trace_inputs[j]);
-                sort(segs[j].blocklist_.begin(), segs[j].blocklist_.end());
-                raw_blocks += segs[j].blocklist_.size();
-                raw_size += segs[j].size_;
-                // level 1
-                if (j > 0 && localized_dedup && segs[j] == segs[j-1]) {
+            ifstream ss_ifs(vm_fname.c_str(), ios::in);
+
+            // open all the snapshots for that VM
+            string ss_fname;
+            vector<ifstream*> trace_inputs;
+            while (ss_ifs.good()) {
+                std::getline(ss_ifs, ss_fname);
+                if (ss_fname.length() == 0) {
                     continue;
                 }
-                // level 2
-                for (vector<Block>::iterator it = segs[j].blocklist_.begin(); 
-                     it != segs[j].blocklist_.end(); ++it) {
-                    if (j == 0 || !localized_dedup) {
-                        global_index[*it] += 1;
-                        total_size += it->size_;
-                        total_blocks += 1;
+                string trace_fname = fprefix + ss_fname + fsuffix;
+                trace_inputs.push_back(new ifstream(trace_fname.c_str(), ios::in | ios::binary));
+            }
+            
+            // dedup each snapshot with its parent, put new blocks into gloabl index
+            int num_ss = trace_inputs.size();
+            Segment* segs = new Segment[num_ss];
+            cout << "processing " << num_ss << " snapshots in " << vm_fname << endl;
+            bool finished = false;
+            while (!finished) {
+                for (int j = 0; j < num_ss; j++) {
+                    segs[j].LoadFixSize(*trace_inputs[j]);
+                    sort(segs[j].blocklist_.begin(), segs[j].blocklist_.end());
+                    //these two now handled within the partitions
+                    //raw_blocks += segs[j].blocklist_.size();
+                    //raw_size += segs[j].size_;
+                    // level 1
+                    if (j > 0 && localized_dedup && segs[j] == segs[j-1]) {
+                        continue;
                     }
-                    else {
-                        if (!binary_search(segs[j-1].blocklist_.begin(), segs[j-1].blocklist_.end(), *it)) {
-                            global_index[*it] += 1;
-                            total_size += it->size_;
-                            total_blocks += 1;
+                    // level 2
+                    for (vector<Block>::iterator it = segs[j].blocklist_.begin(); 
+                         it != segs[j].blocklist_.end(); ++it) {
+                        //only deal with a block it it is in the current partition
+                        if (((*it).cksum_.First4Bytes()) % partition_count == partition_index) {
+                            raw_blocks++;
+                            raw_size += (*it).size_;
+                            if (j == 0 || !localized_dedup) {
+                                global_index[*it] += 1;
+                                total_size += it->size_;
+                                total_blocks += 1;
+                            }
+                            else {
+                                if (!binary_search(segs[j-1].blocklist_.begin(), segs[j-1].blocklist_.end(), *it)) {
+                                    global_index[*it] += 1;
+                                    total_size += it->size_;
+                                    total_blocks += 1;
+                                }
+                            }
                         }
                     }
                 }
-            }
-            finished = true;
-            for (int j = 0; j < num_ss; j++) {
-                if (segs[j].blocklist_.size() != 0) {
-                    finished = false;
+                finished = true;
+                for (int j = 0; j < num_ss; j++) {
+                    if (segs[j].blocklist_.size() != 0) {
+                        finished = false;
+                    }
                 }
             }
+            // clean up
+            delete[] segs;
+            for (unsigned int j = 0; j < trace_inputs.size(); ++j) {
+                trace_inputs[j]->close();
+                delete trace_inputs[j];
+            }
+            analysis_cds(global_index, cds_name);
+            //cout << "Current analysis: " << endl;
+            //cout << "raw:" << endl;
+            //cout << "blocks: " << raw_blocks << endl;
+            //cout << "size: " << raw_size / float(1024*1024*1024) << " GB" << endl;
+            //cout << "after localized dedup: " << endl;
+            //cout << "blocks: " << total_blocks << endl;
+            //cout << "size: " << total_size / float(1024*1024*1024) << " GB" << endl;
+            //cout << "after complete dedup:" << endl;
+            //cout << "blocks: " << dedup_blocks << endl;
+            //cout << "size: " << dedup_size / float(1024*1024*1024) << " GB" << endl;
         }
-        // clean up
-        delete[] segs;
-        for (int j = 0; j < trace_inputs.size(); ++j) {
-            trace_inputs[j]->close();
-            delete trace_inputs[j];
-        }
-        analysis_cds(global_index, cds_name);
+        vm_ifs.close();
+        analysis_cds(global_index, cds_name, true);
+        cout << "End-of-Partition Analysis: " << endl;
+        cout << "raw:" << endl;
+        cout << "blocks: " << raw_blocks << endl;
+        cout << "size: " << raw_size / float(1024*1024*1024) << " GB" << endl;
+        cout << "after localized dedup: " << endl;
+        cout << "blocks: " << total_blocks << endl;
+        cout << "size: " << total_size / float(1024*1024*1024) << " GB" << endl;
+        cout << "after complete dedup:" << endl;
+        cout << "blocks: " << dedup_blocks << endl;
+        cout << "size: " << dedup_size / float(1024*1024*1024) << " GB" << endl;
     }
-    vm_ifs.close();
 
+    cout << "Final Analysis: " << endl;
     cout << "raw:" << endl;
     cout << "blocks: " << raw_blocks << endl;
     cout << "size: " << raw_size / float(1024*1024*1024) << " GB" << endl;
@@ -221,8 +265,6 @@ int main(int argc, char** argv)
     cout << "after complete dedup:" << endl;
     cout << "blocks: " << dedup_blocks << endl;
     cout << "size: " << dedup_size / float(1024*1024*1024) << " GB" << endl;
-
-    analysis_cds(global_index, cds_name, true);
 
     /*
     // aggregate by count
