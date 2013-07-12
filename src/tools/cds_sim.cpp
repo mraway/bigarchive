@@ -10,6 +10,13 @@
 
 using namespace std;
 
+struct DedupCounter {
+    uint64_t num_bytes_;
+    uint64_t num_blocks_;
+
+    DedupCounter() {num_bytes_ = 0; num_blocks_ = 0;}
+};
+
 uint64_t raw_blocks = 0;
 uint64_t raw_size = 0;
 uint64_t after_l1_blocks = 0;
@@ -80,10 +87,14 @@ int main(int argc, char** argv)
             trace_inputs.push_back(new ifstream(trace_fname.c_str(), ios::in | ios::binary));
         }
         
-        // dedup each snapshot with its parent, put new blocks into gloabl index
+        // dedup each snapshot with its parent
         int num_ss = trace_inputs.size();
         Segment* segs = new Segment[num_ss];
         cout << "processing " << num_ss << " snapshots in " << vm_fname << endl;
+        DedupCounter* new_data = new DedupCounter[num_ss];
+        DedupCounter* l1_data = new DedupCounter[num_ss];
+        DedupCounter* l2_data = new DedupCounter[num_ss];
+        DedupCounter* l3_data = new DedupCounter[num_ss];
         bool finished = false;
         while (!finished) {
             for (int j = 0; j < num_ss; j++) {
@@ -93,6 +104,8 @@ int main(int argc, char** argv)
                 // level 1
                 if (j > 0 && segs[j] == segs[j-1]) {
                     // detected at level 1
+                    l1_data[j].num_blocks_ += segs[j].blocklist_.size();
+                    l1_data[j].num_bytes_ += segs[j].size_;
                 }
                 else {
                     // level 2
@@ -109,6 +122,8 @@ int main(int argc, char** argv)
                                              segs[j-1].blocklist_.end(), 
                                              *it)) {
                             // detected at level 2
+                            l2_data[j].num_blocks_ += 1;
+                            l2_data[j].num_bytes_ += it->size_;
                         }
                         else {
                             // level 3
@@ -116,8 +131,12 @@ int main(int argc, char** argv)
                             after_l2_size += it->size_;
                             if (binary_search(cds.begin(), cds.end(), *it)) {
                                 // detected at level 3
+                                l3_data[j].num_blocks_ += 1;
+                                l3_data[j].num_bytes_ += it->size_;
                             }
                             else {
+                                new_data[j].num_blocks_ += 1;
+                                new_data[j].num_bytes_ += it->size_;
                                 after_l3_blocks += 1;
                                 after_l3_size += it->size_;
                             }
@@ -132,11 +151,19 @@ int main(int argc, char** argv)
                 }
             }
         }
-        // clean up
+        // we are done with this VM, print and clean up
         delete[] segs;
         for (size_t j = 0; j < trace_inputs.size(); ++j) {
             trace_inputs[j]->close();
             delete trace_inputs[j];
+        }
+
+        for (int j = 0; j < num_ss; j++) {
+            cout << "snapshot" << j 
+                 << " l1: " << l1_data[j].num_blocks_ << " blocks, " << l1_data[j].num_bytes_ << " bytes,"
+                 << " l2: " << l2_data[j].num_blocks_ << " blocks, " << l2_data[j].num_bytes_ << " bytes,"
+                 << " l3: " << l3_data[j].num_blocks_ << " blocks, " << l3_data[j].num_bytes_ << " bytes,"
+                 << " new: " << new_data[j].num_blocks_ << " blocks, " << new_data[j].num_bytes_ << " bytes" << endl;
         }
 
         cout << "raw: " << " blocks: " << raw_blocks << " size: " << raw_size << endl;

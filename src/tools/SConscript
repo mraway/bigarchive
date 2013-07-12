@@ -2,6 +2,8 @@ Import('env')
 
 local_env = env.Clone()
 
+local_env['SIM_BIN_PATH'] = local_env['PROJECT_BIN_PATH'] + '/simulation'
+
 hash_distribution = local_env.Program(target = 'hash_distribution', source = ['hash_distribution.cpp'], LIBS = env['PROJ_LIBS'] + env['BASIC_LIBS'] + env['LOG_LIBS'])
 local_env.Install(local_env['PROJECT_BIN_PATH'], hash_distribution)
 
@@ -12,13 +14,17 @@ prog = local_env.Program(target = 'cds_distiller', source = ['cds_distiller.cpp'
 local_env.Install(local_env['PROJECT_BIN_PATH'], prog)
 
 prog = local_env.Program(target = 'cds_sim', source = ['cds_sim.cpp'], LIBS = env['PROJ_LIBS'] + env['BASIC_LIBS'])
-local_env.Install(local_env['PROJECT_BIN_PATH'], prog)
+local_env.Install(local_env['SIM_BIN_PATH'], prog)
 
 prog = local_env.Program(target = 'hash_hit_length', source = ['hash_hit_length.cpp'], LIBS = env['PROJ_LIBS'] + env['BASIC_LIBS'] + env['LOG_LIBS'])
 local_env.Install(local_env['PROJECT_BIN_PATH'], prog)
 
 prog = local_env.Program(target = 'hash_hit_benchmark', source = ['hash_hit_benchmark.cpp'], LIBS = env['PROJ_LIBS'] + env['BASIC_LIBS'] + env['LOG_LIBS'])
 local_env.Install(local_env['PROJECT_BIN_PATH'], prog)
+
+prog = local_env.Program(target = 'test_trace_generator', source = ['test_trace_generator.cpp'], LIBS = env['PROJ_LIBS'] + env['BASIC_LIBS'])
+local_env.Install(local_env['PROJECT_BIN_PATH'], prog)
+
 
 local_env.Install(local_env['PROJECT_BIN_PATH'], 'memcached_start.sh')
 local_env.Install(local_env['PROJECT_BIN_PATH'], 'memcached_stop.sh')

@@ -2,31 +2,31 @@ Import('env')
 
 local_env = env.Clone()
 
-#env.Install(env['PROJECT_BIN_PATH'], 'Log4cxxConfig.xml')
+local_env['TEST_BIN_PATH'] = env['PROJECT_BIN_PATH'] + '/test'
 
 data_generator_put = env.Program(target = 'data_generator_put', source = ['data_generator_put.cpp'], LIBS = env['PROJ_LIBS'] + env['BASIC_LIBS'])
-env.Install(env['PROJECT_BIN_PATH'], data_generator_put)
+env.Install(local_env['TEST_BIN_PATH'], data_generator_put)
 
 data_generator_get = env.Program(target = 'data_generator_get', source = ['data_generator_get.cpp'], LIBS = env['PROJ_LIBS'] + env['BASIC_LIBS'])
-env.Install(env['PROJECT_BIN_PATH'], data_generator_get)
+env.Install(local_env['TEST_BIN_PATH'], data_generator_get)
 
 data_source_test = env.Program(target = 'data_source_test', source = ['data_source_test.cpp'], LIBS = env['PROJ_LIBS'] + env['BASIC_LIBS'])
-env.Install(env['PROJECT_BIN_PATH'], data_source_test)
+env.Install(local_env['TEST_BIN_PATH'], data_source_test)
 
 append_store_read = env.Program(target = 'append_store_read', source = ['append_store_read.cpp'], LIBS = env['PROJ_LIBS'] + env['LOG_LIBS'] + env['QFS_LIBS'] + env['BASIC_LIBS'])
-env.Install(env['PROJECT_BIN_PATH'], append_store_read)
+env.Install(local_env['TEST_BIN_PATH'], append_store_read)
 
 write_singlevm = env.Program(target = 'write_singlevm', source = ['./snapshot/write_singlevm.cpp'], LIBS = env['PROJ_LIBS'] + env['LOG_LIBS'] + env['QFS_LIBS'] + env['BASIC_LIBS'])
-env.Install(env['PROJECT_BIN_PATH'], write_singlevm)
+env.Install(local_env['TEST_BIN_PATH'], write_singlevm)
 
 read_singlevm = env.Program(target = 'read_singlevm', source = ['./snapshot/read_singlevm.cpp'], LIBS = env['PROJ_LIBS'] + env['LOG_LIBS'] + env['QFS_LIBS'] + env['BASIC_LIBS'])
-env.Install(env['PROJECT_BIN_PATH'], read_singlevm)
+env.Install(local_env['TEST_BIN_PATH'], read_singlevm)
 
 append_store_test = env.Program(target = 'append_store_test', source = ['append_store_test.cpp'], LIBS = env['PROJ_LIBS'] + env['LOG_LIBS'] + env['QFS_LIBS'] + env['BASIC_LIBS'])
-env.Install(env['PROJECT_BIN_PATH'], append_store_test)
+env.Install(local_env['TEST_BIN_PATH'], append_store_test)
 
 append_store_scan = env.Program(target = 'append_store_scan', source = ['append_store_scan.cpp'], LIBS = env['PROJ_LIBS'] + env['LOG_LIBS'] + env['QFS_LIBS'] + env['BASIC_LIBS'])
-env.Install(env['PROJECT_BIN_PATH'], append_store_scan)
+env.Install(local_env['TEST_BIN_PATH'], append_store_scan)
 
 prog = env.Program(target = 'qfs_rw_test', source = ['qfs_rw_test.cpp'], LIBS = env['LOG_LIBS'] + env['QFS_LIBS'] + env['BASIC_LIBS'])
-env.Install(env['PROJECT_BIN_PATH'], prog)
+env.Install(local_env['TEST_BIN_PATH'], prog)

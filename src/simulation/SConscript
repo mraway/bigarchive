@@ -2,3 +2,5 @@ Import('env')
 
 SConscript('sampling/SConscript')
 SConscript('binning/SConscript')
+SConscript('deletion/SConscript')
+SConscript('local_minhash/SConscript')
