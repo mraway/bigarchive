@@ -1,6 +1,7 @@
 #include "trace_types.h"
 #include <string.h>
 #include <sstream>
+#include <cstdio>
 
 Checksum::Checksum()
 {
@@ -47,7 +48,7 @@ string Checksum::ToString()
 {
     string s(2 * CKSUM_LEN, '0');
     for (int i = 0; i < CKSUM_LEN; i++) {
-		sprintf(&s[2 * i], "%02x", data_[i]);
+		sprintf(&s[2 * i], "%02x", (unsigned char)data_[i]);
 	}
 	return s;
 }
