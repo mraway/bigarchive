@@ -1,0 +1,10 @@
+Import('env')
+
+local_env = env.Clone()
+
+local_env['SIM_BIN_PATH'] = local_env['PROJECT_BIN_PATH'] + '/simulation'
+
+del_sim = local_env.Program(target = 'fp_del_sim', source = ['fp_del_sim.cpp'], LIBS = env['PROJ_LIBS'] + env['BASIC_LIBS'])
+local_env.Install(local_env['SIM_BIN_PATH'], del_sim)
+
+local_env.Install(local_env['SIM_BIN_PATH'], 'del_stat.awk')

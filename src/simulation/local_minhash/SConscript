@@ -1,0 +1,9 @@
+Import('env')
+
+local_env = env.Clone()
+
+local_env['SIM_BIN_PATH'] = local_env['PROJECT_BIN_PATH'] + '/simulation'
+
+local_minhash = local_env.Program(target = 'local_minhash', source = ['local_minhash.cpp', 'snapshot.cpp'], LIBS = env['PROJ_LIBS'] + env['BASIC_LIBS'])
+local_env.Install(local_env['SIM_BIN_PATH'], local_minhash)
+
