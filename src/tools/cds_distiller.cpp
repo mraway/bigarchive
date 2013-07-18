@@ -62,7 +62,7 @@ void analysis_cds(map<Block, uint32_t>& global_index, const string& cds_name, bo
 
     uint64_t cds_freq_threshold[10];		// this is the frequency threshold
     uint64_t num_to_add[10];
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 4; i++) {
         uint64_t cds_size = 0;
         uint64_t cds_data_coverage = 0;
         for (rit = cds_counter.rbegin(); rit != cds_counter.rend(); rit++) {
@@ -78,28 +78,28 @@ void analysis_cds(map<Block, uint32_t>& global_index, const string& cds_name, bo
                 cds_data_coverage += rit->first * rit->second.total_size;
             }
         }
-        if (!write_out) {
+        //if (!write_out) {
             cout << "  threshold: " << (i + 1) << "% " << "freq: " << cds_freq_threshold[i]
                  << std::fixed << std::setw(5) << std::setprecision(6) << std::setfill( '0' )
                  << " CDS index size: " << (double)100 * cds_size / dedup_blocks << "% " << cds_size 
                  << " covered raw data: " << (double)100 * cds_data_coverage / total_size << "% " << cds_data_coverage 
                  << " alpha: " << (1 - log((double)cds_data_coverage / total_size) / log((double)cds_size / dedup_blocks))
                  << endl;
-        }
+        //}
     }
 
     // scan the global index to generate CDS index according to threshold
     // we will only generate CDS from 1% to 5%
     if (write_out) {
         ofstream cds_output[5];
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 4; i++) {
             stringstream ss;
             ss << cds_name << "." << setfill('0') << setw(3) << (i+1);
             cds_output[i].open(ss.str().c_str(), ios::out | ios::binary | ios::app);
         }
 
         for (it = global_index.begin(); it != global_index.end(); ++ it) {
-            for (int i = 0; i < 5; ++i) {
+            for (int i = 0; i < 4; ++i) {
                 if (it->second > cds_freq_threshold[i]) {
                     it->first.ToStream(cds_output[i]);
                     continue;
@@ -113,7 +113,7 @@ void analysis_cds(map<Block, uint32_t>& global_index, const string& cds_name, bo
             }
         }
 
-        for (int i = 0; i < 5; ++i) {
+        for (int i = 0; i < 4; ++i) {
             cds_output[i].close();
         }
     }
@@ -138,19 +138,25 @@ int main(int argc, char** argv)
     bool localized_dedup = true;
 
     //clear the cds files
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 4; i++) {
         stringstream ss;
         ss << cds_name << "." << setfill('0') << setw(3) << (i+1);
         ofstream cds_output;
         cds_output.open(ss.str().c_str(), ios::out | ios::binary | ios::trunc);
         cds_output.close();
     }
-    unsigned int partition_count = 16;
+    unsigned int partition_count = 8;
     unsigned int partition_index;
 
     //loop through each partition
     for(partition_index = 0; partition_index < partition_count; partition_index++) {
         cout << "Starting Partition " << (partition_index+1) << "/" << partition_count << endl;
+    raw_blocks = 0;
+    raw_size = 0;
+    total_blocks = 0;
+    total_size = 0;
+    dedup_size = 0;
+    dedup_blocks = 0;
 
         // build the global index with counter
         map<Block, uint32_t> global_index;
@@ -229,7 +235,7 @@ int main(int argc, char** argv)
                 trace_inputs[j]->close();
                 delete trace_inputs[j];
             }
-            analysis_cds(global_index, cds_name);
+            //analysis_cds(global_index, cds_name);
             //cout << "Current analysis: " << endl;
             //cout << "raw:" << endl;
             //cout << "blocks: " << raw_blocks << endl;
