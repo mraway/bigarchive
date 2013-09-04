@@ -227,7 +227,7 @@ public:
     void Save(ofstream& os) 
     {
         uint32_t num_blocks = blocklist_.size();
-        os.write((char *)&num_blocks, sizeof(uint32_t));
+        //os.write((char *)&num_blocks, sizeof(uint32_t));
         for (uint32_t i = 0; i < num_blocks; i ++)
             blocklist_[i].Save(os);
     }
@@ -266,59 +266,5 @@ public:
             return true;
         }
 };
-
-//class Bin {
-//private:
-    //std::vector<Block> blocklist_;
-    //uint32_t num_segments_;
-    //string min_hash_;
-    //uint32_t num_blocks_;
-    //uint32_t num_dedup_blocks_;
-    //uint32_t size_;
-    //uint32_t dedup_size_;
-//
-//public:
-    //Bin()
-    //{
-        //num_segments_ = 0;
-        //num_blocks_ = 0;
-        //num_dedup_blocks_ = 0;
-        //size_ = 0;
-        //dedup_size_ = 0;
-        //blocklist_.reserve(200);
-    //}
-//
-    //void AddSegment(const Segment& seg)
-    //{
-        //blocklist_.insert(blocklist_.end(), seg.blocklist_.begin(), seg.blocklist_.end());
-        //num_segments_ ++;
-        //min_hash_ = seg.GetMinHashString();
-    //}
-//
-    //void Deduplication()
-    //{
-        //sort(blocklist_.begin(), blocklist_.end());
-        //for (uint32_t i = 0; i < blocklist_.size(); i++) {
-            //num_blocks_ ++;
-            //size_ += blocklist_[i].size_;
-            //dedup_size_ += blocklist_[i].size_;
-            //num_dedup_blocks_ ++;
-            //while ((i < blocklist_.size() - 1) && (blocklist_[i + 1] == blocklist_[i])) {
-                //i ++;
-                //num_blocks_ ++;
-                //size_ += blocklist_[i].size_;
-            //}
-        //}
-    //}
-//
-    //string ToString()
-    //{
-        //stringstream ss;
-        //ss << "raw: " << num_segments_ << " segments, " << num_blocks_ << " blocks, "
-           //<< size_ << " bytes. " << "dedup: " << num_dedup_blocks_ << " blocks, "
-           //<< dedup_size_ << " bytes.";
-        //return ss.str();
-    //}
-//};
 
 #endif /* _DEDUP_TYPES_H_ */

@@ -168,6 +168,24 @@ class Hash {
     bool operator<(const Hash& other) const {
         return memcmp(this->cksum_, other.cksum_, CKSUM_LEN) < 0;
     }
+
+    uint32_t First4Bytes() const {
+        uint32_t tmp;
+        memcpy((char*)&tmp, cksum_, 4);
+        return tmp;
+    }
+
+    uint32_t Last4Bytes() const {
+        uint32_t tmp;
+        memcpy((char*)&tmp, &cksum_[CKSUM_LEN - 4], 4);
+        return tmp;
+    }
+
+    uint32_t Middle4Bytes() const {
+        uint32_t tmp;
+        memcpy((char*)&tmp, &cksum_[(CKSUM_LEN - 4) / 2], 4);
+        return tmp;
+    }
 };
 
 class Segment {
@@ -175,7 +193,8 @@ public:
 	std::vector<Block> blocklist_;
 	uint32_t min_idx_;	// location of min-hash block in blocklist_
 	uint32_t size_;		// overall number of bytes
-	Checksum cksum_;	// segment checksum is the SHA-1 of all block hash values
+	//Checksum cksum_;	// segment checksum is the SHA-1 of all block hash values
+        Hash minhash_;
 
 private:
 	//SHA_CTX *ctx_;
@@ -210,29 +229,30 @@ public:
         blocklist_.clear();
     }
 
-	void Final() 
+    void Final() 
     {
-		//SHA1_Final(cksum_, ctx_);
-		//delete ctx_;
-	}
+        //SHA1_Final(cksum_, ctx_);
+        //delete ctx_;
+        minhash_.setHash(blocklist_[min_idx_]);
+    }
 
-	uint64_t GetOffset() 
+    uint64_t GetOffset() 
     {
-		if (blocklist_.size() == 0)
-			return 0;
-		return blocklist_[0].offset_;
-	}
+        if (blocklist_.size() == 0)
+            return 0;
+        return blocklist_[0].offset_;
+    }
 
     uint32_t GetSize()
     {
         return size_;
     }
 
-	// minhash value can be used this way
-	uint8_t* GetMinHash() 
+    // minhash value can be used this way
+    uint8_t* GetMinHash() 
     {
-		return blocklist_[min_idx_].cksum_;
-	}
+        return blocklist_[min_idx_].cksum_;
+    }
 
     // put minhash into a string so other stl containers can use it
     string GetMinHashString() const
@@ -261,12 +281,12 @@ public:
             blocklist_[i].Save(os);
     }
 
-	bool Load(ifstream& is) 
+    bool Load(ifstream& is) 
     {
-		Block blk;
+        Block blk;
         uint32_t num_blocks;
-		Init();
-        
+        Init();
+
         is.read((char *)&num_blocks, sizeof(uint32_t));
         if (is.gcount() != sizeof(uint32_t))
             return false;
@@ -281,9 +301,10 @@ public:
         return true;
     }
 
-	bool operator==(const Segment& other) const {
-		return memcmp(this->cksum_, other.cksum_, CKSUM_LEN) == 0;
-	}
+    bool operator==(const Segment& other) const {
+        //return memcmp(this->cksum_, other.cksum_, CKSUM_LEN) == 0;
+        return this->minhash_ == other.minhash_;
+    }
 };
 
 class Bin {

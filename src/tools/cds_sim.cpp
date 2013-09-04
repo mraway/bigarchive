@@ -28,16 +28,17 @@ uint64_t after_l3_size = 0;
 
 void usage(char* progname)
 {
-    cout << "Usage: " << progname << " cds_file vm_list [prefix] [suffix]" << endl;
+    cout << "Usage: " << progname << " cds_file vm_list [prefix] [suffix] skip" << endl;
     cout << "vm_list is a list of vm description files." << endl;
     cout << "each vm description file is a list of vm snapshot traces." << endl;
     cout << "prefix is used to specify the path to vm snapshot trace files." << endl;
     cout << "suffix is used to specify the trace type, such like .bv4 or .v4" << endl;
+    cout << "skip specifies that " << progname << " should skip <skip> vms from vm_list" << endl;
 }
 
 int main(int argc, char** argv)
 {
-    if (argc < 3 || argc > 5) {
+    if (argc < 3 || argc > 6) {
         usage(argv[0]);
         return 1;
     }
@@ -45,11 +46,15 @@ int main(int argc, char** argv)
     string cds_name = argv[1];
     string list_fname = argv[2];
     string fprefix, fsuffix;
+    int skip = 0;
     if (argc > 3) {
         fprefix = argv[3];
     }
     if (argc > 4) {
         fsuffix = argv[4];
+    }
+    if (argc > 5) {
+        skip = atoi(argv[5]);
     }
 
     std::vector<Block> cds;
@@ -71,6 +76,10 @@ int main(int argc, char** argv)
         // open vm's snapshot list
         std::getline(vm_ifs, vm_fname);
         if (vm_fname.length() == 0) {
+            continue;
+        }
+        if (skip > 0) {
+            skip--;
             continue;
         }
         ifstream ss_ifs(vm_fname.c_str(), ios::in);

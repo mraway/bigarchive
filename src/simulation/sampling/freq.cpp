@@ -647,11 +647,12 @@ int main(int argc, char** argv)
     //If we will be using a premade cds, load it into memory
     if (use_cds_file) {
         Hash current_hash;
-        while(load_segment(current_seg, cds_input)) {
-            for (i = 0; i < current_seg.blocklist_.size(); i++) {
-                current_hash.setHash(current_seg.blocklist_[i]);
-                cds[current_hash] = 0;
-            }
+        Block current_blk;
+        //we use Block::Load instead of load_segment because cds is block
+        //  and not segment based
+        while(current_blk.Load( cds_input)) {
+            current_hash.setHash(current_blk);
+            cds[current_hash] = 0;
         }
     }
     
@@ -688,19 +689,19 @@ int main(int argc, char** argv)
             vmtraceindex = 0;
             if (use_vm_list) {
                 getline(vmlist_input,line);
-                cur_vm_path = line.c_str();
                 if (strlen(cur_vm_path) < 1 || cur_vm_path[0] == '\n') {
                     continue;
                 }
                 if (trace_input.is_open()) {
                     trace_input.close();
                 }
+                cur_vm_path = line.c_str();
+                cout << "VM file (" << vmindex << "): " << cur_vm_path << endl;
                 trace_input.open(cur_vm_path, std::ios_base::in);
                 if (!trace_input.is_open()) {
                     pr_msg("unable to open %s", cur_vm_path);
                     exit(1);
                 } else {
-                    cout << "VM file (" << vmindex << "): " << cur_vm_path << endl;
                     use_trace_file = true;
                 }
             }
@@ -723,12 +724,12 @@ int main(int argc, char** argv)
                     if (current_input.is_open()) {
                         current_input.close();
                     }
+                    printf("snapshot trace file %d.%d: %s\n", vmindex, vmtraceindex,cur_trace_path);
                     current_input.open(cur_trace_path, std::ios_base::in | std::ios_base::binary);
                     if (!current_input.is_open()) {
                         pr_msg("unable to open %s", cur_trace_path);
                         exit(1);
                     }
-                    printf("snapshot trace file %d.%d: %s\n", vmindex, vmtraceindex,cur_trace_path);
                     //theoretical(indexBlocks, current_input, tblk_threshold, seed);
                     //sampled(indexBlocks, current_input, cache_size, tblk_threshold, seed, do_dirty, do_parent);
                     if (do_containers) {

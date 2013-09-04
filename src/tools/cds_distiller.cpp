@@ -6,6 +6,7 @@
 #include <map>
 #include <algorithm>
 #include <math.h>
+#include <cstring>
 #include "../snapshot/trace_types.h"
 
 using namespace std;
@@ -45,8 +46,8 @@ void analysis_cds(map<Block, uint32_t>& global_index, const string& cds_name, bo
     }
 
     // calculate the dedup size
-    //dedup_size = 0;
-    //dedup_blocks = 0;
+    dedup_size = 0;
+    dedup_blocks = 0;
     for (rit = cds_counter.rbegin(); rit != cds_counter.rend(); rit++) {
         dedup_blocks += rit->second.num_blocks;
         dedup_size += rit->second.total_size;
@@ -121,32 +122,77 @@ void analysis_cds(map<Block, uint32_t>& global_index, const string& cds_name, bo
 
 int main(int argc, char** argv)
 {
-    if (argc < 3 || argc > 5) {
-        usage(argv[0]);
-        return 1;
-    }
+    //if (argc < 3 || argc > 5) {
+        //usage(argv[0]);
+        //return 1;
+    //}
 
-    string cds_name = argv[1];
-    string list_fname = argv[2];
-    string fprefix, fsuffix;
-    if (argc > 3) {
-        fprefix = argv[3];
+    //string cds_name = argv[1];
+    //string list_fname = argv[2];
+    string cds_name = "";
+    string list_fname = "";
+    string fprefix = "";
+    string fsuffix = "";
+    //if (argc > 3) {
+    //    fprefix = argv[3];
+    //}
+    //if (argc > 4) {
+    //    fsuffix = argv[4];
+    //}
+    int argi = 1;
+    int cds_start = -1;
+    int cds_every = 5;
+    while (argi < argc && argv[argi][0] == '-') {
+        if (strcmp(argv[argi],"--cdsname") == 0) {
+            argi++;
+            cds_name = argv[argi++];
+        } else if (strcmp(argv[argi],"--vmlistfile") == 0) {
+            argi++;
+            list_fname = argv[argi++];
+        } else if (strcmp(argv[argi],"--prefix") == 0) {
+            argi++;
+            fprefix = argv[argi++];
+        } else if (strcmp(argv[argi],"--suffix") == 0) {
+            argi++;
+            fsuffix = argv[argi++];
+        } else if (strcmp(argv[argi],"--cdsstart") == 0) {
+            argi++;
+            cds_start = atoi(argv[argi++]);
+        } else if (strcmp(argv[argi],"--cdsevery") == 0) {
+            argi++;
+            cds_every = atoi(argv[argi++]);
+        } else if (strcmp(argv[argi],"-?") == 0) {
+            usage(argv[0]);
+            exit(0);
+        } else if (strcmp(argv[argi],"--") == 0) {
+            argi++;
+            break;
+        } else {
+            cout << "Unknown option: " << argv[argi];
+            usage(argv[0]);
+            exit(1);
+        }
     }
-    if (argc > 4) {
-        fsuffix = argv[4];
+    if (strcmp(list_fname.c_str(),"") == 0 || strcmp(cds_name.c_str(),"") == 0) {
+        cout << "must specify cds name and vmlist filename" << endl;
+        usage(argv[0]);
+        exit(1);
     }
     bool localized_dedup = true;
 
     //clear the cds files
-    for (int i = 0; i < 4; i++) {
-        stringstream ss;
-        ss << cds_name << "." << setfill('0') << setw(3) << (i+1);
-        ofstream cds_output;
-        cds_output.open(ss.str().c_str(), ios::out | ios::binary | ios::trunc);
-        cds_output.close();
+    if (cds_start < 0) {
+        for (int i = 0; i < 4; i++) {
+            stringstream ss;
+            ss << cds_name << "." << setfill('0') << setw(3) << (i+1);
+            ofstream cds_output;
+            cds_output.open(ss.str().c_str(), ios::out | ios::binary | ios::trunc);
+            cds_output.close();
+        }
     }
     unsigned int partition_count = 8;
     unsigned int partition_index;
+    int vm_index = 0;
 
     //loop through each partition
     for(partition_index = 0; partition_index < partition_count; partition_index++) {
@@ -157,6 +203,7 @@ int main(int argc, char** argv)
     total_size = 0;
     dedup_size = 0;
     dedup_blocks = 0;
+    vm_index = 0;
 
         // build the global index with counter
         map<Block, uint32_t> global_index;
@@ -184,7 +231,7 @@ int main(int argc, char** argv)
                 trace_inputs.push_back(new ifstream(trace_fname.c_str(), ios::in | ios::binary));
             }
             
-            // dedup each snapshot with its parent, put new blocks into gloabl index
+            // dedup each snapshot with its parent, put new blocks into global index
             int num_ss = trace_inputs.size();
             Segment* segs = new Segment[num_ss];
             cout << "processing " << num_ss << " snapshots in " << vm_fname << endl;
@@ -204,7 +251,7 @@ int main(int argc, char** argv)
                     for (vector<Block>::iterator it = segs[j].blocklist_.begin(); 
                          it != segs[j].blocklist_.end(); ++it) {
                         //only deal with a block it it is in the current partition
-                        if (((*it).cksum_.First4Bytes()) % partition_count == partition_index) {
+                        if (((*it).cksum_.Middle4Bytes()) % partition_count == partition_index) {
                             raw_blocks++;
                             raw_size += (*it).size_;
                             if (j == 0 || !localized_dedup) {
@@ -235,42 +282,60 @@ int main(int argc, char** argv)
                 trace_inputs[j]->close();
                 delete trace_inputs[j];
             }
-            //analysis_cds(global_index, cds_name);
-            //cout << "Current analysis: " << endl;
-            //cout << "raw:" << endl;
-            //cout << "blocks: " << raw_blocks << endl;
-            //cout << "size: " << raw_size / float(1024*1024*1024) << " GB" << endl;
-            //cout << "after localized dedup: " << endl;
-            //cout << "blocks: " << total_blocks << endl;
-            //cout << "size: " << total_size / float(1024*1024*1024) << " GB" << endl;
-            //cout << "after complete dedup:" << endl;
-            //cout << "blocks: " << dedup_blocks << endl;
-            //cout << "size: " << dedup_size / float(1024*1024*1024) << " GB" << endl;
+            vm_index++;
+            if (cds_start >= 0 && vm_index >= cds_start &&
+                    ((vm_index-cds_start) % cds_every) == 0) {
+                //clear the cds before writing the first paritition
+                if (partition_index == 0) {
+                    for (int i = 0; i < 4; i++) {
+                        stringstream ss;
+                        ss << cds_name << "_" << vm_index << "." << setfill('0') << setw(3) << (i+1);
+                        ofstream cds_output;
+                        cds_output.open(ss.str().c_str(), ios::out | ios::binary | ios::trunc);
+                        cds_output.close();
+                    }
+                }
+                stringstream this_cds;
+                this_cds << cds_name << "_" << vm_index;
+                analysis_cds(global_index, this_cds.str(), true);
+                cout << "Current analysis for this partition: " << endl;
+                cout << "raw:" << endl;
+                cout << "  blocks: " << raw_blocks << endl;
+                cout << "  size: " << raw_size / float(1024*1024*1024) << " GB" << endl;
+                cout << "after localized dedup: " << endl;
+                cout << "  blocks: " << total_blocks << endl;
+                cout << "  size: " << total_size / float(1024*1024*1024) << " GB" << endl;
+                cout << "after complete dedup:" << endl;
+                cout << "  blocks: " << dedup_blocks << endl;
+                cout << "  size: " << dedup_size / float(1024*1024*1024) << " GB" << endl;
+            }
         }
         vm_ifs.close();
-        analysis_cds(global_index, cds_name, true);
-        cout << "End-of-Partition Analysis: " << endl;
-        cout << "raw:" << endl;
-        cout << "blocks: " << raw_blocks << endl;
-        cout << "size: " << raw_size / float(1024*1024*1024) << " GB" << endl;
-        cout << "after localized dedup: " << endl;
-        cout << "blocks: " << total_blocks << endl;
-        cout << "size: " << total_size / float(1024*1024*1024) << " GB" << endl;
-        cout << "after complete dedup:" << endl;
-        cout << "blocks: " << dedup_blocks << endl;
-        cout << "size: " << dedup_size / float(1024*1024*1024) << " GB" << endl;
+        if (cds_start < 0) {
+            analysis_cds(global_index, cds_name, true);
+            cout << "End-of-Partition Analysis: " << endl;
+            cout << "raw:" << endl;
+            cout << "  blocks: " << raw_blocks << endl;
+            cout << "  size: " << raw_size / float(1024*1024*1024) << " GB" << endl;
+            cout << "after localized dedup: " << endl;
+            cout << "  blocks: " << total_blocks << endl;
+            cout << "  size: " << total_size / float(1024*1024*1024) << " GB" << endl;
+            cout << "after complete dedup:" << endl;
+            cout << "  blocks: " << dedup_blocks << endl;
+            cout << "  size: " << dedup_size / float(1024*1024*1024) << " GB" << endl;
+        }
     }
 
     cout << "Final Analysis: " << endl;
     cout << "raw:" << endl;
-    cout << "blocks: " << raw_blocks << endl;
-    cout << "size: " << raw_size / float(1024*1024*1024) << " GB" << endl;
+    cout << "  blocks: " << raw_blocks << endl;
+    cout << "  size: " << raw_size / float(1024*1024*1024) << " GB" << endl;
     cout << "after localized dedup: " << endl;
-    cout << "blocks: " << total_blocks << endl;
-    cout << "size: " << total_size / float(1024*1024*1024) << " GB" << endl;
+    cout << "  blocks: " << total_blocks << endl;
+    cout << "  size: " << total_size / float(1024*1024*1024) << " GB" << endl;
     cout << "after complete dedup:" << endl;
-    cout << "blocks: " << dedup_blocks << endl;
-    cout << "size: " << dedup_size / float(1024*1024*1024) << " GB" << endl;
+    cout << "  blocks: " << dedup_blocks << endl;
+    cout << "  size: " << dedup_size / float(1024*1024*1024) << " GB" << endl;
 
     /*
     // aggregate by count

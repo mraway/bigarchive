@@ -67,6 +67,13 @@ uint32_t Checksum::Last4Bytes() const
     return tmp;
 }
 
+uint32_t Checksum::Middle4Bytes() const
+{
+    uint32_t tmp;
+    memcpy((char*)&tmp, &data_[CKSUM_LEN - 12], 4);
+    return tmp;
+}
+
 Block::Block(int size, const Checksum& ck) 
 {
     size_ = size;

@@ -1,0 +1,11 @@
+Import('env')
+
+local_env = env.Clone()
+
+local_env['SIM_BIN_PATH'] = local_env['PROJECT_BIN_PATH'] + '/simulation'
+
+tracegen = local_env.Program(target = 'tracegen', source = ['tracegen.cpp'])
+local_env.Install(local_env['SIM_BIN_PATH'], tracegen)
+
+trace_stat = local_env.Program(target = 'trace_stat', source = ['trace_stat.cpp'])
+local_env.Install(local_env['SIM_BIN_PATH'], trace_stat)
